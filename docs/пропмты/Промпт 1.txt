@@ -1,0 +1,39 @@
+Реализуй шаг 1 из Implementation Order (§19 game-design.md): 
+«Каркас».
+
+Конкретно: GameLifetimeScope, GameBootstrap, IInputProvider 
+(только KeyboardInputProvider пока, MobileInputProvider — позже 
+на шаге 9), IEventBus, generic FSM, базовые enum/const 
+(GameState, Tags, AnimatorHashes, CarId, StuntType, 
+UpgradeCategory, HazardType), и пустые папки для будущих сервисов 
+включая Services/Progression/ (см. §15.3).
+
+Регламент работы:
+- Сначала покажи план: список файлов которые создашь, в каком 
+  порядке, и какие интерфейсы у каждого сервиса. Жди моего 
+  «ок» перед началом написания кода.
+- Используй скилы из CLAUDE.md: основная работа через 
+  code-writer, по завершении автоматически прогоняй 
+  code-reviewer (как описано в Workflow секции CLAUDE.md).
+- Если для какой-то задачи нужен Editor-скрипт 
+  (например, создание SO-инстансов или Composition Root setup) — 
+  помечай EDITOR_SCRIPT_NEEDED: и параллельно делегируй 
+  editor-script-creator.
+- Не лезь в задачи, относящиеся к последующим шагам 
+  (никакой логики машин, AI, повреждений и т.д.) — только каркас.
+- Не выдумывай новые сервисы или конфиги сверх перечисленных
+  в плане. Если возникает желание добавить что-то — сначала 
+  спрашивай меня.
+
+Также проверь и применяй §15.3 mid-core предохранители:
+- Папка Services/Progression/ создана пустой.
+- MetaProgressService будет создаваться через IPlayerProfile 
+  абстракцию (даже если сейчас в IPlayerProfile только заглушки 
+  под currency).
+- GameFlowService поддерживает push-pop состояний с самого начала, 
+  не «pause через флаг».
+- Save/load выделен в IProfileStorage интерфейс с реализацией 
+  PlayerPrefsProfileStorage.
+
+После завершения шага 1 жди от меня результат проверки в Unity, 
+прежде чем переходить дальше.

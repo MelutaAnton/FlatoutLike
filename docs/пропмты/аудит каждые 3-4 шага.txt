@@ -1,0 +1,19 @@
+Прогон skill audit-architecture по всему текущему коду 
+проекта (Assets/Development/Scripts/).
+
+Особое внимание:
+- Дубликаты строковых ключей (теги, ключи пулов, animator-параметры).
+  Должны быть в enum/const, не в строках по месту.
+- MonoBehaviour с бизнес-логикой. Должно быть только Unity API; 
+  бизнес-логика в pure C# сервисах.
+- Прямые обращения к IPoolManager вне фабрик. Доступ к пулу — 
+  только из *Factory классов.
+- RegisterInstance там, где должен быть RegisterComponent. 
+  MonoBehaviour-зависимости в GameLifetimeScope = RegisterComponent.
+- Resources.Load — запрещён.
+- Magic numbers в Controllers — должны быть в SO.
+- Объекты из пула без InjectGameObject + явного Launch().
+- Триггер-зоны без kinematic Rigidbody.
+
+Покажи отчёт с конкретными файлами и строками. Не исправляй 
+автоматически — я выберу, что фиксить.

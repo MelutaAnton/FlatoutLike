@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"/c/Users/Meluta/.claude/agents\")",
+      "Bash(cp \"/e/UnityProjects/Main/Flatuot2_Like/.claude/agents/code-writer.md\" \"/c/Users/Meluta/.claude/agents/code-writer.md\")",
+      "Bash(cp \"/e/UnityProjects/Main/Flatuot2_Like/.claude/agents/code-reviewer.md\" \"/c/Users/Meluta/.claude/agents/code-reviewer.md\")",
+      "Bash(cp \"/e/UnityProjects/Main/Flatuot2_Like/.claude/agents/editor-script-creator.md\" \"/c/Users/Meluta/.claude/agents/editor-script-creator.md\")",
+      "Bash(cp \"/e/UnityProjects/Main/Flatuot2_Like/.claude/agents/unity-error-analyzer.md\" \"/c/Users/Meluta/.claude/agents/unity-error-analyzer.md\")"
+    ]
+  }
+}

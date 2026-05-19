@@ -1,0 +1,163 @@
+# Flatuot2_Like — правила проекта
+
+Геймдизайн и сущности — в `docs/game-design.md`. 
+
+## Технологии
+
+- Unity 6 (6000.3.9f1 LTS), URP
+- VContainer (DI-контейнер)
+- C# с SOLID и Clean Architecture
+- Active Input Handling: **Both** (Project Settings → Player)
+
+## Архитектурные паттерны
+
+- **DI**: VContainer, Composition Root в `GameLifetimeScope.cs`
+- **EventBus**: типизированная шина `Core/Events/EventBus.cs` (struct-события)
+- **Command**: `ICommand` с `CanExecute()` / `Execute()`
+- **State Machine**: generic FSM для GameState (Movement / Shooting / EnemyDown)
+- **Object Pool**: `IPoolManager` для пуль, VFX, ресурсов
+- **MVP** для UI: Model ← Presenter → View
+- **Factory**: фабрики инкапсулируют пулы; внешний код не работает с `IPoolManager` напрямую
+- **ScriptableObject Data-Driven**: вся конфигурация в SO
+
+## Структура папок
+
+```
+Assets/Development/Scripts/
+├── Core/                       # Переиспользуемый фреймворк
+│   ├── Commands/               # ICommand, игровые команды
+│   ├── DI/                     # ServiceLocator (fallback)
+│   ├── Events/                 # EventBus + game events (struct'ы)
+│   ├── Input/                  # IInputProvider, InputRouter, Keyboard/Mobile providers
+│   ├── Pool/                   # GameObjectPool, PoolManager
+│   └── StateMachine/           # Generic StateMachine<TEnum>
+├── Data/Configs/               # ScriptableObject конфиги (один файл = один класс)
+├── Models/                     # Чистые данные, enums (GameState, ResourceType, VFXEffectType)
+├── Services/                   # Бизнес-логика (pure C#, без MonoBehaviour)
+├── Controllers/                # MonoBehaviour: Unity API only (input, physics, render)
+├── Views/UI/                   # MVP-View'ы (только UI; никаких VFX-Controller'ов здесь)
+├── Factories/                  # Фабрики; единственное место доступа к IPoolManager
+├── Installers/                 # GameLifetimeScope (VContainer Composition Root)
+├── Editor/                     # Editor-скрипты (см. skill `add-editor-script`)
+└── GameBootstrap.cs            # Точка входа
+
+Assets/Development/Data/Configs/   # Инстансы ScriptableObject (.asset)
+```
+
+## Правила кодирования
+
+- Один MonoBehaviour / ScriptableObject = один файл, имя файла = имя класса.
+- Зависимости — через конструктор (pure C#) или `[Inject] Construct(...)` (MonoBehaviour).
+- MonoBehaviour содержит **только** Unity API (ввод, физика, рендер). Бизнес-логика — в сервисах.
+- Запуск поведения объекта вызывается явно (`Launch(direction)`), а не из `Start` / `OnEnable`.
+- Сервисы — pure C#, тестируемые без Unity.
+- События — `readonly struct`, публикуются через `IEventBus`.
+- Именование: `PascalCase` для публичных, `_camelCase` для приватных полей.
+- Каждый сервис имеет интерфейс (`IShootingService`, `IRagdollService`).
+- Команды реализуют `ICommand` с `CanExecute()` / `Execute()`.
+- Доступ к пулу инкапсулируется в фабрике; никакой внешний код не вызывает `IPoolManager` напрямую.
+- Views — только для UI.
+
+## Известные нюансы Unity 6
+
+- `OnEnable()` вызывается **до** VContainer `Construct()` — всегда проверять null перед подпиской и/или использовать флаг `_initialized`.
+- `Input.GetAxisRaw()` / `GetKeyDown()` не работают если Input Handling = "New" — у нас стоит **Both**.
+- Инициализацию переносить в `Construct()`, а не в `Start()`.
+- `NavMeshAgent` требует baked NavMesh — автоматизировать через Editor-скрипт.
+- Mixamo-модели могут ломать Ragdoll Setup Wizard — см. skill `setup-ragdoll`.
+
+## Известные нюансы Unity Physics
+
+### Триггеры требуют Rigidbody (КРИТИЧНО)
+
+`OnTriggerEnter` / `OnTriggerExit` **не срабатывают** если ни на одном из участников нет Rigidbody. Типичная ситуация: триггер-зона `BoxCollider(isTrigger=true)` + персонаж с `NavMeshAgent` + `CapsuleCollider` — Rigidbody нет ни у кого, событие молчит.
+
+Решение — кинематический Rigidbody на триггер-зоне:
+```csharp
+var rb = triggerZone.AddComponent<Rigidbody>();
+rb.isKinematic = true;
+rb.useGravity  = false;
+```
+
+## Известные нюансы VContainer
+
+### `RegisterInstance` vs `RegisterComponent` (КРИТИЧНО)
+
+`RegisterInstance` регистрирует объект как источник зависимости, но **не вызывает** `[Inject] Construct()` на самом объекте. Для MonoBehaviour, которому нужна инъекция, использовать `RegisterComponent`. Симптом: `_initialized` остаётся `false`, ничего не работает.
+
+```csharp
+// НЕВЕРНО — Construct() не будет вызван:
+builder.RegisterInstance(_playerController);
+// ВЕРНО:
+builder.RegisterComponent(_playerController);
+// Через интерфейс:
+builder.RegisterComponent<IHUDView>(_hudView);
+```
+
+`RegisterInstance` подходит только для plain C# объектов и ScriptableObject, которым инъекция не нужна (конфиги, данные).
+
+### Объекты из пула не получают инъекцию автоматически
+
+После `pool.Get()` нужно вручную:
+```csharp
+_container.InjectGameObject(gameObject);  // using VContainer.Unity
+```
+И затем явно вызвать `Launch(...)` — `OnEnable` уже отработал до инъекции.
+
+## Запрещённые практики
+
+### Дублирование строковых ключей
+
+Любой идентификатор (имя тега, animator-параметра, ключ пула, имя сцены) определяется **один раз** — в enum или в единственном SO. Все остальные места ссылаются на это определение.
+
+- VFX: `VFXEffectType` enum + `VFXConfig` — единственный источник.
+- Animator: `static readonly int FooHash = Animator.StringToHash("Foo");`.
+- Теги: `static class Tags { public const string Enemy = "Enemy"; }`.
+- Сцены: enum или константы в одном файле.
+
+Поиск нарушений автоматизирован — skill `audit-architecture`.
+
+### `Resources.Load` запрещён
+
+Файлы в `Resources/` не исключаются из сборки, ссылки не проверяются компилятором. Использовать `[SerializeField]` (через `GameLifetimeScope` или конфиг) или Addressables.
+
+## Workflow (orchestrator)
+
+Ты оркестратор. Когда пользователь просит написать код:
+
+1. **Планирование** — разобрать требования, выделить задачи.
+2. **Реализация** — делегировать `code-writer`.
+3. **Параллельная работа** сразу после `code-writer`:
+   - запустить `code-reviewer` для ревью качества;
+   - если в ответе `code-writer` есть строка `EDITOR_SCRIPT_NEEDED: ...` — параллельно запустить `editor-script-creator`.
+4. **Правки** — с учётом замечаний `code-reviewer` делегировать исправления `code-writer`.
+5. **Завершение** — финальная проверка, отчёт пользователю.
+
+### Ответственности агентов
+
+- `code-writer` — новый C#: интерфейс + сервис + регистрация.
+- `code-reviewer` — ревью git diff на SOLID, Clean Architecture, правила CLAUDE.md.
+- `editor-script-creator` — Editor-скрипты для автоматизации Unity Editor.
+- `unity-error-analyzer` — разбор stacktrace из Unity Console.
+
+## Editor-автоматизация (обязательно)
+
+Любая рутина в Unity Editor автоматизируется через `[MenuItem(...)]` скрипт под `TowerShooter/<Category>/<Action>`. Никогда не писать "сделайте это руками в Inspector".
+
+- Категории и менюшная иерархия — skill `add-editor-script`.
+- Низкоуровневые нюансы (Undo, идемпотентность, теги, заполнение SerializeField на Composition Root) — `.claude/rules/editor-files.md` (auto-loaded для `**/Editor/**`).
+
+## Расширение проекта — куда смотреть
+
+| Задача | Куда |
+|---|---|
+| Новый VFX-эффект | skill `add-vfx-effect` |
+| Новый тип ресурса | skill `add-resource-type` |
+| Ragdoll-настройка | skill `setup-ragdoll` |
+| Новый Editor-скрипт | skill `add-editor-script` + `.claude/rules/editor-files.md` |
+| Формальный аудит кода | skill `audit-architecture` |
+| Обновление CLAUDE.md / MEMORY.md | skill `update-claude-md` |
+| Новый сервис | интерфейс + реализация + регистрация в `GameLifetimeScope` |
+| Новое игровое состояние | значение в `GameState` enum + реализация `IState` + регистрация в `GameFlowService` |
+| Новая команда | класс `: ICommand`, вызывать из контроллера |
+| Новый пресет силы пули | строка в `BulletConfig.asset` |

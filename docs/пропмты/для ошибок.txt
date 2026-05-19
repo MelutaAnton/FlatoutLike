@@ -1,0 +1,11 @@
+Получил ошибку в Unity Console:
+<paste полный stacktrace, включая InvalidOperationException 
+или NullReferenceException и все строки after that>
+
+Используй unity-error-analyzer скил для разбора. Прежде чем 
+писать фикс — расскажи мне:
+1. Причину одной фразой.
+2. Где именно нарушено (файл:строка).
+3. План фикса.
+
+Не правь код до моего «ок».
