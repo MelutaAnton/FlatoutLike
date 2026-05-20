@@ -23,26 +23,96 @@
 ## Структура папок
 
 ```
-Assets/Development/Scripts/
-├── Core/                       # Переиспользуемый фреймворк
-│   ├── Commands/               # ICommand, игровые команды
-│   ├── DI/                     # ServiceLocator (fallback)
-│   ├── Events/                 # EventBus + game events (struct'ы)
-│   ├── Input/                  # IInputProvider, InputRouter, Keyboard/Mobile providers
-│   ├── Pool/                   # GameObjectPool, PoolManager
-│   └── StateMachine/           # Generic StateMachine<TEnum>
-├── Data/Configs/               # ScriptableObject конфиги (один файл = один класс)
-├── Models/                     # Чистые данные, enums (GameState, ResourceType, VFXEffectType)
-├── Services/                   # Бизнес-логика (pure C#, без MonoBehaviour)
-├── Controllers/                # MonoBehaviour: Unity API only (input, physics, render)
-├── Views/UI/                   # MVP-View'ы (только UI; никаких VFX-Controller'ов здесь)
-├── Factories/                  # Фабрики; единственное место доступа к IPoolManager
-├── Installers/                 # GameLifetimeScope (VContainer Composition Root)
-├── Editor/                     # Editor-скрипты (см. skill `add-editor-script`)
-└── GameBootstrap.cs            # Точка входа
-
-Assets/Development/Data/Configs/   # Инстансы ScriptableObject (.asset)
+Assets/
+├── ThirdParty/                     # Купленные/импортированные сторонние ассеты
+│   ├── RealFireAndSmoke/           # VFX-пак
+│   └── ...                         # Один паблишер/пак = одна папка
+│
+└── Development/                    # Весь наш собственный контент и код
+    ├── Scripts/
+    │   ├── Core/                   # Переиспользуемый фреймворк
+    │   │   ├── Commands/           # ICommand, игровые команды
+    │   │   ├── DI/                 # ServiceLocator (fallback)
+    │   │   ├── Events/             # EventBus + game events (struct'ы)
+    │   │   ├── Input/              # IInputProvider, InputRouter, Keyboard/Mobile providers
+    │   │   ├── Pool/               # GameObjectPool, PoolManager
+    │   │   └── StateMachine/       # Generic StateMachine<TEnum>
+    │   ├── Data/Configs/           # Определения ScriptableObject (один файл = один класс)
+    │   ├── Models/                 # Чистые данные, enums (GameState, ResourceType, VFXEffectType)
+    │   ├── Services/               # Бизнес-логика (pure C#, без MonoBehaviour)
+    │   │   └── Progression/        # Mid-core системы (миссии, XP, energy, см. game-design §15)
+    │   ├── Controllers/            # MonoBehaviour: Unity API only (input, physics, render)
+    │   ├── Views/UI/               # MVP-View'ы (только UI; никаких VFX-Controller'ов здесь)
+    │   ├── Factories/              # Фабрики; единственное место доступа к IPoolManager
+    │   ├── Installers/             # GameLifetimeScope (VContainer Composition Root)
+    │   ├── Editor/                 # Editor-скрипты (см. skill `add-editor-script`)
+    │   └── GameBootstrap.cs        # Точка входа
+    │
+    ├── Prefabs/                    # Наши prefab'ы с логикой (см. правила ниже)
+    │   ├── Vehicles/               # Префабы машин с прицеплёнными контроллерами
+    │   ├── Characters/             # Префабы водителя (Mixamo + ragdoll + Animator)
+    │   ├── Pickups/                # RepairPickup, NitroPickup и т.п.
+    │   ├── Environment/            # Композитные модули окружения (BarrelCluster и т.п.)
+    │   ├── VFX/                    # Наши настроенные VFX-префабы (поверх ThirdParty-эмиттеров)
+    │   ├── UI/                     # Canvas'ы и UI-префабы
+    │   └── Systems/                # GameLifetimeScope, EventBus root и др. service-префабы сцены
+    │
+    ├── Data/Configs/               # Инстансы ScriptableObject (.asset)
+    │   ├── Car/
+    │   ├── Driver/
+    │   ├── Enemies/
+    │   └── ...
+    │
+    ├── Scenes/                     # Игровые сцены
+    │   ├── Boot.unity
+    │   ├── MainMenu.unity
+    │   ├── Derby_Arena_01.unity
+    │   ├── Stunts_HighJump.unity
+    │   └── _TestSandbox.unity      # Временные сцены, имя с подчёркиванием
+    │
+    └── Art/                        # Наши доработанные арт-ассеты
+        ├── Materials/              # Материалы (включая URP-конверсии)
+        ├── Textures/               # Наши текстуры, decals, иконки
+        ├── Models/                   # Доработанные ассеты (если есть)
+        └── ...
 ```
+
+## Правила хранения контента
+
+### Купленные ассеты — только в Assets/ThirdParty/
+
+Любой импортированный пак с Asset Store / itch.io / Polyhaven кладётся в **отдельную папку под `Assets/ThirdParty/<PackName>/`**. Содержимое этой папки **не редактируется**: ни материалы, ни префабы, ни скрипты внутри пакета не меняются.
+
+Зачем:
+- Обновление пакета через Package Manager не сносит твою работу.
+- Чёткая граница «что чужое, что наше» для лицензий, аудитов, git diff.
+- Claude Code CLI получает команду «не читать ThirdParty» — это работает только при изоляции.
+
+Если нужна доработка контента из пака — копируешь конкретный файл (меш, материал, текстуру) в `Assets/Development/Art/` или `Assets/Development/Prefabs/` и правишь копию.
+
+### Префабы с нашей логикой — в Assets/Development/Prefabs/<Category>/
+
+Любой префаб, к которому привязаны наши MonoBehaviour'ы (контроллеры, view'ы, фабрики, конфиги), хранится в `Assets/Development/Prefabs/<Category>/`. Категории — по назначению, не по типу скрипта:
+- `Vehicles/` — машины (наши префабы поверх мешей из ThirdParty).
+- `Characters/` — водитель.
+- `Pickups/` — repair/nitro и будущие pickup'ы.
+- `Environment/` — композитные модули окружения.
+- `VFX/` — наши настроенные эффекты (даже если эмиттер из ThirdParty).
+- `UI/` — Canvas'ы.
+- `Systems/` — служебные префабы сцены (GameLifetimeScope и т.п.).
+
+Префаб **никогда** не лежит:
+- В `Assets/ThirdParty/...` — нарушает изоляцию.
+- В `Assets/Development/Scripts/...` — скрипты и префабы разные слои.
+- В корне `Assets/Development/` или `Assets/` — нет категории.
+
+### Связь Prefab → ThirdParty через ссылки, не копированием
+
+Префаб машины в `Development/Prefabs/Vehicles/Car_Sedan.prefab` **ссылается** на меш `Assets/ThirdParty/1Poly_DestructibleCars/Meshes/Sedan.fbx` через `MeshFilter.mesh`. Сам меш не дублируется. Это позволяет обновить пак без потери настройки префаба (Unity сохраняет ссылку по GUID).
+
+### Editor-скрипты автоматизируют сборку
+
+Сборка префабов из сырого ThirdParty-контента — рутина, и она автоматизируется. См. editor-скрипт `Setup Car Damage Visual` в `game-design.md` §17: выделил FBX из ThirdParty → editor-скрипт создал prefab в `Development/Prefabs/Vehicles/` с правильной структурой, контроллерами и ссылками на SO-конфиги.
 
 ## Правила кодирования
 
@@ -57,6 +127,7 @@ Assets/Development/Data/Configs/   # Инстансы ScriptableObject (.asset)
 - Команды реализуют `ICommand` с `CanExecute()` / `Execute()`.
 - Доступ к пулу инкапсулируется в фабрике; никакой внешний код не вызывает `IPoolManager` напрямую.
 - Views — только для UI.
+- Префабы лежат в `Assets/Development/Prefabs/<Category>/`. Сторонние ассеты — в `Assets/ThirdParty/<PackName>/`, без редактирования.
 
 ## Известные нюансы Unity 6
 
