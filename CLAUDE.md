@@ -231,4 +231,3 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 | Новый сервис | интерфейс + реализация + регистрация в `GameLifetimeScope` |
 | Новое игровое состояние | значение в `GameState` enum + реализация `IState` + регистрация в `GameFlowService` |
 | Новая команда | класс `: ICommand`, вызывать из контроллера |
-| Новый пресет силы пули | строка в `BulletConfig.asset` |
