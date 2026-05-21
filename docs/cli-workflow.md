@@ -144,12 +144,12 @@ UpgradeCategory, HazardType), и пустые папки для будущих �
 Implementation Order (§19 game-design.md): «<название шага>».
 
 Что должно появиться:
-- <конкретный сервис/контроллер 1>
-- <конкретный сервис/контроллер 2>
-- <SO-конфиги если нужны>
+- Использовать prefab из `Assets/ThirdParty/1Poly_DestructibleCars/` для visual; не создавать свою машину.
+- `CarMovementService` — pure C#, физика крутящих моментов на колёсах через `CarController` (MonoBehaviour).
+- `ChaseCarCameraBehaviour` — отдельный класс, не зашивать камеру в `CarController`.
+- Тестовая сцена `_TestDriving` (с подчёркиванием = временные сцены) с plane-полом.
 
-Цель шага по game-design: <цитата из Implementation Order, 
-например «ездить по пустой сцене»>.
+Цель шага по game-design: Цель: ездить по пустой сцене.
 
 Регламент тот же, что и на предыдущих шагах:
 1. Сначала план файлов, жди ок.

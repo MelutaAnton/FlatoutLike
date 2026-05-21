@@ -1,0 +1,1 @@
+- [Bootstrap Scene Setup](project_bootstrap_scene.md) — MenuRoot=`FlatOutLike`; GameLifetimeScope has no SerializeField; Boot.unity created in Assets/Development/Scenes/

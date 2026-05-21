@@ -1,0 +1,2 @@
+- [Project Namespace](project-namespace.md) — корневой C#-namespace — FlatOutLike, не Flatuot2_Like, несмотря на имя репо
+- [Step 1 Scope](project-step1-scope.md) — что входит в шаг 1 «Каркас» по docs/game-design.md §19 и чего быть не должно

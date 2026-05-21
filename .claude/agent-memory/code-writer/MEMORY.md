@@ -1,0 +1,1 @@
+- [Project Architecture — Bootstrap Step 1](project_architecture.md) — namespaces, DI registrations, FSM/EventBus/Input patterns established in step 1
