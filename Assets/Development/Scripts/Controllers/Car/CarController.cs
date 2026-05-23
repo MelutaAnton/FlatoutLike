@@ -1,0 +1,127 @@
+using FlatOutLike.Core.Input;
+using FlatOutLike.Data.Configs.Car;
+using FlatOutLike.Services.Car;
+using UnityEngine;
+using VContainer;
+
+namespace FlatOutLike.Controllers.Car
+{
+    public sealed class CarController : MonoBehaviour
+    {
+        [SerializeField] private Rigidbody _rigidbody;
+        [SerializeField] private WheelCollider[] _driveWheels;
+        [SerializeField] private WheelCollider[] _steerWheels;
+        [SerializeField] private Transform[] _wheelVisuals;
+        [SerializeField] private CarStatsConfig _config;
+
+        private IInputProvider _input;
+        private ICarMovementService _movement;
+        private bool _initialized;
+
+        [Inject]
+        public void Construct(IInputProvider input, ICarMovementService movement)
+        {
+            _input = input;
+            _movement = movement;
+
+            if (_rigidbody != null && _config != null)
+            {
+                _rigidbody.mass = _config.Mass;
+                _rigidbody.centerOfMass = _config.CenterOfMassOffset;
+            }
+
+            ApplyWheelFriction();
+
+            _initialized = true;
+        }
+
+        private void ApplyWheelFriction()
+        {
+            if (_config == null) return;
+            ApplyFrictionTo(_driveWheels);
+            ApplyFrictionTo(_steerWheels);
+        }
+
+        private void ApplyFrictionTo(WheelCollider[] wheels)
+        {
+            if (wheels == null) return;
+            foreach (var wc in wheels)
+            {
+                if (wc == null) continue;
+
+                var fwd = wc.forwardFriction;
+                fwd.stiffness = _config.WheelFriction;
+                wc.forwardFriction = fwd;
+
+                var side = wc.sidewaysFriction;
+                side.stiffness = _config.WheelFriction;
+                wc.sidewaysFriction = side;
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (!_initialized) return;
+            if (_config == null || _rigidbody == null) return;
+
+            float throttle = _input.Move.y;
+            float steerInput = _input.Move.x;
+            bool handbrake = _input.Handbrake;
+
+            float forwardSpeed = Vector3.Dot(_rigidbody.linearVelocity, transform.forward);
+
+            float motor = _movement.CalculateMotorTorque(throttle, forwardSpeed, _config);
+            float steer = _movement.CalculateSteerAngle(steerInput, forwardSpeed, _config);
+            float brake = _movement.CalculateBrakeTorque(handbrake, throttle, forwardSpeed, _config);
+
+            ApplyMotor(motor);
+            ApplySteer(steer);
+            ApplyBrake(brake);
+        }
+
+        private void ApplyMotor(float torque)
+        {
+            if (_driveWheels == null) return;
+            foreach (var wc in _driveWheels)
+                if (wc != null) wc.motorTorque = torque;
+        }
+
+        private void ApplySteer(float angle)
+        {
+            if (_steerWheels == null) return;
+            foreach (var wc in _steerWheels)
+                if (wc != null) wc.steerAngle = angle;
+        }
+
+        private void ApplyBrake(float torque)
+        {
+            if (_driveWheels == null) return;
+            foreach (var wc in _driveWheels)
+                if (wc != null) wc.brakeTorque = torque;
+        }
+
+        private void Update()
+        {
+            if (!_initialized) return;
+            if (_wheelVisuals == null || _wheelVisuals.Length == 0) return;
+
+            int visualIdx = 0;
+            SyncVisuals(_driveWheels, ref visualIdx);
+            SyncVisuals(_steerWheels, ref visualIdx);
+        }
+
+        private void SyncVisuals(WheelCollider[] wheels, ref int visualIdx)
+        {
+            if (wheels == null) return;
+            foreach (var wc in wheels)
+            {
+                if (visualIdx >= _wheelVisuals.Length) return;
+                var visual = _wheelVisuals[visualIdx];
+                visualIdx++;
+                if (wc == null || visual == null) continue;
+                wc.GetWorldPose(out Vector3 pos, out Quaternion rot);
+                visual.SetPositionAndRotation(pos, rot);
+            }
+        }
+    }
+}

@@ -1,1 +1,2 @@
 - [Bootstrap Scene Setup](project_bootstrap_scene.md) — MenuRoot=`FlatOutLike`; GameLifetimeScope has no SerializeField; Boot.unity created in Assets/Development/Scenes/
+- [Car Editor Scripts (step 2)](project_car_editor_scripts.md) — 4 scripts for configs/prefab/test scene; ThirdParty pack has .prefab not FBX; GameBootstrap namespace quirk; CarController/ChaseCam field names

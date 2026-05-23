@@ -9,7 +9,10 @@ namespace FlatOutLike.Core.Input
     /// </summary>
     public sealed class KeyboardInputProvider : IInputProvider
     {
-        public InputContext CurrentContext { get; set; } = InputContext.UI;
+        // Default = Driving (first enum value). Until GameFlowService publishes a
+        // real GameStateChangedEvent, the test driving scene needs working input.
+        // Will be overwritten by InputRouter on the first FSM transition.
+        public InputContext CurrentContext { get; set; } = InputContext.Driving;
 
         // Cached values — written in Tick(), read by getters
         private Vector2 _move;

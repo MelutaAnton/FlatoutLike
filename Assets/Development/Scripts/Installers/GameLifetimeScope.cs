@@ -1,5 +1,7 @@
+using FlatOutLike.Controllers.Car;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
+using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Flow;
 using FlatOutLike.Services.Meta;
 using VContainer;
@@ -18,6 +20,8 @@ namespace FlatOutLike.Installers
             builder.Register<MetaProgressService>(Lifetime.Singleton).As<IMetaProgressService>();
             builder.Register<GameFlowService>(Lifetime.Singleton).As<IGameFlowService>();
             builder.RegisterComponentInHierarchy<GameBootstrap>();
+            builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();
+            builder.RegisterComponentInHierarchy<CarController>();
         }
     }
 }

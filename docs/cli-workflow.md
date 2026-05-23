@@ -144,6 +144,8 @@ UpgradeCategory, HazardType), и пустые папки для будущих �
 Implementation Order (§19 game-design.md): «<название шага>».
 
 Что должно появиться:
+`CarController` + `CarMovementService` + `CarStatsConfig` + `ChaseCarCameraBehaviour`.
+
 - Использовать prefab из `Assets/ThirdParty/1Poly_DestructibleCars/` для visual; не создавать свою машину.
 - `CarMovementService` — pure C#, физика крутящих моментов на колёсах через `CarController` (MonoBehaviour).
 - `ChaseCarCameraBehaviour` — отдельный класс, не зашивать камеру в `CarController`.
