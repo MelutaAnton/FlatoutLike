@@ -18,6 +18,7 @@ namespace FlatOutLike.Installers
             builder.Register<InputRouter>(Lifetime.Singleton);
             builder.Register<PlayerPrefsProfileStorage>(Lifetime.Singleton).As<IProfileStorage>();
             builder.Register<MetaProgressService>(Lifetime.Singleton).As<IMetaProgressService>();
+            builder.Register<IPlayerProfile>(c => c.Resolve<IMetaProgressService>().Profile, Lifetime.Singleton);
             builder.Register<GameFlowService>(Lifetime.Singleton).As<IGameFlowService>();
             builder.RegisterComponentInHierarchy<GameBootstrap>();
             builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();
