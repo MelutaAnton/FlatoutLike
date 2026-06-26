@@ -450,75 +450,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: Car_Sport_09
       objectReference: {fileID: 0}
-    - target: {fileID: 8736848838553185037, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 5013bf79aedcd9e4a88be436ff7f7bcd, type: 2}
-    - target: {fileID: 8736848838553185380, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8736848838553186177, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5193657774753180251, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 732182287}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
 --- !u!4 &732182281 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 792185774130568935, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
   m_PrefabInstance: {fileID: 732182280}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &732182282 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5193657774753180251, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-  m_PrefabInstance: {fileID: 732182280}
-  m_PrefabAsset: {fileID: 0}
---- !u!137 &732182283 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 8736848838553183773, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-  m_PrefabInstance: {fileID: 732182280}
-  m_PrefabAsset: {fileID: 0}
---- !u!33 &732182284 stripped
-MeshFilter:
-  m_CorrespondingSourceObject: {fileID: 8736848838553184638, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-  m_PrefabInstance: {fileID: 732182280}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &732182286 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2530628414790592980, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-  m_PrefabInstance: {fileID: 732182280}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 732182282}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 028721e11a6c70844907896da905197a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Controllers.Car.CarController
---- !u!114 &732182287
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 732182282}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4035c0780d5c9c746b4fb12627c2b874, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Controllers.Car.CarDamageVisualController
-  _statsConfig: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
-  _visualConfig: {fileID: 11400000, guid: 237a5002e932eef4996d3def95296ee7, type: 2}
-  _car: {fileID: 732182286}
-  _bodyMeshFilter: {fileID: 732182284}
-  _skinnedRenderer: {fileID: 732182283}
-  _detachableParts: []
 --- !u!1 &801954828
 GameObject:
   m_ObjectHideFlags: 0
