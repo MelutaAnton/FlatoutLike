@@ -1,6 +1,9 @@
+using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Data.Configs.Car;
+using FlatOutLike.Models;
 using FlatOutLike.Services.Car;
+using FlatOutLike.Services.Combat;
 using UnityEngine;
 using VContainer;
 
@@ -8,6 +11,7 @@ namespace FlatOutLike.Controllers.Car
 {
     public sealed class CarController : MonoBehaviour
     {
+        [SerializeField] private int _carId = 0;
         [SerializeField] private Rigidbody _rigidbody;
         [SerializeField] private WheelCollider[] _driveWheels;
         [SerializeField] private WheelCollider[] _steerWheels;
@@ -16,19 +20,28 @@ namespace FlatOutLike.Controllers.Car
 
         private IInputProvider _input;
         private ICarMovementService _movement;
+        private IEventBus _eventBus;
         private bool _initialized;
 
+        public CarId CarId => new CarId(_carId);
+        public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
+
         [Inject]
-        public void Construct(IInputProvider input, ICarMovementService movement)
+        public void Construct(IInputProvider input, ICarMovementService movement,
+            IDamageService damage, IEventBus eventBus)
         {
             _input = input;
             _movement = movement;
+            _eventBus = eventBus;
 
             if (_rigidbody != null && _config != null)
             {
                 _rigidbody.mass = _config.Mass;
                 _rigidbody.centerOfMass = _config.CenterOfMassOffset;
             }
+
+            if (_config != null)
+                damage.RegisterCar(CarId, _config.MaxArmor, _config.Mass);
 
             ApplyWheelFriction();
 
@@ -122,6 +135,19 @@ namespace FlatOutLike.Controllers.Car
                 wc.GetWorldPose(out Vector3 pos, out Quaternion rot);
                 visual.SetPositionAndRotation(pos, rot);
             }
+        }
+
+        private void OnCollisionEnter(Collision c)
+        {
+            if (!_initialized || _eventBus == null) return;
+
+            float impactSpeed = c.relativeVelocity.magnitude;
+            var otherCar = c.gameObject.GetComponentInParent<CarController>();
+            if (otherCar == this) return; // ignore own detached parts bouncing back
+            CarId attacker = otherCar != null ? otherCar.CarId : CarId.None;
+            Vector3 point = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
+
+            _eventBus.Publish(new CarCollisionEvent(attacker, CarId, impactSpeed, point));
         }
     }
 }

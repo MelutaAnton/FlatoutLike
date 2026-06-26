@@ -1,1 +1,2 @@
 - [Project Architecture — Bootstrap Step 1](project_architecture.md) — namespaces, DI registrations, FSM/EventBus/Input patterns established in step 1
+- [Step 3 — Damage & VFX Stack](step3_damage_vfx.md) — DamageService, VfxFactory, CarDamageVisualController, derby events, VfxEffectType enum, CarController changes

@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41b7b62df095edb44a055ceaa48319fa, type: 3}
+  m_Name: CarDamageVisualConfig
+  m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Car.CarDamageVisualConfig
+  _stages:
+  - hpThreshold: 1
+    damageMaterial: {fileID: 0}
+    materials: []
+    decalPrefabsToSpawn: []
+    damagedMesh: {fileID: 0}
+    blendShapeWeights: []
+    vfxToActivate: 
+    enableDetachableParts: 0
+  - hpThreshold: 0.66
+    damageMaterial: {fileID: 2100000, guid: 5123d0b148164ac49b5b36be7de7bcb8, type: 2}
+    materials: []
+    decalPrefabsToSpawn: []
+    damagedMesh: {fileID: 0}
+    blendShapeWeights: []
+    vfxToActivate: 
+    enableDetachableParts: 0
+  - hpThreshold: 0.33
+    damageMaterial: {fileID: 2100000, guid: 5123d0b148164ac49b5b36be7de7bcb8, type: 2}
+    materials: []
+    decalPrefabsToSpawn: []
+    damagedMesh: {fileID: 0}
+    blendShapeWeights: []
+    vfxToActivate: 
+    enableDetachableParts: 1
+  _preservedMaterials:
+  - {fileID: 2100000, guid: 4cd0c5f263dd7804fba9a55fa969faf8, type: 2}

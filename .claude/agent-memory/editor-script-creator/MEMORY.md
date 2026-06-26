@@ -1,2 +1,3 @@
 - [Bootstrap Scene Setup](project_bootstrap_scene.md) — MenuRoot=`FlatOutLike`; GameLifetimeScope has no SerializeField; Boot.unity created in Assets/Development/Scenes/
 - [Car Editor Scripts (step 2)](project_car_editor_scripts.md) — 4 scripts for configs/prefab/test scene; ThirdParty pack has .prefab not FBX; GameBootstrap namespace quirk; CarController/ChaseCam field names
+- [Step 3 Damage+VFX Editor Scripts](project_step3_damage_vfx_scripts.md) — 7 scripts for DamageConfig/VfxConfig/CarDamageVisualConfig/ParticleController/CarDamageVisualController/CrashWall/LifetimeScope refs; field names for all Step 3 classes; VFX prefab LoadPrefabContents pattern

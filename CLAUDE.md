@@ -38,7 +38,7 @@ Assets/
     │   │   ├── Pool/               # GameObjectPool, PoolManager
     │   │   └── StateMachine/       # Generic StateMachine<TEnum>
     │   ├── Data/Configs/           # Определения ScriptableObject (один файл = один класс)
-    │   ├── Models/                 # Чистые данные, enums (GameState, ResourceType, VFXEffectType)
+    │   ├── Models/                 # Чистые данные, enums (GameState, ResourceType, VfxEffectType)
     │   ├── Services/               # Бизнес-логика (pure C#, без MonoBehaviour)
     │   │   └── Progression/        # Mid-core системы (миссии, XP, energy, см. game-design §15)
     │   ├── Controllers/            # MonoBehaviour: Unity API only (input, physics, render)
@@ -181,7 +181,7 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 
 Любой идентификатор (имя тега, animator-параметра, ключ пула, имя сцены) определяется **один раз** — в enum или в единственном SO. Все остальные места ссылаются на это определение.
 
-- VFX: `VFXEffectType` enum + `VFXConfig` — единственный источник.
+- VFX: `VfxEffectType` enum + `VfxConfig` — единственный источник.
 - Animator: `static readonly int FooHash = Animator.StringToHash("Foo");`.
 - Теги: `static class Tags { public const string Enemy = "Enemy"; }`.
 - Сцены: enum или константы в одном файле.
