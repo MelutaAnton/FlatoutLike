@@ -22,10 +22,13 @@ namespace FlatOutLike.Controllers.Car
         private bool _initialized;
         private int _currentStageIndex = -1;
 
-        // Strategy A runtime data — collected in Construct, not serialized.
-        private Renderer[] _bodyRenderers;
-        private Material[][] _originalMaterials;
-        private HashSet<Material> _preserved;
+        // Continuous shader driver (_DamageAmount on FlatOutLike/CarDamageLit).
+        private static readonly int DamageAmountId = Shader.PropertyToID("_DamageAmount");
+        private float _targetDamage01;
+        private float _currentDamage01;
+        private MaterialPropertyBlock _mpb;
+        private Renderer[] _damageRenderers; // body renderers that receive _DamageAmount
+        private HashSet<Material> _preserved; // glass/headlights — excluded from _damageRenderers
 
         [Inject]
         public void Construct(IEventBus eventBus, IVfxService vfx)
@@ -40,17 +43,25 @@ namespace FlatOutLike.Controllers.Car
         }
 
         /// <summary>
-        /// Collects all Renderers in the car hierarchy, excluding:
+        /// Builds _damageRenderers: body renderers that will receive the continuous _DamageAmount
+        /// shader property. Excludes:
         ///   (a) Subtrees rooted at wheel visual Transforms (tyres have their own materials).
         ///   (b) ParticleSystemRenderer components (VFX, not body).
-        /// Results are stored in _bodyRenderers; original materials cached in _originalMaterials.
+        ///   (c) Renderers where ALL original material slots are in _preserved (glass, headlights).
         /// </summary>
         private void CollectBodyRenderers()
         {
+            // Build preserved-material set first so the per-renderer check below can use it.
+            _preserved = new HashSet<Material>();
+            var preservedList = _visualConfig != null ? _visualConfig.PreservedMaterials : null;
+            if (preservedList != null)
+                foreach (var m in preservedList)
+                    if (m != null) _preserved.Add(m);
+
             var all = GetComponentsInChildren<Renderer>(true);
             var wheelVisuals = _car != null ? _car.WheelVisuals : null;
 
-            var result = new List<Renderer>(all.Length);
+            var damageList = new List<Renderer>(all.Length);
             foreach (var r in all)
             {
                 if (r is ParticleSystemRenderer) continue;
@@ -69,23 +80,41 @@ namespace FlatOutLike.Controllers.Car
                     if (isWheelChild) continue;
                 }
 
-                result.Add(r);
+                // Exclude fully-preserved renderers (glass, headlights — all slots preserved).
+                if (_preserved.Count > 0)
+                {
+                    var slots = r.sharedMaterials;
+                    bool allPreserved = slots.Length > 0;
+                    foreach (var m in slots)
+                        if (!_preserved.Contains(m)) { allPreserved = false; break; }
+                    if (allPreserved) continue;
+                }
+
+                damageList.Add(r);
             }
 
-            _bodyRenderers = result.ToArray();
+            _damageRenderers = damageList.ToArray();
+            _mpb = new MaterialPropertyBlock();
+        }
 
-            _originalMaterials = new Material[_bodyRenderers.Length][];
-            for (int i = 0; i < _bodyRenderers.Length; i++)
-                _originalMaterials[i] = _bodyRenderers[i].sharedMaterials;
+        private void Update()
+        {
+            if (!_initialized || _damageRenderers == null || _damageRenderers.Length == 0
+                || _visualConfig == null) return;
 
-            // Build preserved-material set from config (glass, headlights, etc.).
-            // Compared against original slot material so the check is stable across stage changes.
-            _preserved = new HashSet<Material>();
-            var preservedList = _visualConfig != null ? _visualConfig.PreservedMaterials : null;
-            if (preservedList != null)
+            _currentDamage01 = Mathf.MoveTowards(
+                _currentDamage01, _targetDamage01,
+                _visualConfig.DamageLerpSpeed * Time.deltaTime);
+
+            float shaderVal = _visualConfig.DamageResponse != null
+                ? _visualConfig.DamageResponse.Evaluate(_currentDamage01)
+                : _currentDamage01;
+
+            foreach (var r in _damageRenderers)
             {
-                foreach (var m in preservedList)
-                    if (m != null) _preserved.Add(m);
+                r.GetPropertyBlock(_mpb);
+                _mpb.SetFloat(DamageAmountId, shaderVal);
+                r.SetPropertyBlock(_mpb);
             }
         }
 
@@ -121,6 +150,8 @@ namespace FlatOutLike.Controllers.Car
             Debug.Log($"[Damage] {e.Target} HP {e.RemainingHp:F0}/{maxArmor:F0} (-{e.Damage:F0})");
 
             float ratio = e.RemainingHp / maxArmor;
+            _targetDamage01 = Mathf.Clamp01(1f - ratio); // drives shader continuously, independent of stage
+
             int newIndex = FindStageIndex(ratio);
 
             if (newIndex == _currentStageIndex) return;
@@ -171,36 +202,8 @@ namespace FlatOutLike.Controllers.Car
         private void ApplyStage(CarDamageVisualConfig.DamageStage stage, bool goingDeeper)
         {
             // --- Idempotent state setters: apply on ANY stage change (including HP restore) ---
-
-            // Strategy A: Material swap across the whole car body.
-            if (_bodyRenderers != null && _bodyRenderers.Length > 0)
-            {
-                if (stage.damageMaterial != null)
-                {
-                    // Primary: paint damageMaterial over each slot, but keep preserved materials
-                    // (glass, headlights) intact. Compare against original slot to avoid
-                    // false-positives when a slot was already painted by a previous stage.
-                    for (int i = 0; i < _bodyRenderers.Length; i++)
-                    {
-                        var orig = _originalMaterials[i];
-                        var arr = new Material[orig.Length];
-                        for (int s = 0; s < arr.Length; s++)
-                            arr[s] = _preserved.Contains(orig[s]) ? orig[s] : stage.damageMaterial;
-                        _bodyRenderers[i].sharedMaterials = arr;
-                    }
-                }
-                else if (stage.materials != null && stage.materials.Length > 0)
-                {
-                    // Legacy fallback: apply materials[] to the first body renderer only.
-                    _bodyRenderers[0].sharedMaterials = stage.materials;
-                }
-                else
-                {
-                    // Restore originals (e.g. returning to Pristine after repair).
-                    for (int i = 0; i < _bodyRenderers.Length; i++)
-                        _bodyRenderers[i].sharedMaterials = _originalMaterials[i];
-                }
-            }
+            // Strategy A (discrete material swap) removed — damage visualisation is now driven
+            // continuously by _DamageAmount shader property via Update(). See _damageRenderers.
 
             // Strategy B: Mesh swap
             if (stage.damagedMesh != null && _bodyMeshFilter != null)

@@ -16,8 +16,16 @@ namespace FlatOutLike.Data.Configs.Car
         /// </summary>
         [SerializeField] private Material[] _preservedMaterials;
 
+        [Header("Continuous Shader Driver")]
+        [Tooltip("Speed at which _DamageAmount lerps toward the target value (units/sec).")]
+        [SerializeField] private float _damageLerpSpeed = 3f;
+        [Tooltip("Maps normalised HP-loss (0=full HP, 1=dead) to _DamageAmount fed to the shader. Default: linear.")]
+        [SerializeField] private AnimationCurve _damageResponse = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
         public IReadOnlyList<DamageStage> Stages => _stages;
         public IReadOnlyList<Material> PreservedMaterials => _preservedMaterials;
+        public float DamageLerpSpeed => _damageLerpSpeed;
+        public AnimationCurve DamageResponse => _damageResponse;
 
         /// <summary>
         /// A damage stage defines a combination of visual strategies applied in parallel
