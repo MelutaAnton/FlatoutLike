@@ -46,7 +46,9 @@
       "Bash(Write-Host \"All directories created.\")",
       "Bash(Test-Path E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Editor *)",
       "Bash(git *)",
-      "Bash(powershell.exe *)"
+      "Bash(powershell.exe *)",
+      "Bash(del \"E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Models\\\\AiState.cs\")",
+      "Bash(del \"E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Core\\\\Input\\\\AiInputProvider.cs\")"
     ]
   }
 }

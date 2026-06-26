@@ -23,14 +23,29 @@ namespace FlatOutLike.Controllers.Car
         private IEventBus _eventBus;
         private bool _initialized;
 
-        public CarId CarId => new CarId(_carId);
+        public CarId CarId   => new CarId(_carId);
+        public float MaxArmor => _config != null ? _config.MaxArmor : 0f;
         public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
+
+        /// <summary>
+        /// Replaces the active input source at runtime.
+        /// Used by <c>EnemyCarController</c> to swap in an <c>AIInputProvider</c>
+        /// after VContainer injects the default <c>KeyboardInputProvider</c>.
+        /// </summary>
+        public void SetInputSource(IInputProvider provider)
+        {
+            if (provider != null)
+                _input = provider;
+        }
 
         [Inject]
         public void Construct(IInputProvider input, ICarMovementService movement,
             IDamageService damage, IEventBus eventBus)
         {
-            _input = input;
+            // Order-independent: an AI wrapper (EnemyCarController) may have already
+            // installed an AIInputProvider via SetInputSource before this Construct runs.
+            // Never overwrite an existing source with the keyboard singleton.
+            _input ??= input;
             _movement = movement;
             _eventBus = eventBus;
 

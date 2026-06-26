@@ -29,10 +29,10 @@ namespace FlatOutLike.Editor.Setup
     /// </summary>
     public static class SetupCarDamageShaderEditor
     {
-        private const string ScenePath          = "Assets/Development/Scenes/_TestDriving.unity";
-        private const string VisualConfigPath   = "Assets/Development/Data/Configs/Car/CarDamageVisualConfig.asset";
-        private const string DamageShaderName   = "FlatOutLike/CarDamageLit";
-        private const string DamageMatFolder    = "Assets/Development/Art/Materials/Damage";
+        private const string ScenePath        = "Assets/Development/Scenes/_TestDriving.unity";
+        private const string VisualConfigPath = "Assets/Development/Data/Configs/Car/CarDamageVisualConfig.asset";
+        private const string DamageShaderName = "FlatOutLike/CarDamageLit";
+        private const string DamageMatFolder  = "Assets/Development/Art/Materials/Damage";
 
         [MenuItem("FlatOutLike/Setup/Convert Car Body To Damage Shader")]
         public static void ConvertCarBodyToDamageShader()
@@ -51,10 +51,25 @@ namespace FlatOutLike.Editor.Setup
                                  "Run 'FlatOutLike/Setup/Build Driving Test Scene' first.");
                 return;
             }
-            var carGo = carController.gameObject;
-            Debug.Log("[Editor] Found car: " + carGo.name);
+            Debug.Log("[Editor] Found car: " + carController.gameObject.name);
 
-            // ── 3. Build preserve-set from CarDamageVisualConfig ──────────────
+            ConvertCar(carController);
+
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+
+        /// <summary>
+        /// Converts body materials on the given CarController's GameObject to the damage shader.
+        /// Safe to call from other editor scripts (e.g. SetupEnemyCarEditor) without
+        /// affecting which car the existing menu item targets.
+        /// Does NOT manage Undo groups — the caller is responsible.
+        /// </summary>
+        public static void ConvertCar(CarController carController)
+        {
+            var carGo = carController.gameObject;
+            Debug.Log("[Editor] Converting damage shader materials on: " + carGo.name);
+
+            // ── Build preserve-set from CarDamageVisualConfig ─────────────────
             // Read via SerializedObject so no compile-time dependency on the
             // _preservedMaterials field that code-writer adds in parallel.
             // When that field doesn't exist yet, FindProperty returns null and we
@@ -85,7 +100,7 @@ namespace FlatOutLike.Editor.Setup
                                  ". Continuing without preserve-list.");
             }
 
-            // ── 4. Find damage shader ─────────────────────────────────────────
+            // ── Find damage shader ────────────────────────────────────────────
             var damageShader = Shader.Find(DamageShaderName);
             if (damageShader == null)
             {
@@ -94,7 +109,7 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
-            // ── 5. Collect wheel visual transforms for exclusion ──────────────
+            // ── Collect wheel visual transforms for exclusion ─────────────────
             var wheelVisualRoots = new HashSet<Transform>();
             var soController = new SerializedObject(carController);
             var wheelVisualsProp = soController.FindProperty("_wheelVisuals");
@@ -108,12 +123,12 @@ namespace FlatOutLike.Editor.Setup
                 Debug.Log("[Editor] Wheel visual exclusion set: " + wheelVisualRoots.Count + " transform(s).");
             }
 
-            // ── 6. Ensure output folder hierarchy exists ──────────────────────
+            // ── Ensure output folder hierarchy exists ─────────────────────────
             EnsureFolder("Assets/Development",               "Art");
             EnsureFolder("Assets/Development/Art",           "Materials");
             EnsureFolder("Assets/Development/Art/Materials", "Damage");
 
-            // ── 7. Process renderers ──────────────────────────────────────────
+            // ── Process renderers ─────────────────────────────────────────────
             var allRenderers = carGo.GetComponentsInChildren<Renderer>(true);
             int converted = 0;
             int reused    = 0;
@@ -146,7 +161,7 @@ namespace FlatOutLike.Editor.Setup
 
                 // ── Per-slot material conversion ──────────────────────────────
                 // sharedMaterials returns a COPY; assign back after changes.
-                var slots        = renderer.sharedMaterials;
+                var slots         = renderer.sharedMaterials;
                 bool slotsChanged = false;
 
                 for (int s = 0; s < slots.Length; s++)
@@ -173,8 +188,8 @@ namespace FlatOutLike.Editor.Setup
                     // ── Resolve output asset path ─────────────────────────────
                     string damageMatPath = DamageMatFolder + "/" + srcMat.name + "_Damage.mat";
 
-                    var destMat  = AssetDatabase.LoadAssetAtPath<Material>(damageMatPath);
-                    bool isNew   = destMat == null;
+                    var destMat = AssetDatabase.LoadAssetAtPath<Material>(damageMatPath);
+                    bool isNew  = destMat == null;
 
                     if (isNew)
                     {
@@ -223,8 +238,8 @@ namespace FlatOutLike.Editor.Setup
 
                     EditorUtility.SetDirty(destMat);
 
-                    slots[s]     = destMat;
-                    slotsChanged = true;
+                    slots[s]      = destMat;
+                    slotsChanged  = true;
 
                     if (isNew) converted++; else reused++;
                 }
@@ -238,14 +253,12 @@ namespace FlatOutLike.Editor.Setup
                 }
             }
 
-            // ── 8. Save and mark scene dirty ──────────────────────────────────
+            // ── Save and mark scene dirty ─────────────────────────────────────
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
-            Undo.CollapseUndoOperations(undoGroup);
-
-            Debug.Log("[Editor] Convert Car Body To Damage Shader complete — " +
+            Debug.Log("[Editor] Convert Car Body To Damage Shader complete for '" + carGo.name + "' — " +
                       "new: " + converted + ", reused: " + reused +
                       ", skipped (preserved/wheel/particle): " + skipped + ".");
         }

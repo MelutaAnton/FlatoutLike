@@ -4,6 +4,7 @@ using FlatOutLike.Core.Input;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Factories.Vfx;
+using FlatOutLike.Services.AI;
 using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
 using FlatOutLike.Services.Flow;
@@ -17,8 +18,15 @@ namespace FlatOutLike.Installers
 {
     public sealed class GameLifetimeScope : LifetimeScope
     {
-        [SerializeField] private DamageConfig _damageConfig;
-        [SerializeField] private VfxConfig _vfxConfig;
+        [SerializeField] private DamageConfig    _damageConfig;
+        [SerializeField] private VfxConfig       _vfxConfig;
+        /// <summary>
+        /// Root GameObjects of all cars in the scene (player + enemies).
+        /// Populated by the "Fill GameLifetimeScope Refs" editor script.
+        /// VContainer injects all components (CarController, EnemyCarController,
+        /// CarDamageVisualController) via InjectGameObject in the build callback.
+        /// </summary>
+        [SerializeField] private GameObject[] _sceneCars;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -38,7 +46,6 @@ namespace FlatOutLike.Installers
 
             // Car
             builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();
-            builder.RegisterComponentInHierarchy<CarController>();
 
             // Combat (Step 3)
             builder.RegisterInstance(_damageConfig);
@@ -49,12 +56,25 @@ namespace FlatOutLike.Installers
             builder.Register<VfxFactory>(Lifetime.Singleton).As<IVfxFactory>();
             builder.Register<VfxService>(Lifetime.Singleton).As<IVfxService>();
 
-            // Damage visual (Step 3)
-            builder.RegisterComponentInHierarchy<CarDamageVisualController>();
+            // AI (Step 4)
+            builder.Register<EnemyAIService>(Lifetime.Singleton).As<IEnemyAIService>();
 
             // Eager-init DamageService so its ctor subscribes to CarCollisionEvent
             // even when no explicit consumer requests it from the container.
             builder.RegisterBuildCallback(c => c.Resolve<IDamageService>());
+
+            // Inject all scene cars (player + enemies).
+            // Replaces RegisterComponentInHierarchy<CarController> and
+            // RegisterComponentInHierarchy<CarDamageVisualController> — those APIs
+            // only find one component per type in the hierarchy. Here we inject every
+            // GameObject in _sceneCars, covering CarController, EnemyCarController and
+            // CarDamageVisualController on each prefab root in one pass.
+            builder.RegisterBuildCallback(container =>
+            {
+                if (_sceneCars == null) return;
+                foreach (var go in _sceneCars)
+                    if (go != null) container.InjectGameObject(go);
+            });
         }
     }
 }
