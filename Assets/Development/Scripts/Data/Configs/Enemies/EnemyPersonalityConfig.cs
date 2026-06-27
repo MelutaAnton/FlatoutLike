@@ -30,6 +30,12 @@ namespace FlatOutLike.Data.Configs.Enemies
         [SerializeField] private float _steerSharpness = 1.5f; // heading error → steer input multiplier
         /// <summary>cos угла: насколько цель должна быть по курсу, чтобы войти в Ram.</summary>
         [SerializeField, Range(-1f, 1f)] private float _ramAlignmentDot = 0.3f;
+        /// <summary>Sustained seconds below RecoverTriggerSpeed (while throttling) before Recover triggers.</summary>
+        [SerializeField, Min(0f)]        private float _stuckTime = 0.6f;
+        /// <summary>Seconds spent close to the target but unable to aim at it before backing off for a fresh straight-in run (anti-orbit).</summary>
+        [SerializeField, Min(0f)] private float _circleBreakTime = 1f;
+        /// <summary>After a back-off (Recover), commit to driving forward this long before another back-off can trigger — prevents jitter.</summary>
+        [SerializeField, Min(0f)] private float _graceTime = 1f;
 
         public float RamAggression       => _ramAggression;
         public float RetreatHpThreshold  => _retreatHpThreshold;
@@ -43,5 +49,8 @@ namespace FlatOutLike.Data.Configs.Enemies
         public bool  NitroOnRam          => _nitroOnRam;
         public float SteerSharpness      => _steerSharpness;
         public float RamAlignmentDot     => _ramAlignmentDot;
+        public float StuckTime           => _stuckTime;
+        public float CircleBreakTime     => _circleBreakTime;
+        public float GraceTime           => _graceTime;
     }
 }

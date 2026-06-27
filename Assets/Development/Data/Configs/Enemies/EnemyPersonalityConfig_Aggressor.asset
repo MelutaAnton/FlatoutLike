@@ -24,3 +24,6 @@ MonoBehaviour:
   _nitroOnRam: 1
   _steerSharpness: 1.5
   _ramAlignmentDot: 0.3
+  _stuckTime: 0.6
+  _circleBreakTime: 1
+  _graceTime: 1

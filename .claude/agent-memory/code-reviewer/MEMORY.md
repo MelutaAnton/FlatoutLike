@@ -3,3 +3,4 @@
 - [DI Lazy Singletons](project-di-lazy-singletons.md) — ctor-side-effect синглтоны создаются только когда RegisterComponentInHierarchy-потребитель их тянет; не флагать как «never created»
 - [VFX Naming Divergence](project-vfx-naming-divergence.md) — код использует Vfx*, а CLAUDE.md/скиллы — VFX*; грепать оба написания
 - [VContainer Inject Order](project-vcontainer-inject-order.md) — InjectGameObject инжектит в порядке GetComponents (Inspector); cross-Construct запись в общее поле = fragile-ordering риск
+- [SO New-Field Asset Gap](project-so-newfield-asset-gap.md) — новые [SerializeField] в конфиге с существующим .asset не получают C#-дефолты; Create*Editor идемпотентно скипает → нужен re-serialize

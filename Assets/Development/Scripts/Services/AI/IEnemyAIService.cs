@@ -45,6 +45,12 @@ namespace FlatOutLike.Services.AI
         public AIState State;
         /// <summary>Counts down to 0 during the Recover phase.</summary>
         public float   RecoverTimer;
+        /// <summary>Accumulates seconds spent wedged (low speed under throttle).</summary>
+        public float   StuckTimer;
+        /// <summary>Seconds spent close to the target but unable to aim at it (orbit detection).</summary>
+        public float   OffAxisTimer;
+        /// <summary>Post-Recover commit window; suppresses re-triggering back-off.</summary>
+        public float   GraceTimer;
     }
 
     /// <summary>
