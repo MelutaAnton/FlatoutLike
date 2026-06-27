@@ -51,6 +51,8 @@ namespace FlatOutLike.Services.AI
         public float   OffAxisTimer;
         /// <summary>Окно фиксации курса после Recover; подавляет повторный запуск отката.</summary>
         public float   GraceTimer;
+        /// <summary>Секунды без сближения с целью (forward-velocity * cos угла на цель ниже MinApproachSpeed). Ловит широкую орбиту, которую OffAxisTimer не видит из-за дистанции.</summary>
+        public float   ApproachTimer;
     }
 
     /// <summary>

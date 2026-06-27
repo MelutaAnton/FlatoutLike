@@ -30,9 +30,10 @@ namespace FlatOutLike.Services.AI
             // ── Нет цели → Idle и стоп ──────────────────────────────────────────
             if (!p.HasTarget)
             {
-                brain.State        = AIState.Idle;
-                brain.OffAxisTimer = 0f;
-                brain.StuckTimer   = 0f;
+                brain.State         = AIState.Idle;
+                brain.OffAxisTimer  = 0f;
+                brain.StuckTimer    = 0f;
+                brain.ApproachTimer = 0f;
                 return new AIDecision(Vector2.zero, false, false);
             }
 
@@ -64,8 +65,12 @@ namespace FlatOutLike.Services.AI
             // Застряли: в бою всегда подаётся полный газ, поэтому близкая к нулю МОДУЛЬНАЯ
             // скорость однозначно означает упор в стену/препятствие. Используем |SelfSpeed|
             // (не знаковую), чтобы машина, едущая назад или отброшенная ударом, НЕ читалась
-            // как застрявшая (никаких moonwalk-эффектов).
-            if (engaged && Math.Abs(p.SelfSpeed) < profile.RecoverTriggerSpeed)
+            // как застрявшая (никаких moonwalk-эффектов). Гейтится на GraceTimer<=0: в
+            // grace-окне машина как раз разгоняется с нуля после реверса, и без гейта
+            // StuckTimer успевает накопить StuckTime ещё ВНУТРИ grace, после чего триггер
+            // отката срабатывает в ту же микросекунду, как grace заканчивается → качание
+            // взад-вперёд без реального заезда.
+            if (brain.GraceTimer <= 0f && engaged && Math.Abs(p.SelfSpeed) < profile.RecoverTriggerSpeed)
                 brain.StuckTimer += deltaTime;
             else
                 brain.StuckTimer = 0f;
@@ -81,9 +86,22 @@ namespace FlatOutLike.Services.AI
             else
                 brain.OffAxisTimer = 0f;
 
+            // Не сближаемся: широкая орбита, при которой OffAxisTimer не срабатывает
+            // (дистанция > RamExitDistance), но машина по факту не приближается — едет
+            // по дуге вокруг цели. Скорость сближения = forward-velocity, спроецированная
+            // на направление к цели = SelfSpeed * forwardDot. Если ниже порога слишком
+            // долго — откатываемся и пытаемся зайти заново уже не по касательной.
+            float approachSpeed = p.SelfSpeed * forwardDot;
+            if (brain.GraceTimer <= 0f && engaged && approachSpeed < profile.MinApproachSpeed)
+                brain.ApproachTimer += deltaTime;
+            else
+                brain.ApproachTimer = 0f;
+
             // Запуск манёвра отката — подавлен внутри grace-окна.
             if (brain.GraceTimer <= 0f && engaged
-                && (brain.StuckTimer >= profile.StuckTime || brain.OffAxisTimer >= profile.CircleBreakTime))
+                && (brain.StuckTimer    >= profile.StuckTime
+                 || brain.OffAxisTimer  >= profile.CircleBreakTime
+                 || brain.ApproachTimer >= profile.ApproachTime))
             {
                 EnterRecover(ref brain, profile);
                 return Reverse(steer);
@@ -138,10 +156,11 @@ namespace FlatOutLike.Services.AI
 
             if (brain.RecoverTimer <= 0f)
             {
-                brain.State        = AIState.Pursue;
-                brain.GraceTimer   = p.GraceTime;
-                brain.OffAxisTimer = 0f;
-                brain.StuckTimer   = 0f;
+                brain.State         = AIState.Pursue;
+                brain.GraceTimer    = p.GraceTime;
+                brain.OffAxisTimer  = 0f;
+                brain.StuckTimer    = 0f;
+                brain.ApproachTimer = 0f;
                 return Drive(steer, false);
             }
 
@@ -157,10 +176,11 @@ namespace FlatOutLike.Services.AI
 
         private static void EnterRecover(ref AIBrainState brain, EnemyPersonalityConfig p)
         {
-            brain.State        = AIState.Recover;
-            brain.RecoverTimer = p.RecoverDuration;
-            brain.StuckTimer   = 0f;
-            brain.OffAxisTimer = 0f;
+            brain.State         = AIState.Recover;
+            brain.RecoverTimer  = p.RecoverDuration;
+            brain.StuckTimer    = 0f;
+            brain.OffAxisTimer  = 0f;
+            brain.ApproachTimer = 0f;
         }
 
         /// <summary>Зажимает в [-1, 1] через System.Math (а не Mathf), по прецеденту DamageService.</summary>

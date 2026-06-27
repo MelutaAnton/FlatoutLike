@@ -23,7 +23,9 @@ MonoBehaviour:
   _recoverTriggerSpeed: 1.5
   _nitroOnRam: 1
   _steerSharpness: 1.5
-  _ramAlignmentDot: 0.3
+  _ramAlignmentDot: 0.5
   _stuckTime: 0.6
   _circleBreakTime: 1
-  _graceTime: 1
+  _graceTime: 1.5
+  _minApproachSpeed: 1
+  _approachTime: 1.5

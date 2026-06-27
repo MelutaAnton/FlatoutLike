@@ -114,6 +114,9 @@ Assets/
 
 Сборка префабов из сырого ThirdParty-контента — рутина, и она автоматизируется. См. editor-скрипт `Setup Car Damage Visual` в `game-design.md` §17: выделил FBX из ThirdParty → editor-скрипт создал prefab в `Development/Prefabs/Vehicles/` с правильной структурой, контроллерами и ссылками на SO-конфиги.
 
+## Правила комментирования
+Оставлять комментарии к коду на русском языке
+
 ## Правила кодирования
 
 - Один MonoBehaviour / ScriptableObject = один файл, имя файла = имя класса.

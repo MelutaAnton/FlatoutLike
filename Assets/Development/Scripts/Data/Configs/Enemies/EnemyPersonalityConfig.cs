@@ -29,13 +29,17 @@ namespace FlatOutLike.Data.Configs.Enemies
         [SerializeField] private bool  _nitroOnRam    = true;
         [SerializeField] private float _steerSharpness = 1.5f; // ошибка курса → множитель ввода steer
         /// <summary>cos угла: насколько цель должна быть по курсу, чтобы войти в Ram.</summary>
-        [SerializeField, Range(-1f, 1f)] private float _ramAlignmentDot = 0.3f;
+        [SerializeField, Range(-1f, 1f)] private float _ramAlignmentDot = 0.5f;
         /// <summary>Сколько секунд подряд скорость ниже RecoverTriggerSpeed (при подаче газа) до срабатывания Recover.</summary>
         [SerializeField, Min(0f)]        private float _stuckTime = 0.6f;
         /// <summary>Секунды рядом с целью без возможности прицелиться, после которых машина откатывается для нового прямого захода (анти-орбита).</summary>
         [SerializeField, Min(0f)] private float _circleBreakTime = 1f;
         /// <summary>После отката (Recover) едем вперёд хотя бы столько секунд, прежде чем может сработать новый откат — защита от дёрганья.</summary>
-        [SerializeField, Min(0f)] private float _graceTime = 1f;
+        [SerializeField, Min(0f)] private float _graceTime = 1.5f;
+        /// <summary>Минимальная скорость сближения с целью (м/с): forward-velocity, спроецированная на направление к цели. Ниже = считаем, что не приближаемся.</summary>
+        [SerializeField, Min(0f)] private float _minApproachSpeed = 1f;
+        /// <summary>Сколько секунд подряд скорость сближения ниже MinApproachSpeed до срабатывания Recover. Ловит широкую орбиту вне зоны OffAxisTimer.</summary>
+        [SerializeField, Min(0f)] private float _approachTime = 1.5f;
 
         public float RamAggression       => _ramAggression;
         public float RetreatHpThreshold  => _retreatHpThreshold;
@@ -52,5 +56,7 @@ namespace FlatOutLike.Data.Configs.Enemies
         public float StuckTime           => _stuckTime;
         public float CircleBreakTime     => _circleBreakTime;
         public float GraceTime           => _graceTime;
+        public float MinApproachSpeed    => _minApproachSpeed;
+        public float ApproachTime        => _approachTime;
     }
 }
