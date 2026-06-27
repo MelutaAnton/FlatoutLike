@@ -29,3 +29,5 @@ MonoBehaviour:
   _graceTime: 1.5
   _minApproachSpeed: 1
   _approachTime: 1.5
+  _obstacleAvoidDistance: 8
+  _obstacleSideAvoidDistance: 1.5

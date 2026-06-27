@@ -30,11 +30,31 @@ namespace FlatOutLike.Controllers.Enemies
         [SerializeField] private EnemyPersonalityConfig _profile;
         [SerializeField] private Rigidbody             _rigidbody;
 
+        [Header("Obstacle Avoidance")]
+        // Подъём origin'а над землёй — чтобы лучи шли на уровне «груди» машины,
+        // а не цепляли текстуру земли. Используется и для forward-, и для side-лучей.
+        [SerializeField, Min(0f)]  private float     _obstacleRayOriginUp      = 0.5f;
+        // Длина forward-сканирования (Service сам сравнит с ObstacleAvoidDistance).
+        [SerializeField, Min(0f)]  private float     _obstacleRayLength        = 12f;
+        // Угол отклонения боковых forward-лучей от forward (градусы).
+        [SerializeField, Range(0f, 89f)] private float _obstacleRaySideAngle   = 30f;
+        // Длина перпендикулярных side-лучей. Покрывает половину ширины машины + scan.
+        [SerializeField, Min(0f)]  private float     _obstacleSideRayLength    = 2.5f;
+        // Слои, которые считаются препятствиями. По умолчанию Everything (~0).
+        // Сам коллайдер машины отсеивается через сравнение attachedRigidbody — поэтому
+        // origin'у не нужен forward-offset; лучи стартуют из центра selfPos.
+        [SerializeField] private LayerMask _obstacleLayerMask = ~0;
+
         private IEnemyAIService _ai;
         private IDamageService  _damage;
         private AIInputProvider _aiInput;
         private AIBrainState    _brain;
         private bool            _initialized;
+
+        // Буфер для RaycastNonAlloc, чтобы не аллоцировать массив каждый FixedUpdate.
+        // 8 хитов — с запасом: путь луча обычно пересекает 1-2 коллайдера (свой кузов
+        // + одна стена). Если в сцене будет частокол объектов, увеличить.
+        private readonly RaycastHit[] _hitBuffer = new RaycastHit[8];
 
         [Inject]
         public void Construct(IEnemyAIService ai, IDamageService damage)
@@ -86,15 +106,36 @@ namespace FlatOutLike.Controllers.Enemies
             Vector3 selfFwd = _car.transform.forward;
             float selfSpeed = _rigidbody != null ? Vector3.Dot(_rigidbody.linearVelocity, selfFwd) : 0f;
 
+            // ── Рейкасты для обхода препятствий ──────────────────────────────────
+            // 5 лучей из центра машины: центральный forward + два под углом + два
+            // перпендикулярных в стороны. CastDistance отсеивает свой Rigidbody,
+            // так что origin может быть внутри собственного коллайдера. Service
+            // сам решит, включать ли swerve / side-clamp, сравнив с порогами.
+            Vector3 rayOrigin    = selfPos + Vector3.up * _obstacleRayOriginUp;
+            Vector3 dirLeftFwd   = Quaternion.AngleAxis(-_obstacleRaySideAngle, Vector3.up) * selfFwd;
+            Vector3 dirRightFwd  = Quaternion.AngleAxis( _obstacleRaySideAngle, Vector3.up) * selfFwd;
+            Vector3 selfRight    = _car.transform.right;
+
+            float distCenter    = CastDistance(rayOrigin,  selfFwd,     _obstacleRayLength);
+            float distLeft      = CastDistance(rayOrigin,  dirLeftFwd,  _obstacleRayLength);
+            float distRight     = CastDistance(rayOrigin,  dirRightFwd, _obstacleRayLength);
+            float distSideLeft  = CastDistance(rayOrigin, -selfRight,   _obstacleSideRayLength);
+            float distSideRight = CastDistance(rayOrigin,  selfRight,   _obstacleSideRayLength);
+
             // ── Собираем снапшот perception ──────────────────────────────────────
             var perception = new AIPerception(
-                hasTarget:      hasTarget,
-                selfPosition:   selfPos,
-                selfForward:    selfFwd,
-                selfSpeed:      selfSpeed,
-                selfHpRatio:    selfRatio,
-                targetPosition: hasTarget ? _target.transform.position : Vector3.zero,
-                targetHpRatio:  targetRatio
+                hasTarget:                 hasTarget,
+                selfPosition:              selfPos,
+                selfForward:               selfFwd,
+                selfSpeed:                 selfSpeed,
+                selfHpRatio:               selfRatio,
+                targetPosition:            hasTarget ? _target.transform.position : Vector3.zero,
+                targetHpRatio:             targetRatio,
+                obstacleCenterDistance:    distCenter,
+                obstacleLeftDistance:      distLeft,
+                obstacleRightDistance:     distRight,
+                obstacleSideLeftDistance:  distSideLeft,
+                obstacleSideRightDistance: distSideRight
             );
 
             // ── AI-тик ───────────────────────────────────────────────────────────
@@ -102,6 +143,26 @@ namespace FlatOutLike.Controllers.Enemies
 
             // ── Пушим результат в источник ввода, который читает CarController ───
             _aiInput.Set(decision.Move, decision.Handbrake, decision.Nitro);
+        }
+
+        /// <summary>
+        /// Возвращает дистанцию до ближайшего НЕ-СВОЕГО хита по лучу или float.MaxValue,
+        /// если чисто. Хиты, чей attachedRigidbody == собственного Rigidbody, отсеиваются —
+        /// это позволяет стартовать луч из центра машины без боязни задеть свой кузов.
+        /// Триггеры игнорируются — пикапы и зоны эффектов в сканер обхода не входят.
+        /// </summary>
+        private float CastDistance(Vector3 origin, Vector3 direction, float length)
+        {
+            int n = Physics.RaycastNonAlloc(origin, direction, _hitBuffer, length,
+                                            _obstacleLayerMask, QueryTriggerInteraction.Ignore);
+            float minDist = float.MaxValue;
+            for (int i = 0; i < n; i++)
+            {
+                var hit = _hitBuffer[i];
+                if (hit.collider.attachedRigidbody == _rigidbody) continue;
+                if (hit.distance < minDist) minDist = hit.distance;
+            }
+            return minDist;
         }
     }
 }

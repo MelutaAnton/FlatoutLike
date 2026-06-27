@@ -40,6 +40,10 @@ namespace FlatOutLike.Data.Configs.Enemies
         [SerializeField, Min(0f)] private float _minApproachSpeed = 1f;
         /// <summary>Сколько секунд подряд скорость сближения ниже MinApproachSpeed до срабатывания Recover. Ловит широкую орбиту вне зоны OffAxisTimer.</summary>
         [SerializeField, Min(0f)] private float _approachTime = 1.5f;
+        /// <summary>Дистанция до препятствия по центральному forward-лучу, при которой включается обход. Меньше — машина свернёт в сторону более чистого бокового луча.</summary>
+        [SerializeField, Min(0f)] private float _obstacleAvoidDistance = 8f;
+        /// <summary>Дистанция до препятствия по перпендикулярному side-лучу, при которой запрещаем target-steer заворачивать в эту сторону (защита от тычка боком).</summary>
+        [SerializeField, Min(0f)] private float _obstacleSideAvoidDistance = 1.5f;
 
         public float RamAggression       => _ramAggression;
         public float RetreatHpThreshold  => _retreatHpThreshold;
@@ -58,5 +62,7 @@ namespace FlatOutLike.Data.Configs.Enemies
         public float GraceTime           => _graceTime;
         public float MinApproachSpeed    => _minApproachSpeed;
         public float ApproachTime        => _approachTime;
+        public float ObstacleAvoidDistance     => _obstacleAvoidDistance;
+        public float ObstacleSideAvoidDistance => _obstacleSideAvoidDistance;
     }
 }

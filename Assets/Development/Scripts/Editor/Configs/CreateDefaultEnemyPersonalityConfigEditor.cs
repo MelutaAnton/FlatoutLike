@@ -13,9 +13,10 @@ namespace FlatOutLike.Editor.Configs
     ///   • Ассета нет → создаётся новый инстанс; C#-дефолты покрывают все поля.
     ///   • Ассет есть → перезаписываем дефолты для AI-tuning полей
     ///     (_stuckTime, _circleBreakTime, _graceTime, _ramAlignmentDot,
-    ///     _minApproachSpeed, _approachTime). Остальные поля (RamAggression,
-    ///     дистанции и т.д.) намеренно не трогаются — чтобы ручной тюнинг
-    ///     из Inspector сохранился.
+    ///     _minApproachSpeed, _approachTime, _obstacleAvoidDistance,
+    ///     _obstacleSideAvoidDistance). Остальные поля (RamAggression, дистанции
+    ///     и т.д.) намеренно не трогаются — чтобы ручной тюнинг из Inspector
+    ///     сохранился.
     ///
     /// Идемпотентность: повторный запуск этого пункта меню безопасен — каждый раз
     /// пишутся те же значения, без дубликатов и без смены GUID.
@@ -74,7 +75,8 @@ namespace FlatOutLike.Editor.Configs
             var fieldNames = new[]
             {
                 "_stuckTime", "_circleBreakTime", "_graceTime",
-                "_ramAlignmentDot", "_minApproachSpeed", "_approachTime"
+                "_ramAlignmentDot", "_minApproachSpeed", "_approachTime",
+                "_obstacleAvoidDistance", "_obstacleSideAvoidDistance"
             };
 
             // Поднимаем временный инстанс, чтобы прочитать C#-дефолты конструктора.
@@ -113,12 +115,14 @@ namespace FlatOutLike.Editor.Configs
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
 
-            float stuckTime        = defaultValues.TryGetValue("_stuckTime",        out var s) ? s : float.NaN;
-            float circleBreakTime  = defaultValues.TryGetValue("_circleBreakTime",  out var c) ? c : float.NaN;
-            float graceTime        = defaultValues.TryGetValue("_graceTime",        out var g) ? g : float.NaN;
-            float ramAlignmentDot  = defaultValues.TryGetValue("_ramAlignmentDot",  out var a) ? a : float.NaN;
-            float minApproachSpeed = defaultValues.TryGetValue("_minApproachSpeed", out var m) ? m : float.NaN;
-            float approachTime     = defaultValues.TryGetValue("_approachTime",     out var t) ? t : float.NaN;
+            float stuckTime                 = defaultValues.TryGetValue("_stuckTime",                 out var s)  ? s  : float.NaN;
+            float circleBreakTime           = defaultValues.TryGetValue("_circleBreakTime",           out var c)  ? c  : float.NaN;
+            float graceTime                 = defaultValues.TryGetValue("_graceTime",                 out var g)  ? g  : float.NaN;
+            float ramAlignmentDot           = defaultValues.TryGetValue("_ramAlignmentDot",           out var a)  ? a  : float.NaN;
+            float minApproachSpeed          = defaultValues.TryGetValue("_minApproachSpeed",          out var m)  ? m  : float.NaN;
+            float approachTime              = defaultValues.TryGetValue("_approachTime",              out var t)  ? t  : float.NaN;
+            float obstacleAvoidDistance     = defaultValues.TryGetValue("_obstacleAvoidDistance",     out var o)  ? o  : float.NaN;
+            float obstacleSideAvoidDistance = defaultValues.TryGetValue("_obstacleSideAvoidDistance", out var os) ? os : float.NaN;
 
             Debug.Log($"[Editor] Synced tuning fields on existing EnemyPersonalityConfig_Aggressor: " +
                       $"_stuckTime={stuckTime}, " +
@@ -126,7 +130,9 @@ namespace FlatOutLike.Editor.Configs
                       $"_graceTime={graceTime}, " +
                       $"_ramAlignmentDot={ramAlignmentDot}, " +
                       $"_minApproachSpeed={minApproachSpeed}, " +
-                      $"_approachTime={approachTime}");
+                      $"_approachTime={approachTime}, " +
+                      $"_obstacleAvoidDistance={obstacleAvoidDistance}, " +
+                      $"_obstacleSideAvoidDistance={obstacleSideAvoidDistance}");
         }
 
         // ─────────────────────────────────────────────────────────────────────

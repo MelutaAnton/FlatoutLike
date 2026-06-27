@@ -22,17 +22,34 @@ namespace FlatOutLike.Services.AI
         public readonly Vector3 TargetPosition;
         /// <summary>Доля HP машины цели, 0..1.</summary>
         public readonly float   TargetHpRatio;
+        /// <summary>Дистанция до препятствия по центральному forward-лучу (float.MaxValue если чисто).</summary>
+        public readonly float   ObstacleCenterDistance;
+        /// <summary>Дистанция до препятствия по левому forward-лучу под углом (float.MaxValue если чисто).</summary>
+        public readonly float   ObstacleLeftDistance;
+        /// <summary>Дистанция до препятствия по правому forward-лучу под углом (float.MaxValue если чисто).</summary>
+        public readonly float   ObstacleRightDistance;
+        /// <summary>Дистанция до препятствия слева перпендикулярно (через -transform.right). Засекает стену вплотную к боку.</summary>
+        public readonly float   ObstacleSideLeftDistance;
+        /// <summary>Дистанция до препятствия справа перпендикулярно (через +transform.right).</summary>
+        public readonly float   ObstacleSideRightDistance;
 
         public AIPerception(bool hasTarget, Vector3 selfPosition, Vector3 selfForward,
-            float selfSpeed, float selfHpRatio, Vector3 targetPosition, float targetHpRatio)
+            float selfSpeed, float selfHpRatio, Vector3 targetPosition, float targetHpRatio,
+            float obstacleCenterDistance, float obstacleLeftDistance, float obstacleRightDistance,
+            float obstacleSideLeftDistance, float obstacleSideRightDistance)
         {
-            HasTarget      = hasTarget;
-            SelfPosition   = selfPosition;
-            SelfForward    = selfForward;
-            SelfSpeed      = selfSpeed;
-            SelfHpRatio    = selfHpRatio;
-            TargetPosition = targetPosition;
-            TargetHpRatio  = targetHpRatio;
+            HasTarget                 = hasTarget;
+            SelfPosition              = selfPosition;
+            SelfForward               = selfForward;
+            SelfSpeed                 = selfSpeed;
+            SelfHpRatio               = selfHpRatio;
+            TargetPosition            = targetPosition;
+            TargetHpRatio             = targetHpRatio;
+            ObstacleCenterDistance    = obstacleCenterDistance;
+            ObstacleLeftDistance      = obstacleLeftDistance;
+            ObstacleRightDistance     = obstacleRightDistance;
+            ObstacleSideLeftDistance  = obstacleSideLeftDistance;
+            ObstacleSideRightDistance = obstacleSideRightDistance;
         }
     }
 
@@ -53,6 +70,8 @@ namespace FlatOutLike.Services.AI
         public float   GraceTimer;
         /// <summary>Секунды без сближения с целью (forward-velocity * cos угла на цель ниже MinApproachSpeed). Ловит широкую орбиту, которую OffAxisTimer не видит из-за дистанции.</summary>
         public float   ApproachTimer;
+        /// <summary>Бэйас руля, сохранённый при входе в Recover (направление огибания препятствия). Принудительно применяется в grace-окне после выхода из Recover, чтобы машина не вернулась target-axis в ту же стену.</summary>
+        public float   PostRecoverSteerBias;
     }
 
     /// <summary>

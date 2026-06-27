@@ -30,10 +30,11 @@ namespace FlatOutLike.Services.AI
             // ── Нет цели → Idle и стоп ──────────────────────────────────────────
             if (!p.HasTarget)
             {
-                brain.State         = AIState.Idle;
-                brain.OffAxisTimer  = 0f;
-                brain.StuckTimer    = 0f;
-                brain.ApproachTimer = 0f;
+                brain.State                = AIState.Idle;
+                brain.OffAxisTimer         = 0f;
+                brain.StuckTimer           = 0f;
+                brain.ApproachTimer        = 0f;
+                brain.PostRecoverSteerBias = 0f;
                 return new AIDecision(Vector2.zero, false, false);
             }
 
@@ -46,16 +47,82 @@ namespace FlatOutLike.Services.AI
             float crossY     = Vector3.Cross(p.SelfForward, dir).y;   // положительное = цель справа
             float steer      = ClampSigned(crossY * profile.SteerSharpness);
 
+            // ── Боковая защита (side-clamp) ─────────────────────────────────────
+            // Перпендикулярные side-лучи ловят стену вплотную к боку. Если бок
+            // занят — запрещаем target-steer заворачивать в ту сторону. Иначе
+            // у края стены машина почти проехала, бок прилип к стене, цель тянет
+            // обратно в стену → стук боком в угол → StuckTimer → Recover → тот же
+            // вектор → опять стук. С клампом steer=0 машина проедет прямо вдоль
+            // стены и оторвётся от угла.
+            //
+            // Клампится САМ steer (а не engageSteer), чтобы Reverse(steer) тоже
+            // не разворачивал нос в боковую стену во время Recover.
+            bool leftSideBlocked  = p.ObstacleSideLeftDistance  < profile.ObstacleSideAvoidDistance;
+            bool rightSideBlocked = p.ObstacleSideRightDistance < profile.ObstacleSideAvoidDistance;
+            if (leftSideBlocked  && steer < 0f) steer = 0f;
+            if (rightSideBlocked && steer > 0f) steer = 0f;
+
+            // ── Обход препятствий ───────────────────────────────────────────────
+            // Если центральный forward-луч задел что-то ближе порога И этот хит
+            // ЯВНО не сама цель (дистанция меньше distToTarget с запасом) —
+            // переопределяем steer в сторону более чистого бокового луча. Газ
+            // не трогаем — машина идёт полным газом, по диагонали огибает стену.
+            //
+            // Гейт «obstacle closer than target by margin» заменил старый
+            // `dist > RamTriggerDistance`: тот выключал avoidance, когда игрок
+            // был ближе 12 м, и AI на близкой дистанции просто чесал target-axis
+            // в стену между собой и игроком. Новый гейт срабатывает в любом
+            // радиусе, кроме случая «центральный луч попал в самого игрока».
+            // Чистый layer-exclude машин (Step 5) сделает это абсолютно надёжным.
+            //
+            // В Recover steer применяется через Reverse(steer) — там нужна target-axis,
+            // иначе реверс уведёт в стену сбоку; поэтому avoidance считается ТОЛЬКО для
+            // engageSteer и применяется только в Pursue/Ram switch-ветках.
+            //
+            // Picker учитывает side-блоки: бок занят = запрет свернуть в ту сторону.
+            // Sandwich (оба бока + центр блокированы) → engageSteer=0, прямо в стену
+            // → StuckTimer вытянет Recover, реверс выйдет ровно по target-axis.
+            const float TargetHitMargin = 3f; // см. комментарий выше
+            bool obstacleBlocksPath = p.ObstacleCenterDistance < profile.ObstacleAvoidDistance
+                                   && p.ObstacleCenterDistance < dist - TargetHitMargin;
+
+            float engageSteer = steer;
+            if (obstacleBlocksPath)
+            {
+                if      (leftSideBlocked  && !rightSideBlocked) engageSteer =  1f;
+                else if (rightSideBlocked && !leftSideBlocked)  engageSteer = -1f;
+                else if (leftSideBlocked  &&  rightSideBlocked) engageSteer =  0f;
+                else engageSteer = (p.ObstacleLeftDistance >= p.ObstacleRightDistance) ? -1f : 1f;
+            }
+
+            // Post-Recover bias: пока крутится GraceTimer, ПРИНУДИТЕЛЬНО держим тот
+            // swerve, который выбрали в момент входа в Recover. Без этого после
+            // реверса AI пересчитывает target-axis (target всё там же, за стеной)
+            // и тут же возвращается в ту же стену → цикл «вперёд-назад-вперёд».
+            // Бэйас перебивает target-steer, но не avoidance: если по ходу
+            // grace-окна центральный луч снова показывает препятствие, picker
+            // выше уже подкорректировал engageSteer на актуальное направление.
+            if (brain.GraceTimer > 0f && Math.Abs(brain.PostRecoverSteerBias) > 0.5f
+                && !obstacleBlocksPath)
+                engageSteer = brain.PostRecoverSteerBias;
+
             // ── Отсчёт grace (окно обязательного движения вперёд после отката) ──
+            // На истечении grace сбрасываем PostRecoverSteerBias — после окна
+            // commit'а машина возвращается к нормальному target-axis steer.
             if (brain.GraceTimer > 0f)
+            {
                 brain.GraceTimer -= deltaTime;
+                if (brain.GraceTimer <= 0f) brain.PostRecoverSteerBias = 0f;
+            }
 
             // ── Опциональное отступление (обходит FSM) ──────────────────────────
             // У профиля Aggressor RetreatHpThreshold = 0 → не срабатывает никогда.
+            // Bias = 0: отступление по HP — не обход стены, никакого направления
+            // огибать нет, после реверса нормально пересчитываем target-axis.
             if (profile.RetreatHpThreshold > 0f && p.SelfHpRatio < profile.RetreatHpThreshold
                 && brain.State != AIState.Recover)
             {
-                EnterRecover(ref brain, profile);
+                EnterRecover(ref brain, profile, 0f);
                 return Reverse(steer);
             }
 
@@ -98,12 +165,18 @@ namespace FlatOutLike.Services.AI
                 brain.ApproachTimer = 0f;
 
             // Запуск манёвра отката — подавлен внутри grace-окна.
+            // Bias = engageSteer если препятствие БЫЛО причиной (или подкравшейся
+            // причиной) затыка — picker уже выбрал сторону огибания, и мы хотим
+            // сохранить это направление через grace-окно после реверса.
+            // Если затык не от стены (нет obstacleBlocksPath) — bias = 0, после
+            // реверса нормальный target-axis.
             if (brain.GraceTimer <= 0f && engaged
                 && (brain.StuckTimer    >= profile.StuckTime
                  || brain.OffAxisTimer  >= profile.CircleBreakTime
                  || brain.ApproachTimer >= profile.ApproachTime))
             {
-                EnterRecover(ref brain, profile);
+                float bias = obstacleBlocksPath ? engageSteer : 0f;
+                EnterRecover(ref brain, profile, bias);
                 return Reverse(steer);
             }
 
@@ -120,20 +193,24 @@ namespace FlatOutLike.Services.AI
                     if (dist <= profile.RamTriggerDistance && forwardDot > profile.RamAlignmentDot)
                     {
                         brain.State = AIState.Ram;
-                        return Drive(steer, profile.NitroOnRam);
+                        return Drive(engageSteer, profile.NitroOnRam);
                     }
-                    return Drive(steer, false);
+                    return Drive(engageSteer, false);
 
                 case AIState.Ram:
                     // → Pursue: цель ушла (гистерезис RamExit > RamTrigger)
                     if (dist > profile.RamExitDistance)
                     {
                         brain.State = AIState.Pursue;
-                        return Drive(steer, false);
+                        return Drive(engageSteer, false);
                     }
                     // Nitro только когда реально нацелились на цель — буст вне курса
                     // только расширяет радиус поворота и подкармливает орбиту.
-                    return Drive(steer, profile.NitroOnRam && forwardDot > profile.RamAlignmentDot);
+                    // Газ заглушаем при обходе стены (engageSteer ≠ steer): forwardDot
+                    // к цели может быть выше порога, но фактически руль вывернут на стену.
+                    bool aimed = forwardDot > profile.RamAlignmentDot
+                              && Math.Abs(engageSteer - steer) < 0.01f;
+                    return Drive(engageSteer, profile.NitroOnRam && aimed);
 
                 case AIState.Recover:
                     return TickRecover(ref brain, profile, steer, deltaTime);
@@ -174,13 +251,15 @@ namespace FlatOutLike.Services.AI
         private static AIDecision Reverse(float steer) =>
             new AIDecision(new Vector2(-steer, -1f), false, false);
 
-        private static void EnterRecover(ref AIBrainState brain, EnemyPersonalityConfig p)
+        private static void EnterRecover(ref AIBrainState brain, EnemyPersonalityConfig p,
+            float postRecoverBias)
         {
-            brain.State         = AIState.Recover;
-            brain.RecoverTimer  = p.RecoverDuration;
-            brain.StuckTimer    = 0f;
-            brain.OffAxisTimer  = 0f;
-            brain.ApproachTimer = 0f;
+            brain.State                = AIState.Recover;
+            brain.RecoverTimer         = p.RecoverDuration;
+            brain.StuckTimer           = 0f;
+            brain.OffAxisTimer         = 0f;
+            brain.ApproachTimer        = 0f;
+            brain.PostRecoverSteerBias = postRecoverBias;
         }
 
         /// <summary>Зажимает в [-1, 1] через System.Math (а не Mathf), по прецеденту DamageService.</summary>
