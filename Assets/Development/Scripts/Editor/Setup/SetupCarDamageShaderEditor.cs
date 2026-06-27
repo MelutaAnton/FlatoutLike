@@ -10,20 +10,21 @@ using FlatOutLike.Data.Configs.Car;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Converts car body materials on the scene car to use FlatOutLike/CarDamageLit shader,
-    /// creating per-material _Damage variants under Assets/Development/Art/Materials/Damage/.
-    /// Properties (_BaseMap, _BaseColor, _Metallic, _Smoothness) are copied from the
-    /// original material with URP-compatibility fallbacks (_MainTex, _Color).
+    /// Конвертирует материалы корпуса машины в сцене на использование шейдера
+    /// FlatOutLike/CarDamageLit, создавая per-material _Damage-варианты в
+    /// Assets/Development/Art/Materials/Damage/. Свойства (_BaseMap, _BaseColor,
+    /// _Metallic, _Smoothness) копируются из оригинального материала с
+    /// URP-fallback'ами (_MainTex, _Color).
     ///
-    /// Excluded from conversion:
-    ///   • Materials listed in CarDamageVisualConfig._preservedMaterials (glass, headlights).
-    ///   • Renderers that are children of CarController._wheelVisuals.
-    ///   • ParticleSystemRenderer components.
+    /// Исключаются из конвертации:
+    ///   • Материалы из списка CarDamageVisualConfig._preservedMaterials (стекло, фары).
+    ///   • Рендереры, являющиеся детьми CarController._wheelVisuals.
+    ///   • Компоненты ParticleSystemRenderer.
     ///
-    /// Idempotent: materials already on the damage shader are skipped;
-    ///             existing _Damage.mat assets are reused and properties are refreshed.
+    /// Идемпотентность: материалы, уже использующие damage-шейдер, пропускаются;
+    ///                  существующие _Damage.mat-ассеты переиспользуются и обновляются.
     ///
-    /// Run AFTER:
+    /// Запускать ПОСЛЕ:
     ///   FlatOutLike/Setup/Build Driving Test Scene
     ///   FlatOutLike/Configs/Create Default CarDamageVisualConfig
     /// </summary>
@@ -40,10 +41,10 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Convert Car Body To Damage Shader");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Ensure _TestDriving is open ────────────────────────────────
+            // ── 1. Убеждаемся, что _TestDriving открыт ────────────────────────
             OpenSceneIfNeeded();
 
-            // ── 2. Find car by component ──────────────────────────────────────
+            // ── 2. Ищем машину по компоненту ──────────────────────────────────
             var carController = Object.FindAnyObjectByType<CarController>();
             if (carController == null)
             {
@@ -59,21 +60,21 @@ namespace FlatOutLike.Editor.Setup
         }
 
         /// <summary>
-        /// Converts body materials on the given CarController's GameObject to the damage shader.
-        /// Safe to call from other editor scripts (e.g. SetupEnemyCarEditor) without
-        /// affecting which car the existing menu item targets.
-        /// Does NOT manage Undo groups — the caller is responsible.
+        /// Конвертирует материалы корпуса на GameObject указанного CarController на damage-шейдер.
+        /// Безопасно вызывать из других editor-скриптов (например, SetupEnemyCarEditor),
+        /// не влияя на то, какую машину обрабатывает существующий пункт меню.
+        /// Группами Undo НЕ управляет — это ответственность вызывающего.
         /// </summary>
         public static void ConvertCar(CarController carController)
         {
             var carGo = carController.gameObject;
             Debug.Log("[Editor] Converting damage shader materials on: " + carGo.name);
 
-            // ── Build preserve-set from CarDamageVisualConfig ─────────────────
-            // Read via SerializedObject so no compile-time dependency on the
-            // _preservedMaterials field that code-writer adds in parallel.
-            // When that field doesn't exist yet, FindProperty returns null and we
-            // continue with an empty set (all body materials convertible).
+            // ── Собираем preserve-set из CarDamageVisualConfig ────────────────
+            // Читаем через SerializedObject, чтобы не было compile-time зависимости
+            // от поля _preservedMaterials, которое параллельно добавляет code-writer.
+            // Когда этого поля ещё нет, FindProperty возвращает null и мы продолжаем
+            // с пустым набором (все материалы корпуса конвертируемы).
             var preservedSet = new HashSet<Material>();
             var visualConfig = AssetDatabase.LoadAssetAtPath<CarDamageVisualConfig>(VisualConfigPath);
             if (visualConfig != null)
@@ -100,7 +101,7 @@ namespace FlatOutLike.Editor.Setup
                                  ". Continuing without preserve-list.");
             }
 
-            // ── Find damage shader ────────────────────────────────────────────
+            // ── Ищем damage-шейдер ────────────────────────────────────────────
             var damageShader = Shader.Find(DamageShaderName);
             if (damageShader == null)
             {
@@ -109,7 +110,7 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
-            // ── Collect wheel visual transforms for exclusion ─────────────────
+            // ── Собираем Transform'ы wheel-visuals для исключения ─────────────
             var wheelVisualRoots = new HashSet<Transform>();
             var soController = new SerializedObject(carController);
             var wheelVisualsProp = soController.FindProperty("_wheelVisuals");
@@ -123,12 +124,12 @@ namespace FlatOutLike.Editor.Setup
                 Debug.Log("[Editor] Wheel visual exclusion set: " + wheelVisualRoots.Count + " transform(s).");
             }
 
-            // ── Ensure output folder hierarchy exists ─────────────────────────
+            // ── Убеждаемся, что иерархия выходных папок существует ────────────
             EnsureFolder("Assets/Development",               "Art");
             EnsureFolder("Assets/Development/Art",           "Materials");
             EnsureFolder("Assets/Development/Art/Materials", "Damage");
 
-            // ── Process renderers ─────────────────────────────────────────────
+            // ── Обрабатываем рендереры ────────────────────────────────────────
             var allRenderers = carGo.GetComponentsInChildren<Renderer>(true);
             int converted = 0;
             int reused    = 0;
@@ -136,14 +137,14 @@ namespace FlatOutLike.Editor.Setup
 
             foreach (var renderer in allRenderers)
             {
-                // Exclude particle renderers
+                // Исключаем particle-рендереры
                 if (renderer is ParticleSystemRenderer)
                 {
                     skipped++;
                     continue;
                 }
 
-                // Exclude children of wheel visual transforms
+                // Исключаем детей wheel-visual Transform'ов
                 bool isWheel = false;
                 foreach (var wv in wheelVisualRoots)
                 {
@@ -159,8 +160,8 @@ namespace FlatOutLike.Editor.Setup
                     continue;
                 }
 
-                // ── Per-slot material conversion ──────────────────────────────
-                // sharedMaterials returns a COPY; assign back after changes.
+                // ── Поcлотовая конвертация материалов ─────────────────────────
+                // sharedMaterials возвращает КОПИЮ; нужно присвоить обратно после изменений.
                 var slots         = renderer.sharedMaterials;
                 bool slotsChanged = false;
 
@@ -169,7 +170,7 @@ namespace FlatOutLike.Editor.Setup
                     var srcMat = slots[s];
                     if (srcMat == null) continue;
 
-                    // Idempotency: slot already uses damage shader
+                    // Идемпотентность: слот уже использует damage-шейдер
                     if (srcMat.shader == damageShader)
                     {
                         Debug.Log("[Editor] '" + renderer.name + "' slot " + s +
@@ -177,7 +178,7 @@ namespace FlatOutLike.Editor.Setup
                         continue;
                     }
 
-                    // Preserve-list: glass, headlights, trim, etc.
+                    // Preserve-list: стекло, фары, молдинги и т.д.
                     if (preservedSet.Contains(srcMat))
                     {
                         Debug.Log("[Editor] '" + renderer.name + "' slot " + s +
@@ -185,7 +186,7 @@ namespace FlatOutLike.Editor.Setup
                         continue;
                     }
 
-                    // ── Resolve output asset path ─────────────────────────────
+                    // ── Определяем путь выходного ассета ──────────────────────
                     string damageMatPath = DamageMatFolder + "/" + srcMat.name + "_Damage.mat";
 
                     var destMat = AssetDatabase.LoadAssetAtPath<Material>(damageMatPath);
@@ -200,14 +201,14 @@ namespace FlatOutLike.Editor.Setup
                     }
                     else
                     {
-                        // Ensure shader is up to date (e.g. if script re-runs after shader rename)
+                        // Убеждаемся, что шейдер актуален (например, если скрипт перезапущен после переименования шейдера)
                         destMat.shader = damageShader;
                         Debug.Log("[Editor] Reusing damage material: " + damageMatPath);
                     }
 
-                    // ── Copy properties (with URP-conversion fallbacks) ────────
+                    // ── Копируем свойства (с URP-fallback'ами) ────────────────
 
-                    // _BaseMap: URP standard name; fallback _MainTex (many ThirdParty packs)
+                    // _BaseMap: стандартное имя URP; fallback на _MainTex (многие ThirdParty-паки)
                     string baseMapSrc = srcMat.HasProperty("_BaseMap")  ? "_BaseMap"
                                       : srcMat.HasProperty("_MainTex") ? "_MainTex"
                                       : null;
@@ -222,7 +223,7 @@ namespace FlatOutLike.Editor.Setup
                         }
                     }
 
-                    // _BaseColor: URP standard name; fallback _Color (legacy/Standard)
+                    // _BaseColor: стандартное имя URP; fallback на _Color (legacy/Standard)
                     if (srcMat.HasProperty("_BaseColor"))
                         destMat.SetColor("_BaseColor", srcMat.GetColor("_BaseColor"));
                     else if (srcMat.HasProperty("_Color"))
@@ -244,7 +245,7 @@ namespace FlatOutLike.Editor.Setup
                     if (isNew) converted++; else reused++;
                 }
 
-                // Assign back only if something changed; record undo on renderer
+                // Присваиваем обратно только если что-то изменилось; пишем undo на рендерер
                 if (slotsChanged)
                 {
                     Undo.RecordObject(renderer, "Convert Materials on " + renderer.name);
@@ -253,7 +254,7 @@ namespace FlatOutLike.Editor.Setup
                 }
             }
 
-            // ── Save and mark scene dirty ─────────────────────────────────────
+            // ── Сохраняем и помечаем сцену как dirty ──────────────────────────
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());

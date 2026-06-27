@@ -17,7 +17,7 @@ namespace FlatOutLike.Factories.Vfx
             = new Dictionary<VfxEffectType, Queue<ParticleController>>();
         private readonly Dictionary<VfxEffectType, GameObject> _prefabs
             = new Dictionary<VfxEffectType, GameObject>();
-        // Tracks which VfxEffectType each controller belongs to for correct pool return.
+        // Отслеживает, к какому VfxEffectType принадлежит каждый контроллер, для корректного возврата в Pool.
         private readonly Dictionary<ParticleController, VfxEffectType> _controllerTypes
             = new Dictionary<ParticleController, VfxEffectType>();
 

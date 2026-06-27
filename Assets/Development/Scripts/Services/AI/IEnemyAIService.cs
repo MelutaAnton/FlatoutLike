@@ -5,22 +5,22 @@ using UnityEngine;
 namespace FlatOutLike.Services.AI
 {
     /// <summary>
-    /// Snapshot of the world as seen by the AI brain for one physics tick.
-    /// All data is pre-computed by <c>EnemyCarController</c> from Unity API
-    /// (Transform, Rigidbody, IDamageService) so the service stays pure C#.
+    /// Снимок мира, каким его видит AI-мозг в одном физическом тике.
+    /// Все данные предварительно вычисляются <c>EnemyCarController</c> из Unity API
+    /// (Transform, Rigidbody, IDamageService), чтобы Service оставался pure C#.
     /// </summary>
     public readonly struct AIPerception
     {
         public readonly bool    HasTarget;
         public readonly Vector3 SelfPosition;
-        /// <summary>Normalised forward direction of the enemy car.</summary>
+        /// <summary>Нормализованное направление вперёд для машины врага.</summary>
         public readonly Vector3 SelfForward;
-        /// <summary>Forward speed in m/s (positive = moving forward).</summary>
+        /// <summary>Скорость вперёд в м/с (положительное = движется вперёд).</summary>
         public readonly float   SelfSpeed;
-        /// <summary>0..1 HP fraction of the enemy car.</summary>
+        /// <summary>Доля HP машины врага, 0..1.</summary>
         public readonly float   SelfHpRatio;
         public readonly Vector3 TargetPosition;
-        /// <summary>0..1 HP fraction of the target car.</summary>
+        /// <summary>Доля HP машины цели, 0..1.</summary>
         public readonly float   TargetHpRatio;
 
         public AIPerception(bool hasTarget, Vector3 selfPosition, Vector3 selfForward,
@@ -37,28 +37,28 @@ namespace FlatOutLike.Services.AI
     }
 
     /// <summary>
-    /// Mutable per-enemy FSM state. Held by <c>EnemyCarController</c>;
-    /// passed <c>ref</c> to <see cref="IEnemyAIService.Tick"/> so the service is stateless.
+    /// Изменяемое FSM-состояние для одного врага. Хранится в <c>EnemyCarController</c>;
+    /// передаётся <c>ref</c> в <see cref="IEnemyAIService.Tick"/>, чтобы Service оставался stateless.
     /// </summary>
     public struct AIBrainState
     {
         public AIState State;
-        /// <summary>Counts down to 0 during the Recover phase.</summary>
+        /// <summary>Отсчитывает до 0 в фазе Recover.</summary>
         public float   RecoverTimer;
-        /// <summary>Accumulates seconds spent wedged (low speed under throttle).</summary>
+        /// <summary>Копит секунды простоя в упоре (низкая скорость при газе).</summary>
         public float   StuckTimer;
-        /// <summary>Seconds spent close to the target but unable to aim at it (orbit detection).</summary>
+        /// <summary>Секунды рядом с целью без возможности прицелиться (детекция орбиты).</summary>
         public float   OffAxisTimer;
-        /// <summary>Post-Recover commit window; suppresses re-triggering back-off.</summary>
+        /// <summary>Окно фиксации курса после Recover; подавляет повторный запуск отката.</summary>
         public float   GraceTimer;
     }
 
     /// <summary>
-    /// Control decision produced by one AI tick: the inputs forwarded to <c>AIInputProvider</c>.
+    /// Решение об управлении за один AI-тик: инпуты, передаваемые в <c>AIInputProvider</c>.
     /// </summary>
     public readonly struct AIDecision
     {
-        /// <summary>x = steer [-1, 1], y = throttle [-1, 1].</summary>
+        /// <summary>x = руль [-1, 1], y = газ [-1, 1].</summary>
         public readonly Vector2 Move;
         public readonly bool    Handbrake;
         public readonly bool    Nitro;
@@ -74,8 +74,8 @@ namespace FlatOutLike.Services.AI
     public interface IEnemyAIService
     {
         /// <summary>
-        /// Runs one FSM tick and returns the resulting car control inputs.
-        /// Mutates <paramref name="brain"/> in-place (state transitions, timer countdown).
+        /// Прогоняет один FSM-тик и возвращает итоговые инпуты управления машиной.
+        /// Изменяет <paramref name="brain"/> на месте (переходы состояний, отсчёт таймеров).
         /// </summary>
         AIDecision Tick(ref AIBrainState brain, in AIPerception perception,
             EnemyPersonalityConfig profile, float deltaTime);

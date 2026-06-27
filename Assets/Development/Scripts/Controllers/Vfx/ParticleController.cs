@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace FlatOutLike.Controllers.Vfx
 {
-    // EDITOR: This prefab requires ParticleSystem.Stop Action = Callback.
-    // Set via SetupVfxPrefabsEditor to avoid losing the setting on prefab reimport.
+    // EDITOR: префабу требуется ParticleSystem.Stop Action = Callback.
+    // Выставляется через SetupVfxPrefabsEditor, чтобы не потерять настройку при реимпорте префаба.
     public sealed class ParticleController : MonoBehaviour
     {
         [SerializeField] private ParticleSystem _particleSystem;
@@ -25,7 +25,7 @@ namespace FlatOutLike.Controllers.Vfx
             _particleSystem.Play();
         }
 
-        // Called by Unity when ParticleSystem.stopAction == Callback
+        // Вызывается Unity, когда ParticleSystem.stopAction == Callback
         private void OnParticleSystemStopped()
         {
             var callback = _onFinished;

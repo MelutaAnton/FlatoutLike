@@ -16,32 +16,32 @@ namespace FlatOutLike.Editor.Configs
         [MenuItem("FlatOutLike/Configs/Create Default CarDamageVisualConfig")]
         public static void CreateDefaultCarDamageVisualConfig()
         {
-            // ── Idempotency check ─────────────────────────────────────────────
+            // ── Проверка идемпотентности ──────────────────────────────────────
             if (AssetDatabase.LoadAssetAtPath<CarDamageVisualConfig>(AssetPath) != null)
             {
                 Debug.Log("[Editor] CarDamageVisualConfig already exists at " + AssetPath);
                 return;
             }
 
-            // ── Ensure folder hierarchy exists ────────────────────────────────
+            // ── Убеждаемся, что иерархия папок существует ─────────────────────
             EnsureFolder("Assets/Development", "Data");
             EnsureFolder(FolderData,           "Configs");
             EnsureFolder(FolderCfg,            "Car");
 
-            // ── Create asset ──────────────────────────────────────────────────
+            // ── Создание ассета ───────────────────────────────────────────────
             var config = ScriptableObject.CreateInstance<CarDamageVisualConfig>();
             AssetDatabase.CreateAsset(config, AssetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            // ── Populate 3 stages via SerializedObject ────────────────────────
+            // ── Заполнение 3 стадий через SerializedObject ────────────────────
             var so = new SerializedObject(config);
             var stagesProp = so.FindProperty("_stages");
             stagesProp.arraySize = 3;
 
-            // ── Stage 0: Pristine (hpThreshold = 1.0) ────────────────────────
-            // Materials filled from Car_Sport_09 renderer (Strategy A baseline).
-            // damagedMesh / blendShapeWeights / vfxToActivate left empty (strategy A only).
+            // ── Стадия 0: Pristine (hpThreshold = 1.0) ───────────────────────
+            // Materials берутся с рендерера Car_Sport_09 (базовая линия Strategy A).
+            // damagedMesh / blendShapeWeights / vfxToActivate оставлены пустыми (только strategy A).
             var pristine = stagesProp.GetArrayElementAtIndex(0);
             pristine.FindPropertyRelative("hpThreshold").floatValue       = 1.0f;
             pristine.FindPropertyRelative("enableDetachableParts").boolValue = false;
@@ -78,8 +78,8 @@ namespace FlatOutLike.Editor.Configs
                                  "Run 'FlatOutLike/Setup/Build Car Prefab From Selected FBX' first.");
             }
 
-            // ── Stage 1: Dented (hpThreshold = 0.66) ─────────────────────────
-            // Materials, decals, VFX left empty — fill manually or in a future step.
+            // ── Стадия 1: Dented (hpThreshold = 0.66) ────────────────────────
+            // Materials, decals, VFX оставлены пустыми — заполнить вручную или на следующем шаге.
             var dented = stagesProp.GetArrayElementAtIndex(1);
             dented.FindPropertyRelative("hpThreshold").floatValue          = 0.66f;
             dented.FindPropertyRelative("enableDetachableParts").boolValue  = false;
@@ -88,8 +88,8 @@ namespace FlatOutLike.Editor.Configs
             dented.FindPropertyRelative("blendShapeWeights").arraySize      = 0;
             dented.FindPropertyRelative("vfxToActivate").arraySize          = 0;
 
-            // ── Stage 2: Wrecked (hpThreshold = 0.33) ────────────────────────
-            // enableDetachableParts = true — joints get finite break force at this stage.
+            // ── Стадия 2: Wrecked (hpThreshold = 0.33) ───────────────────────
+            // enableDetachableParts = true — joints получают конечный break force на этой стадии.
             var wrecked = stagesProp.GetArrayElementAtIndex(2);
             wrecked.FindPropertyRelative("hpThreshold").floatValue          = 0.33f;
             wrecked.FindPropertyRelative("enableDetachableParts").boolValue  = true;

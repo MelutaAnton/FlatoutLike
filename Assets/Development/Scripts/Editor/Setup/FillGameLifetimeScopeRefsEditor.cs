@@ -11,19 +11,19 @@ using FlatOutLike.Installers;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Fills GameLifetimeScope serialized references from assets and the active scene.
+    /// Заполняет serialized-ссылки на GameLifetimeScope из ассетов и активной сцены.
     ///
-    /// Step 3 fields: _damageConfig, _vfxConfig
-    /// Step 4 fields: _sceneCars (all CarController root GameObjects in the scene)
+    /// Поля шага 3: _damageConfig, _vfxConfig
+    /// Поля шага 4: _sceneCars (все корневые GameObject'ы с CarController в сцене)
     ///
-    /// All fields are filled in a single pass; the method is idempotent — re-running
-    /// overwrites refs with the current scene state without duplicating anything.
+    /// Все поля заполняются за один проход; метод идемпотентен — повторный запуск
+    /// перезаписывает ссылки текущим состоянием сцены, ничего не дублируя.
     ///
-    /// Run AFTER:
+    /// Запускать ПОСЛЕ:
     ///   FlatOutLike/Configs/Create Default DamageConfig
     ///   FlatOutLike/Configs/Create Default VfxConfig
-    ///   FlatOutLike/Setup/Build Driving Test Scene   (creates GameLifetimeScope)
-    ///   FlatOutLike/Setup/Setup Enemy Car (Step 4)   (optional; adds enemy to _sceneCars)
+    ///   FlatOutLike/Setup/Build Driving Test Scene   (создаёт GameLifetimeScope)
+    ///   FlatOutLike/Setup/Setup Enemy Car (Step 4)   (опционально; добавляет врага в _sceneCars)
     /// </summary>
     public static class FillGameLifetimeScopeRefsEditor
     {
@@ -36,7 +36,7 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Fill GameLifetimeScope Refs");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Find GameLifetimeScope in the currently open scene ─────────
+            // ── 1. Ищем GameLifetimeScope в открытой сцене ────────────────────
             var scope = Object.FindAnyObjectByType<GameLifetimeScope>();
             if (scope == null)
             {
@@ -47,7 +47,7 @@ namespace FlatOutLike.Editor.Setup
 
             Debug.Log("[Editor] Found GameLifetimeScope on '" + scope.gameObject.name + "'.");
 
-            // ── 2. Load Step 3 config assets ──────────────────────────────────
+            // ── 2. Загружаем ассеты конфигов шага 3 ───────────────────────────
             var damageConfig = AssetDatabase.LoadAssetAtPath<DamageConfig>(DamageConfigPath);
             if (damageConfig == null)
                 Debug.LogWarning("[Editor] DamageConfig not found at " + DamageConfigPath +
@@ -62,7 +62,7 @@ namespace FlatOutLike.Editor.Setup
 
             var so = new SerializedObject(scope);
 
-            // ── 3. Fill Step 3 config refs ────────────────────────────────────
+            // ── 3. Заполняем ссылки на конфиги шага 3 ─────────────────────────
             so.FindProperty("_damageConfig").objectReferenceValue = damageConfig;
             so.FindProperty("_vfxConfig").objectReferenceValue    = vfxConfig;
 
@@ -71,10 +71,10 @@ namespace FlatOutLike.Editor.Setup
                       ", _vfxConfig = " +
                       (vfxConfig    != null ? vfxConfig.name    : "NULL") + ".");
 
-            // ── 4. Fill _sceneCars with all CarController roots in scene ──────
-            // transform.root ensures we always store the topmost prefab root, not a
-            // child GO — GameLifetimeScope.Configure() calls InjectGameObject(go)
-            // which injects the entire hierarchy.
+            // ── 4. Заполняем _sceneCars всеми корнями CarController в сцене ───
+            // transform.root гарантирует, что мы всегда сохраняем самый верхний корень
+            // префаба, а не дочерний GameObject — GameLifetimeScope.Configure() вызывает
+            // InjectGameObject(go), который инжектит всю иерархию.
             var allCars  = Object.FindObjectsByType<CarController>(FindObjectsSortMode.None);
             var carsProp = so.FindProperty("_sceneCars");
             carsProp.arraySize = allCars.Length;
@@ -86,10 +86,10 @@ namespace FlatOutLike.Editor.Setup
             for (int i = 0; i < allCars.Length; i++)
                 Debug.Log("[Editor]   [" + i + "] " + allCars[i].transform.root.gameObject.name);
 
-            // ── Apply all changes at once ─────────────────────────────────────
+            // ── Применяем все изменения разом ─────────────────────────────────
             so.ApplyModifiedProperties();
 
-            // ── 5. Mark scene dirty ───────────────────────────────────────────
+            // ── 5. Помечаем сцену как dirty ───────────────────────────────────
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
             Undo.CollapseUndoOperations(undoGroup);
@@ -98,9 +98,9 @@ namespace FlatOutLike.Editor.Setup
         }
 
         /// <summary>
-        /// Convenience alias for the Step 4 workflow entry point.
-        /// Fills _damageConfig, _vfxConfig AND _sceneCars — identical to Step 3 item.
-        /// Run this after 'Setup Enemy Car (Step 4)' so both player and enemy are registered.
+        /// Удобный алиас точки входа для workflow шага 4.
+        /// Заполняет _damageConfig, _vfxConfig И _sceneCars — идентично пункту шага 3.
+        /// Запускать после 'Setup Enemy Car (Step 4)', чтобы и игрок, и враг были зарегистрированы.
         /// </summary>
         [MenuItem("FlatOutLike/Setup/Fill GameLifetimeScope Refs (Step 4)")]
         public static void FillRefsStep4() => FillRefs();

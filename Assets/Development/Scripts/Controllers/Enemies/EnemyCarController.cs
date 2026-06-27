@@ -11,22 +11,22 @@ using VContainer;
 namespace FlatOutLike.Controllers.Enemies
 {
     /// <summary>
-    /// Drives the AI FSM tick each FixedUpdate and pushes the resulting inputs into
-    /// the sibling <see cref="CarController"/> via an <see cref="AIInputProvider"/>.
+    /// Гоняет AI FSM-тик каждый FixedUpdate и пушит получившийся ввод в соседний
+    /// <see cref="CarController"/> через <see cref="AIInputProvider"/>.
     ///
-    /// Ordering note: EnemyCarController writes to <c>_aiInput</c> in its own FixedUpdate;
-    /// CarController reads those values in its own FixedUpdate. Unity does not guarantee
-    /// execution order across components on different GameObjects, so up to 1 physics-frame
-    /// lag is possible — imperceptible at 50 Hz and acceptable for arcade AI.
+    /// Замечание про порядок: EnemyCarController пишет в <c>_aiInput</c> в своём FixedUpdate;
+    /// CarController читает эти значения в своём FixedUpdate. Unity не гарантирует порядок
+    /// выполнения компонентов на разных GameObject'ах, поэтому возможна задержка до 1 физ-кадра —
+    /// незаметная на 50 Hz и приемлемая для аркадного AI.
     /// </summary>
-    // Invariant: this component, its CarController (_car) and Rigidbody (_rigidbody)
-    // live on the SAME GameObject. Perception is computed from _car's transform so
-    // the AI reasons about the controlled vehicle, not this component's transform.
+    // Инвариант: этот компонент, его CarController (_car) и Rigidbody (_rigidbody)
+    // живут на ОДНОМ GameObject. Perception считается из transform'а _car, чтобы AI
+    // рассуждал об управляемой машине, а не о transform'е этого компонента.
     public sealed class EnemyCarController : MonoBehaviour
     {
-        [SerializeField] private CarController         _car;        // sibling car being controlled
-        [SerializeField] private CarController         _target;     // player car (reassignable via SetTarget)
-        [SerializeField] private CarStatsConfig        _statsConfig; // reserved for future per-enemy stat overrides
+        [SerializeField] private CarController         _car;        // соседняя машина, которой управляем
+        [SerializeField] private CarController         _target;     // машина игрока (переназначается через SetTarget)
+        [SerializeField] private CarStatsConfig        _statsConfig; // зарезервировано под per-enemy override'ы статов
         [SerializeField] private EnemyPersonalityConfig _profile;
         [SerializeField] private Rigidbody             _rigidbody;
 
@@ -45,9 +45,9 @@ namespace FlatOutLike.Controllers.Enemies
             _aiInput = new AIInputProvider();
             _brain   = new AIBrainState { State = AIState.Idle, RecoverTimer = 0f };
 
-            // Replace the keyboard provider with the AI-writable one.
-            // OnEnable may have already fired before Construct — the guard inside
-            // CarController is irrelevant here since we call the public API directly.
+            // Подменяем keyboard-провайдер на записываемый AI-провайдер.
+            // OnEnable мог уже отработать до Construct — guard внутри CarController
+            // здесь не релевантен, потому что вызываем публичный API напрямую.
             if (_car != null)
                 _car.SetInputSource(_aiInput);
 
@@ -55,8 +55,8 @@ namespace FlatOutLike.Controllers.Enemies
         }
 
         /// <summary>
-        /// Replaces the current target. Called by the factory / targeting service (Step 5).
-        /// Safe to call before Construct — target is only read inside FixedUpdate.
+        /// Заменяет текущую цель. Вызывается Factory / targeting-сервисом (Step 5).
+        /// Безопасно вызывать до Construct — target читается только внутри FixedUpdate.
         /// </summary>
         public void SetTarget(CarController target) => _target = target;
 
@@ -66,12 +66,12 @@ namespace FlatOutLike.Controllers.Enemies
 
             bool hasTarget = _target != null;
 
-            // ── Self HP ratio ─────────────────────────────────────────────────────
+            // ── Своё HP-соотношение ──────────────────────────────────────────────
             float selfMaxArmor = _car.MaxArmor;
             float selfHp       = _damage.GetHp(_car.CarId);
             float selfRatio    = selfMaxArmor > 0f ? selfHp / selfMaxArmor : 1f;
 
-            // ── Target HP ratio ───────────────────────────────────────────────────
+            // ── HP-соотношение цели ──────────────────────────────────────────────
             float targetRatio = 1f;
             if (hasTarget)
             {
@@ -80,13 +80,13 @@ namespace FlatOutLike.Controllers.Enemies
                 targetRatio = targetMaxArmor > 0f ? targetHp / targetMaxArmor : 1f;
             }
 
-            // ── Forward speed (Unity 6: linearVelocity, NOT legacy .velocity) ─────
-            // Perception uses _car.transform so the AI reasons about the controlled vehicle.
+            // ── Скорость вперёд (Unity 6: linearVelocity, НЕ legacy .velocity) ───
+            // Perception использует _car.transform, чтобы AI рассуждал об управляемой машине.
             Vector3 selfPos = _car.transform.position;
             Vector3 selfFwd = _car.transform.forward;
             float selfSpeed = _rigidbody != null ? Vector3.Dot(_rigidbody.linearVelocity, selfFwd) : 0f;
 
-            // ── Build perception snapshot ─────────────────────────────────────────
+            // ── Собираем снапшот perception ──────────────────────────────────────
             var perception = new AIPerception(
                 hasTarget:      hasTarget,
                 selfPosition:   selfPos,
@@ -97,10 +97,10 @@ namespace FlatOutLike.Controllers.Enemies
                 targetHpRatio:  targetRatio
             );
 
-            // ── AI tick ───────────────────────────────────────────────────────────
+            // ── AI-тик ───────────────────────────────────────────────────────────
             AIDecision decision = _ai.Tick(ref _brain, perception, _profile, Time.fixedDeltaTime);
 
-            // ── Push result to the input source that CarController reads ──────────
+            // ── Пушим результат в источник ввода, который читает CarController ───
             _aiInput.Set(decision.Move, decision.Handbrake, decision.Nitro);
         }
     }

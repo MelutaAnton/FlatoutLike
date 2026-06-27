@@ -1,33 +1,33 @@
 using System;
 using FlatOutLike.Data.Configs.Enemies;
 using FlatOutLike.Models;
-using UnityEngine; // Vector2, Vector3 math only — no MonoBehaviour/GameObject/Transform
+using UnityEngine; // только математика Vector2/Vector3 — никаких MonoBehaviour/GameObject/Transform
 
 namespace FlatOutLike.Services.AI
 {
     /// <summary>
-    /// Stateless FSM AI brain for enemy cars.
+    /// Stateless FSM-мозг AI для машин врагов.
     ///
-    /// State machine: Idle → Pursue → Ram → Recover → Pursue → …
+    /// Машина состояний: Idle → Pursue → Ram → Recover → Pursue → …
     ///
-    /// Movement philosophy: FULL throttle while engaged. A car's minimum turn radius is
-    /// fixed by its steering geometry, so crawling does NOT let it out-turn a tight orbit —
-    /// instead, orbiting is broken by an explicit back-off (Recover): once the car has been
-    /// close to the target but unable to aim at it for CircleBreakTime seconds (OffAxisTimer),
-    /// or wedged on geometry for StuckTime seconds (StuckTimer), it reverses to gain
-    /// separation and swing its nose onto the target, then makes a fresh straight-in run.
-    /// A GraceTime window after each Recover forces a committed forward run, so the car
-    /// never jitters back-and-forth in place.
+    /// Философия движения: ПОЛНЫЙ газ во время боя. Минимальный радиус поворота машины
+    /// задаётся геометрией рулевого управления, поэтому замедление НЕ позволяет вписаться
+    /// в более крутую дугу — вместо этого орбиту разрывает явный откат (Recover): как только
+    /// машина оказалась близко к цели, но не могла прицелиться в неё в течение CircleBreakTime
+    /// секунд (OffAxisTimer), или застряла на геометрии в течение StuckTime секунд
+    /// (StuckTimer), она едет назад, чтобы оторваться и развернуть нос на цель, после чего
+    /// делает новый прямой заход. Окно GraceTime после каждого Recover заставляет машину
+    /// двигаться вперёд без откатов — чтобы она не дёргалась туда-сюда на месте.
     ///
-    /// All mutable state lives in <see cref="AIBrainState"/> (passed ref by the caller).
-    /// Pure C# — no MonoBehaviour, no Unity lifecycle methods.
+    /// Все изменяемые данные лежат в <see cref="AIBrainState"/> (передаётся ref вызывающим).
+    /// Pure C# — без MonoBehaviour и Unity lifecycle-методов.
     /// </summary>
     public sealed class EnemyAIService : IEnemyAIService
     {
         public AIDecision Tick(ref AIBrainState brain, in AIPerception p,
             EnemyPersonalityConfig profile, float deltaTime)
         {
-            // ── No target → Idle and stop ────────────────────────────────────────
+            // ── Нет цели → Idle и стоп ──────────────────────────────────────────
             if (!p.HasTarget)
             {
                 brain.State        = AIState.Idle;
@@ -36,21 +36,21 @@ namespace FlatOutLike.Services.AI
                 return new AIDecision(Vector2.zero, false, false);
             }
 
-            // ── Geometry ─────────────────────────────────────────────────────────
+            // ── Геометрия ───────────────────────────────────────────────────────
             Vector3 toTarget = p.TargetPosition - p.SelfPosition;
             float   dist     = toTarget.magnitude;
             Vector3 dir      = dist > 0.001f ? toTarget / dist : p.SelfForward;
 
-            float forwardDot = Vector3.Dot(p.SelfForward, dir);       // +1 = target dead ahead
-            float crossY     = Vector3.Cross(p.SelfForward, dir).y;   // positive = target to the right
+            float forwardDot = Vector3.Dot(p.SelfForward, dir);       // +1 = цель строго по курсу
+            float crossY     = Vector3.Cross(p.SelfForward, dir).y;   // положительное = цель справа
             float steer      = ClampSigned(crossY * profile.SteerSharpness);
 
-            // ── Grace countdown (commit-to-forward window after a back-off) ───────
+            // ── Отсчёт grace (окно обязательного движения вперёд после отката) ──
             if (brain.GraceTimer > 0f)
                 brain.GraceTimer -= deltaTime;
 
-            // ── Optional retreat (short-circuits FSM) ────────────────────────────
-            // Aggressor profile has RetreatHpThreshold = 0 → never fires.
+            // ── Опциональное отступление (обходит FSM) ──────────────────────────
+            // У профиля Aggressor RetreatHpThreshold = 0 → не срабатывает никогда.
             if (profile.RetreatHpThreshold > 0f && p.SelfHpRatio < profile.RetreatHpThreshold
                 && brain.State != AIState.Recover)
             {
@@ -58,29 +58,30 @@ namespace FlatOutLike.Services.AI
                 return Reverse(steer);
             }
 
-            // ── Global back-off triggers (cover Pursue AND Ram uniformly) ────────
+            // ── Глобальные триггеры отката (покрывают и Pursue, и Ram) ──────────
             bool engaged = brain.State == AIState.Pursue || brain.State == AIState.Ram;
 
-            // Wedged: full throttle is always commanded while engaged, so near-zero speed
-            // MAGNITUDE unambiguously means stuck on a wall/obstacle. Use |SelfSpeed| (not
-            // signed) so a reversing/shoved-back car is NOT misread as stuck (no moonwalk).
+            // Застряли: в бою всегда подаётся полный газ, поэтому близкая к нулю МОДУЛЬНАЯ
+            // скорость однозначно означает упор в стену/препятствие. Используем |SelfSpeed|
+            // (не знаковую), чтобы машина, едущая назад или отброшенная ударом, НЕ читалась
+            // как застрявшая (никаких moonwalk-эффектов).
             if (engaged && Math.Abs(p.SelfSpeed) < profile.RecoverTriggerSpeed)
                 brain.StuckTimer += deltaTime;
             else
                 brain.StuckTimer = 0f;
 
-            // Orbiting: close enough to engage but can't get the nose on the target.
-            // Gated on GraceTimer<=0 so the post-back-off commit window is a FULL forward
-            // run: we only start counting toward the next back-off after grace expires.
-            // Without this the orbit timer fills during grace and re-triggers the instant
-            // grace ends, producing a reverse / short-forward / reverse rhythm.
+            // Орбита: достаточно близко для боя, но не получается развернуть нос на цель.
+            // Гейтится на GraceTimer<=0, чтобы окно после отката было ПОЛНЫМ заездом вперёд:
+            // начинаем отсчёт до следующего отката только после истечения grace. Без этого
+            // orbit-таймер копится во время grace и срабатывает сразу, как только grace
+            // закончится, давая ритм «назад / короткий вперёд / назад».
             if (brain.GraceTimer <= 0f && engaged
                 && dist <= profile.RamExitDistance && forwardDot < profile.RamAlignmentDot)
                 brain.OffAxisTimer += deltaTime;
             else
                 brain.OffAxisTimer = 0f;
 
-            // Trigger the back-off maneuver — suppressed during the grace window.
+            // Запуск манёвра отката — подавлен внутри grace-окна.
             if (brain.GraceTimer <= 0f && engaged
                 && (brain.StuckTimer >= profile.StuckTime || brain.OffAxisTimer >= profile.CircleBreakTime))
             {
@@ -88,7 +89,7 @@ namespace FlatOutLike.Services.AI
                 return Reverse(steer);
             }
 
-            // ── FSM ──────────────────────────────────────────────────────────────
+            // ── FSM ─────────────────────────────────────────────────────────────
             switch (brain.State)
             {
                 case AIState.Idle:
@@ -97,7 +98,7 @@ namespace FlatOutLike.Services.AI
                     return new AIDecision(Vector2.zero, false, false);
 
                 case AIState.Pursue:
-                    // → Ram: close and aimed
+                    // → Ram: близко и нацелились
                     if (dist <= profile.RamTriggerDistance && forwardDot > profile.RamAlignmentDot)
                     {
                         brain.State = AIState.Ram;
@@ -106,14 +107,14 @@ namespace FlatOutLike.Services.AI
                     return Drive(steer, false);
 
                 case AIState.Ram:
-                    // → Pursue: target escaped (hysteresis RamExit > RamTrigger)
+                    // → Pursue: цель ушла (гистерезис RamExit > RamTrigger)
                     if (dist > profile.RamExitDistance)
                     {
                         brain.State = AIState.Pursue;
                         return Drive(steer, false);
                     }
-                    // Nitro only while actually aimed at the target — boosting off-axis
-                    // just widens the turn radius and feeds the orbit.
+                    // Nitro только когда реально нацелились на цель — буст вне курса
+                    // только расширяет радиус поворота и подкармливает орбиту.
                     return Drive(steer, profile.NitroOnRam && forwardDot > profile.RamAlignmentDot);
 
                 case AIState.Recover:
@@ -124,11 +125,11 @@ namespace FlatOutLike.Services.AI
             }
         }
 
-        // ── Recover ─────────────────────────────────────────────────────────────
+        // ── Recover ────────────────────────────────────────────────────────────
         /// <summary>
-        /// Reverse while counter-steering: backing up with -steer rotates the nose toward
-        /// the target while the car moves away, gaining separation for a straight-in run.
-        /// → Pursue when RecoverTimer elapses, opening a GraceTime commit window.
+        /// Едем назад со встречным рулём: реверс с -steer разворачивает нос в сторону
+        /// цели, пока машина отъезжает, набирая дистанцию для прямого захода.
+        /// → Pursue, когда RecoverTimer истечёт, открывая GraceTime-окно фиксации курса.
         /// </summary>
         private static AIDecision TickRecover(ref AIBrainState brain, EnemyPersonalityConfig p,
             float steer, float dt)
@@ -147,7 +148,7 @@ namespace FlatOutLike.Services.AI
             return Reverse(steer);
         }
 
-        // ── Helpers ─────────────────────────────────────────────────────────────
+        // ── Хелперы ────────────────────────────────────────────────────────────
         private static AIDecision Drive(float steer, bool nitro) =>
             new AIDecision(new Vector2(steer, 1f), false, nitro);
 
@@ -162,7 +163,7 @@ namespace FlatOutLike.Services.AI
             brain.OffAxisTimer = 0f;
         }
 
-        /// <summary>Clamps to [-1, 1] via System.Math (not Mathf), per DamageService precedent.</summary>
+        /// <summary>Зажимает в [-1, 1] через System.Math (а не Mathf), по прецеденту DamageService.</summary>
         private static float ClampSigned(float value) =>
             (float)Math.Max(-1.0, Math.Min(1.0, (double)value));
     }

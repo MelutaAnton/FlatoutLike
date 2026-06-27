@@ -40,7 +40,7 @@ namespace FlatOutLike.Services.Combat
 
         private void OnCarCollision(CarCollisionEvent evt)
         {
-            if (evt.Attacker == evt.Victim) return; // self-collision guard (defence in depth)
+            if (evt.Attacker == evt.Victim) return; // защита от self-collision (defence in depth)
 
             var victim = evt.Victim;
 

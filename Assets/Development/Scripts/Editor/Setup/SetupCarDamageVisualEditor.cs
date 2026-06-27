@@ -9,19 +9,19 @@ using FlatOutLike.Data.Configs.Car;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Adds CarDamageVisualController to the car object in the open _TestDriving scene
-    /// and fills all its SerializedField references:
-    ///   _car            → CarController on the same root
+    /// Добавляет CarDamageVisualController к объекту машины в открытой сцене _TestDriving
+    /// и заполняет все его SerializedField-ссылки:
+    ///   _car            → CarController на том же корне
     ///   _statsConfig    → CarStatsConfig_Default.asset
     ///   _visualConfig   → CarDamageVisualConfig.asset
-    ///   _bodyRenderer   → first Renderer found in children
-    ///   _bodyMeshFilter → first MeshFilter found in children (optional)
-    ///   _skinnedRenderer→ first SkinnedMeshRenderer found in children (optional)
-    ///   _detachableParts→ all DetachablePart components found in children
+    ///   _bodyRenderer   → первый Renderer, найденный в детях
+    ///   _bodyMeshFilter → первый MeshFilter, найденный в детях (опционально)
+    ///   _skinnedRenderer→ первый SkinnedMeshRenderer, найденный в детях (опционально)
+    ///   _detachableParts→ все компоненты DetachablePart, найденные в детях
     ///
-    /// Idempotent: re-running refreshes references without duplicating the component.
+    /// Идемпотентность: повторный запуск обновляет ссылки, не дублируя компонент.
     ///
-    /// Run AFTER:
+    /// Запускать ПОСЛЕ:
     ///   FlatOutLike/Setup/Build Driving Test Scene
     ///   FlatOutLike/Configs/Create Default CarStatsConfig
     ///   FlatOutLike/Configs/Create Default CarDamageVisualConfig
@@ -38,10 +38,10 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Setup Car Damage Visual");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Ensure _TestDriving is open ────────────────────────────────
+            // ── 1. Убеждаемся, что _TestDriving открыт ────────────────────────
             OpenSceneIfNeeded();
 
-            // ── 2. Find car by component (robust vs. name search) ─────────────
+            // ── 2. Ищем машину по компоненту (надёжнее поиска по имени) ───────
             var carController = Object.FindAnyObjectByType<CarController>();
             if (carController == null)
             {
@@ -53,7 +53,7 @@ namespace FlatOutLike.Editor.Setup
             var carGo = carController.gameObject;
             Debug.Log("[Editor] Found car: " + carGo.name);
 
-            // ── 3. Add CarDamageVisualController if not present ───────────────
+            // ── 3. Добавляем CarDamageVisualController, если его ещё нет ──────
             var damageVisual = carGo.GetComponent<CarDamageVisualController>();
             if (damageVisual == null)
             {
@@ -66,7 +66,7 @@ namespace FlatOutLike.Editor.Setup
                           carGo.name + ", refreshing refs.");
             }
 
-            // ── 4. Load configs ───────────────────────────────────────────────
+            // ── 4. Загружаем конфиги ──────────────────────────────────────────
             var statsConfig = AssetDatabase.LoadAssetAtPath<CarStatsConfig>(StatsConfigPath);
             if (statsConfig == null)
                 Debug.LogWarning("[Editor] CarStatsConfig_Default not found at " + StatsConfigPath +
@@ -79,15 +79,15 @@ namespace FlatOutLike.Editor.Setup
                                  ". Run 'FlatOutLike/Configs/Create Default CarDamageVisualConfig' first. " +
                                  "_visualConfig will be null.");
 
-            // ── 5. Locate body renderer and related components ────────────────
-            // GetComponentInChildren searches depth-first; the first hit is the car body mesh.
-            // WheelColliders do not have MeshRenderers by default, so this is safe.
+            // ── 5. Находим body-рендерер и сопутствующие компоненты ───────────
+            // GetComponentInChildren ищет в глубину; первое попадание — меш корпуса машины.
+            // У WheelCollider'ов по умолчанию нет MeshRenderer'ов, поэтому это безопасно.
             var bodyRenderer    = carGo.GetComponentInChildren<Renderer>();
             var bodyMeshFilter  = carGo.GetComponentInChildren<MeshFilter>();
             var skinnedRenderer = carGo.GetComponentInChildren<SkinnedMeshRenderer>();
             var detachableParts = carGo.GetComponentsInChildren<DetachablePart>();
 
-            // ── 6. Fill SerializedFields via SerializedObject ─────────────────
+            // ── 6. Заполняем SerializedField'ы через SerializedObject ─────────
             var so = new SerializedObject(damageVisual);
 
             so.FindProperty("_car").objectReferenceValue          = carController;
@@ -95,15 +95,15 @@ namespace FlatOutLike.Editor.Setup
             so.FindProperty("_visualConfig").objectReferenceValue = visualConfig;
             so.FindProperty("_bodyRenderer").objectReferenceValue = bodyRenderer;
 
-            // Optional: Strategy B (mesh swap)
+            // Опционально: Strategy B (mesh swap)
             if (bodyMeshFilter != null)
                 so.FindProperty("_bodyMeshFilter").objectReferenceValue = bodyMeshFilter;
 
-            // Optional: Strategy C (blend shapes)
+            // Опционально: Strategy C (blend shapes)
             if (skinnedRenderer != null)
                 so.FindProperty("_skinnedRenderer").objectReferenceValue = skinnedRenderer;
 
-            // Detachable parts (empty array is fine if no DetachablePart components exist yet)
+            // Отрывные детали (пустой массив ОК, если компонентов DetachablePart ещё нет)
             var partsProp = so.FindProperty("_detachableParts");
             partsProp.arraySize = detachableParts.Length;
             for (int i = 0; i < detachableParts.Length; i++)
@@ -117,7 +117,7 @@ namespace FlatOutLike.Editor.Setup
                       ", bodyRenderer=" + (bodyRenderer != null ? bodyRenderer.name : "NULL") +
                       ", detachableParts=" + detachableParts.Length + ".");
 
-            // ── 7. Mark scene dirty ───────────────────────────────────────────
+            // ── 7. Помечаем сцену как dirty ───────────────────────────────────
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
             Undo.CollapseUndoOperations(undoGroup);

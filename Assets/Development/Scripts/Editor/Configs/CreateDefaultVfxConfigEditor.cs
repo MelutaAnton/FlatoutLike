@@ -15,25 +15,25 @@ namespace FlatOutLike.Editor.Configs
         [MenuItem("FlatOutLike/Configs/Create Default VfxConfig")]
         public static void CreateDefaultVfxConfig()
         {
-            // ── Idempotency check ─────────────────────────────────────────────
+            // ── Проверка идемпотентности ──────────────────────────────────────
             if (AssetDatabase.LoadAssetAtPath<VfxConfig>(AssetPath) != null)
             {
                 Debug.Log("[Editor] VfxConfig already exists at " + AssetPath);
                 return;
             }
 
-            // ── Ensure folder hierarchy exists ────────────────────────────────
+            // ── Убеждаемся, что иерархия папок существует ─────────────────────
             EnsureFolder("Assets/Development", "Data");
             EnsureFolder(FolderData,           "Configs");
             EnsureFolder(FolderCfg,            "Vfx");
 
-            // ── Create asset ──────────────────────────────────────────────────
+            // ── Создание ассета ───────────────────────────────────────────────
             var config = ScriptableObject.CreateInstance<VfxConfig>();
             AssetDatabase.CreateAsset(config, AssetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            // ── Explicitly set entries to empty array (populate after VFX prefabs exist) ──
+            // ── Явно задаём entries как пустой массив (заполнить после создания VFX-префабов) ──
             var so = new SerializedObject(config);
             so.FindProperty("_entries").arraySize = 0;
             so.ApplyModifiedProperties();

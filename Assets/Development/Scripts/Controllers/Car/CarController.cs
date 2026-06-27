@@ -28,9 +28,9 @@ namespace FlatOutLike.Controllers.Car
         public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
 
         /// <summary>
-        /// Replaces the active input source at runtime.
-        /// Used by <c>EnemyCarController</c> to swap in an <c>AIInputProvider</c>
-        /// after VContainer injects the default <c>KeyboardInputProvider</c>.
+        /// Заменяет активный источник ввода в рантайме.
+        /// Используется <c>EnemyCarController</c>, чтобы подменить <c>AIInputProvider</c>
+        /// после того как VContainer заинжектил дефолтный <c>KeyboardInputProvider</c>.
         /// </summary>
         public void SetInputSource(IInputProvider provider)
         {
@@ -42,9 +42,9 @@ namespace FlatOutLike.Controllers.Car
         public void Construct(IInputProvider input, ICarMovementService movement,
             IDamageService damage, IEventBus eventBus)
         {
-            // Order-independent: an AI wrapper (EnemyCarController) may have already
-            // installed an AIInputProvider via SetInputSource before this Construct runs.
-            // Never overwrite an existing source with the keyboard singleton.
+            // Не зависит от порядка: AI-обёртка (EnemyCarController) могла уже
+            // установить AIInputProvider через SetInputSource до запуска этого Construct.
+            // Никогда не перезаписываем существующий источник keyboard-синглтоном.
             _input ??= input;
             _movement = movement;
             _eventBus = eventBus;
@@ -158,7 +158,7 @@ namespace FlatOutLike.Controllers.Car
 
             float impactSpeed = c.relativeVelocity.magnitude;
             var otherCar = c.gameObject.GetComponentInParent<CarController>();
-            if (otherCar == this) return; // ignore own detached parts bouncing back
+            if (otherCar == this) return; // игнорируем собственные оторванные детали, отскочившие назад
             CarId attacker = otherCar != null ? otherCar.CarId : CarId.None;
             Vector3 point = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
 

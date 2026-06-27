@@ -6,14 +6,14 @@ using FlatOutLike.Controllers.Vfx;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Select one or more particle prefab assets in the Project window and run this
-    /// menu item. For each prefab the script will:
-    ///   1. Set ParticleSystem.main.stopAction = Callback (required for pool return).
-    ///   2. Set ParticleSystem.main.playOnAwake = false (effects are pool-driven, activated
-    ///      via SetActive before Launch — playOnAwake fires on the old pooled position).
-    ///   3. Add ParticleController component if absent.
-    ///   4. Wire ParticleController._particleSystem to the ParticleSystem on the root.
-    /// Operation is idempotent — re-running on already-configured prefabs is safe.
+    /// Выделите один или несколько prefab'ов partice-эффектов в окне Project и запустите
+    /// этот пункт меню. Для каждого префаба скрипт:
+    ///   1. Установит ParticleSystem.main.stopAction = Callback (нужно для возврата в Pool).
+    ///   2. Установит ParticleSystem.main.playOnAwake = false (эффекты управляются Pool'ом,
+    ///      активируются через SetActive перед Launch — playOnAwake срабатывает на старой pooled-позиции).
+    ///   3. Добавит компонент ParticleController, если его нет.
+    ///   4. Привяжет ParticleController._particleSystem к ParticleSystem на корне.
+    /// Операция идемпотентна — повторный запуск на уже настроенных префабах безопасен.
     /// </summary>
     public static class SetupVfxPrefabsEditor
     {
@@ -40,7 +40,7 @@ namespace FlatOutLike.Editor.Setup
             {
                 string assetPath = AssetDatabase.GetAssetPath(go);
 
-                // ── Filter: only prefab assets ────────────────────────────────
+                // ── Фильтр: только prefab-ассеты ──────────────────────────────
                 if (string.IsNullOrEmpty(assetPath) ||
                     !assetPath.EndsWith(".prefab", System.StringComparison.OrdinalIgnoreCase))
                 {
@@ -55,7 +55,7 @@ namespace FlatOutLike.Editor.Setup
                     continue;
                 }
 
-                // ── Open prefab contents for editing ──────────────────────────
+                // ── Открываем содержимое префаба для редактирования ───────────
                 var root = PrefabUtility.LoadPrefabContents(assetPath);
                 bool changed = false;
 
@@ -69,11 +69,11 @@ namespace FlatOutLike.Editor.Setup
                         continue;
                     }
 
-                    // ── 1. Configure MainModule ───────────────────────────────
+                    // ── 1. Настраиваем MainModule ─────────────────────────────
                     var main = ps.main;
 
-                    // stopAction = Callback: required so ParticleController.OnParticleSystemStopped()
-                    // fires and the pool receives the return callback.
+                    // stopAction = Callback: нужно, чтобы ParticleController.OnParticleSystemStopped()
+                    // срабатывал и Pool получал callback возврата.
                     if (main.stopAction != ParticleSystemStopAction.Callback)
                     {
                         main.stopAction = ParticleSystemStopAction.Callback;
@@ -85,9 +85,9 @@ namespace FlatOutLike.Editor.Setup
                         Debug.Log("[Editor] '" + go.name + "' — stopAction already Callback, skipping.");
                     }
 
-                    // playOnAwake = false: effects are pool-driven and activated via SetActive(true)
-                    // before Launch(). With playOnAwake enabled the system fires on the old pooled
-                    // position one frame before repositioning and can trigger the stop-callback early.
+                    // playOnAwake = false: эффекты управляются Pool'ом и активируются через SetActive(true)
+                    // перед Launch(). С включённым playOnAwake система запускается на старой pooled-позиции
+                    // за кадр до перепозиционирования и может преждевременно дёрнуть stop-callback.
                     if (main.playOnAwake)
                     {
                         main.playOnAwake = false;
@@ -99,7 +99,7 @@ namespace FlatOutLike.Editor.Setup
                         Debug.Log("[Editor] '" + go.name + "' — playOnAwake already false, skipping.");
                     }
 
-                    // ── 2. Add ParticleController if not present ──────────────
+                    // ── 2. Добавляем ParticleController, если его нет ─────────
                     var pc = root.GetComponent<ParticleController>();
                     if (pc == null)
                     {
@@ -112,7 +112,7 @@ namespace FlatOutLike.Editor.Setup
                         Debug.Log("[Editor] '" + go.name + "' — ParticleController already present.");
                     }
 
-                    // ── 3. Wire _particleSystem ───────────────────────────────
+                    // ── 3. Привязываем _particleSystem ────────────────────────
                     var sopc = new SerializedObject(pc);
                     var psProp = sopc.FindProperty("_particleSystem");
                     if (psProp.objectReferenceValue == null)
@@ -127,7 +127,7 @@ namespace FlatOutLike.Editor.Setup
                         Debug.Log("[Editor] '" + go.name + "' — ParticleController._particleSystem already wired.");
                     }
 
-                    // ── Save if anything changed ──────────────────────────────
+                    // ── Сохраняем, если что-то изменилось ─────────────────────
                     if (changed)
                     {
                         PrefabUtility.SaveAsPrefabAsset(root, assetPath);

@@ -6,21 +6,21 @@ using FlatOutLike.Data.Configs.Enemies;
 namespace FlatOutLike.Editor.Configs
 {
     /// <summary>
-    /// Creates the default Aggressor EnemyPersonalityConfig asset, or synchronises
-    /// newly-added tuning fields if the asset already exists (preserving its GUID).
+    /// Создаёт дефолтный ассет EnemyPersonalityConfig (Aggressor) либо синхронизирует
+    /// недавно добавленные поля тюнинга, если ассет уже существует (GUID сохраняется).
     ///
-    /// Behaviour:
-    ///   • Asset absent  → create fresh instance; C# defaults cover all fields.
-    ///   • Asset present → re-assert defaults ONLY for the three newest tuning fields
-    ///     (_stuckTime, _circleBreakTime, _graceTime). All other fields
-    ///     (RamAggression, distances, etc.) are intentionally left untouched so that
-    ///     any manual tuning done in Inspector is preserved.
+    /// Поведение:
+    ///   • Ассета нет → создаётся новый инстанс; C#-дефолты покрывают все поля.
+    ///   • Ассет есть → перезаписываем дефолты ТОЛЬКО для трёх последних tuning-полей
+    ///     (_stuckTime, _circleBreakTime, _graceTime). Остальные поля
+    ///     (RamAggression, дистанции и т.д.) намеренно не трогаются — чтобы ручной
+    ///     тюнинг из Inspector сохранился.
     ///
-    /// Idempotent: repeating this menu action is safe — same values are written each time,
-    /// no duplicates, no GUID change.
+    /// Идемпотентность: повторный запуск этого пункта меню безопасен — каждый раз
+    /// пишутся те же значения, без дубликатов и без смены GUID.
     ///
-    /// Null-safe: if a field is not found on either the asset or the defaults instance
-    /// (e.g. after a schema change), a warning is logged and the field is skipped — no NRE.
+    /// Null-safe: если поле не найдено ни на ассете, ни на инстансе с дефолтами
+    /// (например, после смены схемы) — пишется warning и поле пропускается, без NRE.
     /// </summary>
     public static class CreateDefaultEnemyPersonalityConfigEditor
     {
@@ -40,13 +40,13 @@ namespace FlatOutLike.Editor.Configs
                 return;
             }
 
-            // ── Ensure folder hierarchy ───────────────────────────────────────
+            // ── Убеждаемся, что иерархия папок существует ─────────────────────
             EnsureFolder("Assets/Development", "Data");
             EnsureFolder(FolderData,           "Configs");
             EnsureFolder(FolderConfigs,        "Enemies");
 
-            // ── Create asset ──────────────────────────────────────────────────
-            // Class defaults already define the Aggressor profile; no extra setup required.
+            // ── Создание ассета ───────────────────────────────────────────────
+            // Дефолты класса уже задают профиль Aggressor; дополнительная настройка не нужна.
             var config = ScriptableObject.CreateInstance<EnemyPersonalityConfig>();
             AssetDatabase.CreateAsset(config, AssetPath);
             AssetDatabase.SaveAssets();
@@ -61,22 +61,22 @@ namespace FlatOutLike.Editor.Configs
         }
 
         /// <summary>
-        /// Writes C# class defaults into the tuning fields that were added after the
-        /// asset was first created. Values come from a fresh temporary instance so that
-        /// magic numbers are not duplicated here — the class is the single source of truth.
-        /// Each field is guarded: if FindProperty returns null (schema change), the field
-        /// is skipped with a warning instead of throwing NullReferenceException.
+        /// Записывает C#-дефолты класса в поля тюнинга, которые были добавлены уже
+        /// после создания ассета. Значения берутся из свежего временного инстанса,
+        /// чтобы magic numbers здесь не дублировались — класс остаётся единственным
+        /// источником истины. Каждое поле под защитой: если FindProperty вернул null
+        /// (смена схемы), поле пропускается с warning'ом вместо NullReferenceException.
         /// </summary>
         private static void SyncNewTuningFields(EnemyPersonalityConfig asset)
         {
-            // Fields to sync — update this list when new tuning fields are added to the class.
+            // Поля для синхронизации — обновлять этот список при добавлении новых tuning-полей в класс.
             var fieldNames = new[] { "_stuckTime", "_circleBreakTime", "_graceTime" };
 
-            // Spin up a temporary instance to read the C# constructor defaults.
+            // Поднимаем временный инстанс, чтобы прочитать C#-дефолты конструктора.
             var defaults   = ScriptableObject.CreateInstance<EnemyPersonalityConfig>();
             var soDefaults = new SerializedObject(defaults);
 
-            // Read default values with null-guard on the defaults side.
+            // Читаем дефолтные значения с null-guard на стороне defaults.
             var defaultValues = new System.Collections.Generic.Dictionary<string, float>();
             foreach (var fieldName in fieldNames)
             {
@@ -91,7 +91,7 @@ namespace FlatOutLike.Editor.Configs
 
             Object.DestroyImmediate(defaults);
 
-            // Apply to the existing asset — GUID is never touched.
+            // Применяем к существующему ассету — GUID не трогается.
             var soExisting = new SerializedObject(asset);
             foreach (var kvp in defaultValues)
             {

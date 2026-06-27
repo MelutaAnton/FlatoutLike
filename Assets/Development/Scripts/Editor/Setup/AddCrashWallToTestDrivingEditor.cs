@@ -7,12 +7,12 @@ using UnityEngine.SceneManagement;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Adds a static obstacle wall to _TestDriving for collision damage testing.
-    /// The wall is placed at (0, 1.5, 20) — directly ahead of the car spawn point (0, 1, 0)
-    /// on the +Z acceleration path. It is a BoxCollider without Rigidbody (infinite mass),
-    /// which triggers the WallMassRatio branch in DamageService.
+    /// Добавляет статическую стену-препятствие в _TestDriving для проверки урона
+    /// от столкновений. Стена располагается в (0, 1.5, 20) — прямо по курсу машины
+    /// от точки спавна (0, 1, 0) на трассе разгона по +Z. Это BoxCollider без
+    /// Rigidbody (бесконечная масса), что включает ветку WallMassRatio в DamageService.
     ///
-    /// Idempotent: checks for "CrashTestWall" by name before creating.
+    /// Идемпотентность: перед созданием проверяет наличие "CrashTestWall" по имени.
     /// </summary>
     public static class AddCrashWallToTestDrivingEditor
     {
@@ -25,10 +25,10 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Add Crash Wall to Test Driving");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Ensure _TestDriving is open ────────────────────────────────
+            // ── 1. Убеждаемся, что _TestDriving открыт ────────────────────────
             OpenSceneIfNeeded();
 
-            // ── 2. Idempotency: check by unique wall name ─────────────────────
+            // ── 2. Идемпотентность: проверка по уникальному имени стены ───────
             var existing = GameObject.Find(WallName);
             if (existing != null)
             {
@@ -37,19 +37,19 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
-            // ── 3. Create wall as a Cube primitive (comes with BoxCollider) ────
+            // ── 3. Создаём стену как Cube-примитив (идёт с BoxCollider) ───────
             var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Undo.RegisterCreatedObjectUndo(wall, "Create CrashTestWall");
             wall.name = WallName;
 
-            // Position: 20 units ahead of car spawn point; lifted to Y=1.5 so the
-            // box center aligns with the car body (car height ~1.4 units).
-            // Scale: 10 wide × 3 tall × 0.5 deep — wide enough that the car cannot steer around it.
+            // Позиция: 20 единиц по курсу от точки спавна; поднята до Y=1.5, чтобы
+            // центр коробки совпадал с корпусом машины (высота машины ~1.4 единицы).
+            // Размеры: 10 в ширину × 3 в высоту × 0.5 в глубину — достаточно широкая, чтобы машина не объехала её.
             wall.transform.position   = new Vector3(0f, 1.5f, 20f);
             wall.transform.localScale = new Vector3(10f, 3f, 0.5f);
 
-            // ── 4. Confirm no Rigidbody (static = infinite mass for WallMassRatio) ──
-            // CreatePrimitive never adds Rigidbody, but guard defensively.
+            // ── 4. Убеждаемся, что нет Rigidbody (статика = бесконечная масса для WallMassRatio) ──
+            // CreatePrimitive никогда не добавляет Rigidbody, но проверяем на всякий случай.
             var rb = wall.GetComponent<Rigidbody>();
             if (rb != null)
             {
@@ -57,7 +57,7 @@ namespace FlatOutLike.Editor.Setup
                 Debug.Log("[Editor] Removed Rigidbody from CrashTestWall (static obstacle).");
             }
 
-            // BoxCollider is created by CreatePrimitive — confirm
+            // BoxCollider создаётся CreatePrimitive — подтверждаем
             var col = wall.GetComponent<BoxCollider>();
             if (col == null)
             {
@@ -65,7 +65,7 @@ namespace FlatOutLike.Editor.Setup
                 Debug.Log("[Editor] Added BoxCollider to CrashTestWall.");
             }
 
-            // ── 5. Mark scene dirty ───────────────────────────────────────────
+            // ── 5. Помечаем сцену как dirty ───────────────────────────────────
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
             Undo.CollapseUndoOperations(undoGroup);

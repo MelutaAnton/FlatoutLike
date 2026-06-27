@@ -15,26 +15,26 @@ namespace FlatOutLike.Editor.Configs
         [MenuItem("FlatOutLike/Configs/Create Default DamageConfig")]
         public static void CreateDefaultDamageConfig()
         {
-            // ── Idempotency check ─────────────────────────────────────────────
+            // ── Проверка идемпотентности ──────────────────────────────────────
             if (AssetDatabase.LoadAssetAtPath<DamageConfig>(AssetPath) != null)
             {
                 Debug.Log("[Editor] DamageConfig already exists at " + AssetPath);
                 return;
             }
 
-            // ── Ensure folder hierarchy exists ────────────────────────────────
+            // ── Убеждаемся, что иерархия папок существует ─────────────────────
             EnsureFolder("Assets/Development", "Data");
             EnsureFolder(FolderData,           "Configs");
             EnsureFolder(FolderCfg,            "Combat");
 
-            // ── Create asset ──────────────────────────────────────────────────
+            // ── Создание ассета ───────────────────────────────────────────────
             var config = ScriptableObject.CreateInstance<DamageConfig>();
             AssetDatabase.CreateAsset(config, AssetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            // ── Explicit default values (DamageScale=1, MinImpactSpeed=3, WallMassRatio=1) ──
-            // Class field-initializers already match these values; set explicitly for clarity.
+            // ── Явные дефолтные значения (DamageScale=1, MinImpactSpeed=3, WallMassRatio=1) ──
+            // Field-initializers класса уже совпадают с этими значениями; задаём явно для ясности.
             var so = new SerializedObject(config);
             so.FindProperty("_damageScale").floatValue    = 1f;
             so.FindProperty("_minImpactSpeed").floatValue = 3f;

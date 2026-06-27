@@ -11,8 +11,8 @@ namespace FlatOutLike.Data.Configs.Car
         [SerializeField] private DamageStage[] _stages;
 
         /// <summary>
-        /// Materials that are never overwritten by damageMaterial (e.g. glass, headlights).
-        /// Comparison is by original slot material reference, not by current renderer state.
+        /// Материалы, которые никогда не перезаписываются damageMaterial (например, стекло, фары).
+        /// Сравнение идёт по ссылке на исходный материал слота, а не по текущему состоянию renderer.
         /// </summary>
         [SerializeField] private Material[] _preservedMaterials;
 
@@ -28,9 +28,9 @@ namespace FlatOutLike.Data.Configs.Car
         public AnimationCurve DamageResponse => _damageResponse;
 
         /// <summary>
-        /// A damage stage defines a combination of visual strategies applied in parallel
-        /// when HP drops to or below hpThreshold. Empty/null fields are ignored.
-        /// Stages should be ordered by descending hpThreshold (e.g. 1.0, 0.66, 0.33).
+        /// Стадия повреждения задаёт набор визуальных стратегий, применяемых параллельно,
+        /// когда HP падает до hpThreshold или ниже. Пустые/null-поля игнорируются.
+        /// Стадии должны идти по убыванию hpThreshold (например, 1.0, 0.66, 0.33).
         /// </summary>
         [Serializable]
         public struct DamageStage

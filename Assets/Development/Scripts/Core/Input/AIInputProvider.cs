@@ -3,10 +3,10 @@ using UnityEngine;
 namespace FlatOutLike.Core.Input
 {
     /// <summary>
-    /// Writable input provider for AI-controlled cars.
-    /// One instance per enemy — NOT registered in DI as a singleton.
-    /// Values are pushed externally by EnemyCarController each FixedUpdate;
-    /// <see cref="Tick"/> is intentionally a no-op (poll vs push inversion).
+    /// Записываемый провайдер ввода для машин под управлением AI.
+    /// Один экземпляр на врага — НЕ регистрируется в DI как singleton.
+    /// Значения пушатся снаружи из EnemyCarController каждый FixedUpdate;
+    /// <see cref="Tick"/> намеренно пустой (инверсия poll vs push).
     /// </summary>
     public sealed class AIInputProvider : IInputProvider
     {
@@ -25,8 +25,8 @@ namespace FlatOutLike.Core.Input
         public bool    PausePressed       => false;
 
         /// <summary>
-        /// Writes the next physics-frame inputs for the sibling <c>CarController</c>.
-        /// Called by <c>EnemyCarController.FixedUpdate</c> after the AI tick.
+        /// Записывает ввод для следующего физического кадра для соседнего <c>CarController</c>.
+        /// Вызывается из <c>EnemyCarController.FixedUpdate</c> после AI-тика.
         /// </summary>
         public void Set(Vector2 move, bool handbrake, bool nitro)
         {
@@ -35,7 +35,7 @@ namespace FlatOutLike.Core.Input
             _nitro     = nitro;
         }
 
-        // No polling needed — values are pushed externally.
+        // Polling не нужен — значения пушатся снаружи.
         public void Tick() { }
     }
 }

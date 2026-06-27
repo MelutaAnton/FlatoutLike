@@ -13,8 +13,8 @@ namespace FlatOutLike.Controllers.Car
         [SerializeField] private CarStatsConfig _statsConfig;
         [SerializeField] private CarDamageVisualConfig _visualConfig;
         [SerializeField] private CarController _car;
-        [SerializeField] private MeshFilter _bodyMeshFilter;             // optional: Strategy B
-        [SerializeField] private SkinnedMeshRenderer _skinnedRenderer;  // optional: Strategy C
+        [SerializeField] private MeshFilter _bodyMeshFilter;             // опционально: Стратегия B
+        [SerializeField] private SkinnedMeshRenderer _skinnedRenderer;  // опционально: Стратегия C
         [SerializeField] private DetachablePart[] _detachableParts;
 
         private IEventBus _eventBus;
@@ -22,13 +22,13 @@ namespace FlatOutLike.Controllers.Car
         private bool _initialized;
         private int _currentStageIndex = -1;
 
-        // Continuous shader driver (_DamageAmount on FlatOutLike/CarDamageLit).
+        // Непрерывный shader-драйвер (_DamageAmount в FlatOutLike/CarDamageLit).
         private static readonly int DamageAmountId = Shader.PropertyToID("_DamageAmount");
         private float _targetDamage01;
         private float _currentDamage01;
         private MaterialPropertyBlock _mpb;
-        private Renderer[] _damageRenderers; // body renderers that receive _DamageAmount
-        private HashSet<Material> _preserved; // glass/headlights — excluded from _damageRenderers
+        private Renderer[] _damageRenderers; // body-рендереры, получающие _DamageAmount
+        private HashSet<Material> _preserved; // стекло/фары — исключены из _damageRenderers
 
         [Inject]
         public void Construct(IEventBus eventBus, IVfxService vfx)
@@ -36,22 +36,22 @@ namespace FlatOutLike.Controllers.Car
             _eventBus = eventBus;
             _vfx = vfx;
             _initialized = true;
-            // OnEnable fires before Construct on scene start, so we subscribe here explicitly.
+            // OnEnable срабатывает до Construct на старте сцены, поэтому подписываемся здесь явно.
             _eventBus.Subscribe<CarDamagedEvent>(OnCarDamaged);
 
             CollectBodyRenderers();
         }
 
         /// <summary>
-        /// Builds _damageRenderers: body renderers that will receive the continuous _DamageAmount
-        /// shader property. Excludes:
-        ///   (a) Subtrees rooted at wheel visual Transforms (tyres have their own materials).
-        ///   (b) ParticleSystemRenderer components (VFX, not body).
-        ///   (c) Renderers where ALL original material slots are in _preserved (glass, headlights).
+        /// Собирает _damageRenderers: body-рендереры, которые получают непрерывное
+        /// shader-свойство _DamageAmount. Исключает:
+        ///   (a) Поддеревья под Transform'ами визуалов колёс (у шин свои материалы).
+        ///   (b) Компоненты ParticleSystemRenderer (VFX, не body).
+        ///   (c) Рендереры, у которых ВСЕ исходные слоты материалов в _preserved (стекло, фары).
         /// </summary>
         private void CollectBodyRenderers()
         {
-            // Build preserved-material set first so the per-renderer check below can use it.
+            // Сначала собираем множество preserved-материалов, чтобы проверка ниже могла его использовать.
             _preserved = new HashSet<Material>();
             var preservedList = _visualConfig != null ? _visualConfig.PreservedMaterials : null;
             if (preservedList != null)
@@ -80,7 +80,7 @@ namespace FlatOutLike.Controllers.Car
                     if (isWheelChild) continue;
                 }
 
-                // Exclude fully-preserved renderers (glass, headlights — all slots preserved).
+                // Исключаем полностью preserved-рендереры (стекло, фары — все слоты в preserved).
                 if (_preserved.Count > 0)
                 {
                     var slots = r.sharedMaterials;
@@ -120,8 +120,8 @@ namespace FlatOutLike.Controllers.Car
 
         private void OnEnable()
         {
-            // Guard: OnEnable fires before Construct — do nothing until initialized.
-            // On re-enable after OnDisable, re-subscribe.
+            // Guard: OnEnable срабатывает до Construct — ничего не делаем, пока не инициализированы.
+            // При повторном включении после OnDisable — переподписываемся.
             if (!_initialized) return;
             _eventBus.Subscribe<CarDamagedEvent>(OnCarDamaged);
         }
@@ -146,22 +146,22 @@ namespace FlatOutLike.Controllers.Car
             float maxArmor = _statsConfig.MaxArmor;
             if (maxArmor <= 0f) return;
 
-            // Step 3 verification log (no HUD yet); remove on step 8 when DerbyHudView exists.
+            // Лог для проверки шага 3 (HUD ещё нет); убрать на шаге 8, когда появится DerbyHudView.
             Debug.Log($"[Damage] {e.Target} HP {e.RemainingHp:F0}/{maxArmor:F0} (-{e.Damage:F0})");
 
             float ratio = e.RemainingHp / maxArmor;
-            _targetDamage01 = Mathf.Clamp01(1f - ratio); // drives shader continuously, independent of stage
+            _targetDamage01 = Mathf.Clamp01(1f - ratio); // непрерывно гонит шейдер, независимо от стадии
 
             int newIndex = FindStageIndex(ratio);
 
             if (newIndex == _currentStageIndex) return;
 
-            // goingDeeper: entering a more-damaged stage (e.g. Pristine→Dented).
-            // Used to guard one-time effects (decals, VFX) so they don't repeat on HP restore.
+            // goingDeeper: переходим в более повреждённую стадию (напр., Pristine→Dented).
+            // Используется как guard для одноразовых эффектов (decals, VFX), чтобы они не повторялись при восстановлении HP.
             bool goingDeeper = newIndex > _currentStageIndex;
             _currentStageIndex = newIndex;
 
-            // Step 3 verification log; remove on step 8 (HUD).
+            // Лог для проверки шага 3; убрать на шаге 8 (HUD).
             Debug.Log($"[Damage] {e.Target} stage → {newIndex} (ratio {ratio:P0}, {(goingDeeper ? "worse" : "repaired")})");
 
             if (newIndex >= 0 && newIndex < _visualConfig.Stages.Count)
@@ -169,9 +169,9 @@ namespace FlatOutLike.Controllers.Car
         }
 
         /// <summary>
-        /// Returns the index of the stage with the minimum hpThreshold that is still
-        /// >= the current HP ratio. As HP drops, we progressively enter deeper stages.
-        /// Stages must be sorted descending by hpThreshold (e.g. 1.0, 0.66, 0.33).
+        /// Возвращает индекс стадии с минимальным hpThreshold, который при этом
+        /// >= текущему HP-соотношению. По мере падения HP последовательно входим в более глубокие стадии.
+        /// Стадии должны быть отсортированы по hpThreshold по убыванию (например, 1.0, 0.66, 0.33).
         /// </summary>
         private int FindStageIndex(float ratio)
         {
@@ -191,25 +191,25 @@ namespace FlatOutLike.Controllers.Car
                 }
             }
 
-            // Fallback: ratio is above all thresholds (e.g. freshly spawned) — use first stage.
+            // Fallback: ratio выше всех порогов (например, только что заспавнились) — берём первую стадию.
             if (result == -1)
                 result = 0;
 
             return result;
         }
 
-        /// <param name="goingDeeper">True when entering a more-damaged stage; false on HP restore.</param>
+        /// <param name="goingDeeper">True при входе в более повреждённую стадию; false при восстановлении HP.</param>
         private void ApplyStage(CarDamageVisualConfig.DamageStage stage, bool goingDeeper)
         {
-            // --- Idempotent state setters: apply on ANY stage change (including HP restore) ---
-            // Strategy A (discrete material swap) removed — damage visualisation is now driven
-            // continuously by _DamageAmount shader property via Update(). See _damageRenderers.
+            // --- Идемпотентные сеттеры состояния: применяются на ЛЮБОЙ смене стадии (включая восстановление HP) ---
+            // Стратегия A (дискретная подмена материалов) удалена — визуализация повреждений теперь
+            // непрерывно гонится через shader-свойство _DamageAmount в Update(). См. _damageRenderers.
 
-            // Strategy B: Mesh swap
+            // Стратегия B: подмена меша
             if (stage.damagedMesh != null && _bodyMeshFilter != null)
                 _bodyMeshFilter.sharedMesh = stage.damagedMesh;
 
-            // Strategy C: Blend shape weights
+            // Стратегия C: веса blend shape
             if (stage.blendShapeWeights != null && stage.blendShapeWeights.Length > 0
                 && _skinnedRenderer != null && _skinnedRenderer.sharedMesh != null)
             {
@@ -223,7 +223,7 @@ namespace FlatOutLike.Controllers.Car
                 }
             }
 
-            // Detachable parts toggle (idempotent: just sets joint breakForce)
+            // Переключение отрываемых деталей (идемпотентно: только проставляет joint breakForce)
             if (_detachableParts != null)
             {
                 foreach (var part in _detachableParts)
@@ -233,11 +233,11 @@ namespace FlatOutLike.Controllers.Car
                 }
             }
 
-            // --- One-time effects: only when entering a deeper (more-damaged) stage ---
-            // Prevents duplicate decals / VFX when HP is restored (step 5 repair pickup).
+            // --- Одноразовые эффекты: только при входе в более глубокую (более повреждённую) стадию ---
+            // Предотвращает дублирование decals / VFX при восстановлении HP (repair pickup из шага 5).
             if (!goingDeeper) return;
 
-            // Decals: instantiate as persistent children (not pooled)
+            // Decals: создаём как постоянных детей (не из Pool)
             if (stage.decalPrefabsToSpawn != null)
             {
                 foreach (var decalPrefab in stage.decalPrefabsToSpawn)
@@ -247,7 +247,7 @@ namespace FlatOutLike.Controllers.Car
                 }
             }
 
-            // VFX: play via service (controllers never call IVfxFactory directly)
+            // VFX: проигрываем через Service (контроллеры никогда не вызывают IVfxFactory напрямую)
             if (stage.vfxToActivate != null && _vfx != null)
             {
                 foreach (var vfxType in stage.vfxToActivate)

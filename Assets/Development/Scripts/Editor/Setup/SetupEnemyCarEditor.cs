@@ -12,21 +12,21 @@ using FlatOutLike.Installers;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Instantiates an enemy car in the active test scene, adds EnemyCarController,
-    /// fills all its SerializedField references and converts its body materials
-    /// to the damage shader automatically.
+    /// Спавнит машину-врага в активной тестовой сцене, добавляет EnemyCarController,
+    /// заполняет все его SerializedField-ссылки и автоматически конвертирует материалы
+    /// корпуса на damage-шейдер.
     ///
-    /// Finding the player car: first CarController in the scene that does NOT have
-    /// an EnemyCarController sibling — this is robust to future multi-enemy setups.
+    /// Поиск машины игрока: первый CarController в сцене, у которого НЕТ соседнего
+    /// EnemyCarController — это надёжно работает и для будущих multi-enemy раскладов.
     ///
-    /// Idempotent: if EnemyCarController already exists in the scene only the
-    /// refs are refreshed; no new GameObject is instantiated.
+    /// Идемпотентность: если EnemyCarController уже есть в сцене — обновляются только
+    /// ссылки; новый GameObject не создаётся.
     ///
-    /// Run AFTER:
+    /// Запускать ПОСЛЕ:
     ///   FlatOutLike/Setup/Build Driving Test Scene
     ///   FlatOutLike/Configs/Create Default EnemyPersonalityConfig
     ///
-    /// Run BEFORE:
+    /// Запускать ДО:
     ///   FlatOutLike/Setup/Fill GameLifetimeScope Refs (Step 4)
     /// </summary>
     public static class SetupEnemyCarEditor
@@ -40,7 +40,7 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Setup Enemy Car (Step 4)");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Check scene has GameLifetimeScope ──────────────────────────
+            // ── 1. Проверяем, что в сцене есть GameLifetimeScope ──────────────
             var scope = Object.FindAnyObjectByType<GameLifetimeScope>();
             if (scope == null)
             {
@@ -49,7 +49,7 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
-            // ── 2. Find player CarController (no EnemyCarController sibling) ──
+            // ── 2. Ищем CarController игрока (без соседнего EnemyCarController) ──
             var playerCar = FindPlayerCar();
             if (playerCar == null)
             {
@@ -59,7 +59,7 @@ namespace FlatOutLike.Editor.Setup
             }
             Debug.Log("[Editor] Found player car: " + playerCar.gameObject.name);
 
-            // ── 3. Idempotency: EnemyCarController already in scene ───────────
+            // ── 3. Идемпотентность: EnemyCarController уже в сцене ────────────
             var existingEnemy = Object.FindAnyObjectByType<EnemyCarController>();
             if (existingEnemy != null)
             {
@@ -72,8 +72,8 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
-            // ── 4. Resolve car prefab ─────────────────────────────────────────
-            // Prefer the exact same prefab that was used to spawn the player car.
+            // ── 4. Определяем prefab машины ───────────────────────────────────
+            // Предпочитаем ровно тот же префаб, из которого был создан игрок.
             var prefabSource = PrefabUtility.GetCorrespondingObjectFromSource(playerCar.gameObject)
                                as GameObject;
             if (prefabSource == null)
@@ -89,16 +89,16 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
-            // ── 5. Instantiate enemy car ──────────────────────────────────────
+            // ── 5. Спавним машину-врага ───────────────────────────────────────
             var enemyCarGo = (GameObject)PrefabUtility.InstantiatePrefab(prefabSource);
             Undo.RegisterCreatedObjectUndo(enemyCarGo, "Instantiate Enemy Car");
             enemyCarGo.name               = "EnemyCar";
-            enemyCarGo.transform.position = new Vector3(0f, 1f, 25f);  // 25 m ahead of player
-            enemyCarGo.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // facing player
+            enemyCarGo.transform.position = new Vector3(0f, 1f, 25f);  // 25 м впереди игрока
+            enemyCarGo.transform.rotation = Quaternion.Euler(0f, 180f, 0f); // лицом к игроку
             Debug.Log("[Editor] Instantiated EnemyCar from prefab '" + prefabSource.name +
                       "' at (0, 1, 25) facing player.");
 
-            // ── 6a. Set _carId = 1 on enemy's CarController via SerializedObject ─
+            // ── 6a. Ставим _carId = 1 на CarController врага через SerializedObject ─
             var enemyCar = enemyCarGo.GetComponent<CarController>();
             if (enemyCar != null)
             {
@@ -113,8 +113,8 @@ namespace FlatOutLike.Editor.Setup
                                  "Check that the car prefab has CarController on its root.");
             }
 
-            // ── 6b. Add EnemyCarController ────────────────────────────────────
-            // Using Undo.AddComponent so the addition is undoable.
+            // ── 6b. Добавляем EnemyCarController ──────────────────────────────
+            // Через Undo.AddComponent — чтобы добавление было откатываемым.
             var enemyController = enemyCarGo.GetComponent<EnemyCarController>();
             if (enemyController == null)
             {
@@ -126,19 +126,19 @@ namespace FlatOutLike.Editor.Setup
                 Debug.Log("[Editor] EnemyCarController already present on EnemyCar, refreshing refs.");
             }
 
-            // ── 6c. Fill EnemyCarController SerializedFields ──────────────────
+            // ── 6c. Заполняем SerializedField'ы EnemyCarController ────────────
             FillEnemyCarRefs(enemyController, playerCar);
 
-            // ── 7. Convert damage shader materials for enemy car ──────────────
-            // Delegates to the extracted public method to avoid duplicating material
-            // conversion logic and to avoid FindAnyObjectByType finding the wrong car.
+            // ── 7. Конвертируем материалы damage-шейдера на машине врага ──────
+            // Делегируем вынесенному public-методу, чтобы не дублировать логику
+            // конвертации материалов и чтобы FindAnyObjectByType не нашёл не ту машину.
             if (enemyCar != null)
             {
                 SetupCarDamageShaderEditor.ConvertCar(enemyCar);
                 Debug.Log("[Editor] Damage shader conversion applied to EnemyCar.");
             }
 
-            // ── 8. Save scene ─────────────────────────────────────────────────
+            // ── 8. Сохраняем сцену ────────────────────────────────────────────
             FinalizeScene();
 
             Undo.CollapseUndoOperations(undoGroup);
@@ -150,17 +150,17 @@ namespace FlatOutLike.Editor.Setup
 
         // ─────────────────────────────────────────────────────────────────────
         /// <summary>
-        /// Fills all SerializedField refs on EnemyCarController.
-        /// Reads _config and _rigidbody from the sibling CarController via SerializedObject
-        /// so we use exactly the already-assigned references, not a fresh GetComponent lookup.
+        /// Заполняет все SerializedField-ссылки на EnemyCarController.
+        /// Читает _config и _rigidbody с соседнего CarController через SerializedObject,
+        /// чтобы использовать ровно уже назначенные ссылки, а не свежий GetComponent.
         /// </summary>
         private static void FillEnemyCarRefs(EnemyCarController enemyController, CarController playerCar)
         {
             var enemyCarGo = enemyController.gameObject;
             var enemyCar   = enemyCarGo.GetComponent<CarController>();
 
-            // Read _config and _rigidbody from CarController via SerializedObject —
-            // these may differ from GetComponent results if the prefab has overrides.
+            // Читаем _config и _rigidbody с CarController через SerializedObject —
+            // они могут отличаться от результатов GetComponent, если у префаба есть overrides.
             CarStatsConfig statsConfig = null;
             Rigidbody      rigidbody   = null;
 
@@ -171,7 +171,7 @@ namespace FlatOutLike.Editor.Setup
                 rigidbody   = carSo.FindProperty("_rigidbody").objectReferenceValue as Rigidbody;
             }
 
-            // Fallback if the SO fields are not yet wired (fresh prefab instance)
+            // Fallback, если поля SO ещё не привязаны (свежий инстанс префаба)
             if (rigidbody == null)
                 rigidbody = enemyCarGo.GetComponent<Rigidbody>();
 
@@ -199,8 +199,8 @@ namespace FlatOutLike.Editor.Setup
         }
 
         /// <summary>
-        /// Returns the first CarController in the scene that does NOT have an
-        /// EnemyCarController component on the same GameObject — that is the player.
+        /// Возвращает первый CarController в сцене, у которого НЕТ компонента
+        /// EnemyCarController на том же GameObject — это и есть игрок.
         /// </summary>
         private static CarController FindPlayerCar()
         {
@@ -214,8 +214,8 @@ namespace FlatOutLike.Editor.Setup
         }
 
         /// <summary>
-        /// Fallback prefab lookup: finds the first Car_* prefab in the Vehicles folder.
-        /// Mirrors the logic in BuildDrivingTestSceneEditor.FindFirstCarPrefab().
+        /// Fallback-поиск префаба: находит первый Car_*-префаб в папке Vehicles.
+        /// Повторяет логику BuildDrivingTestSceneEditor.FindFirstCarPrefab().
         /// </summary>
         private static GameObject FindFirstCarPrefab()
         {
