@@ -19,7 +19,7 @@ MonoBehaviour:
   _pursueStartDistance: 60
   _ramTriggerDistance: 12
   _ramExitDistance: 18
-  _recoverDuration: 1.2
+  _recoverDuration: 1.5
   _recoverTriggerSpeed: 1.5
   _nitroOnRam: 1
   _steerSharpness: 1.5

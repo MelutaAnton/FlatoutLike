@@ -221,10 +221,12 @@ MonoBehaviour:
   _statsConfig: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
   _profile: {fileID: 11400000, guid: fb31982b6bad63b4ea0b592eeac717ae, type: 2}
   _rigidbody: {fileID: 199019997}
-  _obstacleRayOriginForward: 2.5
+  _diagEnabled: 0
+  _diagInterval: 0.25
   _obstacleRayOriginUp: 0.5
   _obstacleRayLength: 12
   _obstacleRaySideAngle: 30
+  _obstacleSideRayLength: 2.5
   _obstacleLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295

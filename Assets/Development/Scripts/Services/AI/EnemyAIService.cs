@@ -47,16 +47,14 @@ namespace FlatOutLike.Services.AI
             float crossY     = Vector3.Cross(p.SelfForward, dir).y;   // положительное = цель справа
             float steer      = ClampSigned(crossY * profile.SteerSharpness);
 
-            // ── Боковая защита (side-clamp) ─────────────────────────────────────
-            // Перпендикулярные side-лучи ловят стену вплотную к боку. Если бок
-            // занят — запрещаем target-steer заворачивать в ту сторону. Иначе
-            // у края стены машина почти проехала, бок прилип к стене, цель тянет
-            // обратно в стену → стук боком в угол → StuckTimer → Recover → тот же
-            // вектор → опять стук. С клампом steer=0 машина проедет прямо вдоль
-            // стены и оторвётся от угла.
-            //
-            // Клампится САМ steer (а не engageSteer), чтобы Reverse(steer) тоже
-            // не разворачивал нос в боковую стену во время Recover.
+            // ── Боковая защита (side-clamp на raw steer) ────────────────────────
+            // Перпендикулярные side-лучи ловят стену вплотную к боку. Раздельно
+            // от active side-push (ниже): здесь МЯГКИЙ clamp на raw `steer` —
+            // запрещаем target-steer заворачивать в блокированный бок. Это нужно
+            // для безопасности Recover: TickRecover вызывает Reverse(steer), и
+            // если steer тянет в стену, реверс уведёт нос туда же. Active push
+            // на raw steer применять НЕЛЬЗЯ — реверс с принудительным разворотом
+            // в противоположную сторону может загнать в стену сзади/спереди.
             bool leftSideBlocked  = p.ObstacleSideLeftDistance  < profile.ObstacleSideAvoidDistance;
             bool rightSideBlocked = p.ObstacleSideRightDistance < profile.ObstacleSideAvoidDistance;
             if (leftSideBlocked  && steer < 0f) steer = 0f;
@@ -83,8 +81,20 @@ namespace FlatOutLike.Services.AI
             // Sandwich (оба бока + центр блокированы) → engageSteer=0, прямо в стену
             // → StuckTimer вытянет Recover, реверс выйдет ровно по target-axis.
             const float TargetHitMargin = 3f; // см. комментарий выше
-            bool obstacleBlocksPath = p.ObstacleCenterDistance < profile.ObstacleAvoidDistance
-                                   && p.ObstacleCenterDistance < dist - TargetHitMargin;
+            // Гейт проверяет ВСЕ три forward-луча (C, L, R), а не только C.
+            // Иначе угловой wedge: нос машины прошёл кромку стены → C очистился →
+            // gate выключал avoidance, хотя L-луч (под 30°) всё ещё видел стену
+            // в 2-3 м. AI считал путь свободным и рулил target-axis обратно
+            // в стену. Перпендикулярные side-лучи (sL/sR) короткие и под 90°,
+            // в мёртвой зоне 30°-90° от forward стену не видят — поэтому угловые
+            // forward-лучи единственный сигнал в этой геометрии.
+            bool centerBlocked = p.ObstacleCenterDistance < profile.ObstacleAvoidDistance
+                              && p.ObstacleCenterDistance < dist - TargetHitMargin;
+            bool leftFwdBlocked  = p.ObstacleLeftDistance  < profile.ObstacleAvoidDistance
+                                && p.ObstacleLeftDistance  < dist - TargetHitMargin;
+            bool rightFwdBlocked = p.ObstacleRightDistance < profile.ObstacleAvoidDistance
+                                && p.ObstacleRightDistance < dist - TargetHitMargin;
+            bool obstacleBlocksPath = centerBlocked || leftFwdBlocked || rightFwdBlocked;
 
             float engageSteer = steer;
             if (obstacleBlocksPath)
@@ -105,6 +115,40 @@ namespace FlatOutLike.Services.AI
             if (brain.GraceTimer > 0f && Math.Abs(brain.PostRecoverSteerBias) > 0.5f
                 && !obstacleBlocksPath)
                 engageSteer = brain.PostRecoverSteerBias;
+
+            // ── Active side-push (финальный override engageSteer) ───────────────
+            // Симметрично active-обходу forward'ом, но для бокового контакта.
+            // Старый soft clamp `engageSteer→0` не помогал на кромке стены:
+            // машина шла прямо вдоль угла, борт тёрся, forward-скорость падала
+            // → StuckTimer → Recover → grace → снова прямо вдоль кромки → loop.
+            // Принудительный руль ПРОЧЬ от трущегося борта превращает «трение
+            // вдоль» в «дугу отрыва за один тик» — машина активно срывается с
+            // угла. Перебивает и target-axis, и picker, и post-Recover bias:
+            // если бок упёрся, всё остальное не имеет значения, нужно сначала
+            // оторваться. Sandwich (оба бока) → 0; рулём не разрулить, FSM
+            // вытянет Recover через StuckTimer.
+            if (leftSideBlocked && rightSideBlocked)
+                engageSteer = 0f;
+            else if (leftSideBlocked)
+                engageSteer =  1f;
+            else if (rightSideBlocked)
+                engageSteer = -1f;
+
+            // ── Throttle release при side-stuck ──────────────────────────────────
+            // Корневая физика wedge'а: на полном газу wall friction жёстко прижимает
+            // кузов к стене, никакое изменение wheel angle его не развернёт — сила
+            // тяги через wheels трансформируется в нормальную реакцию стены, а не
+            // в боковой импульс. Active push выше выкручивает руль, но кузов стоит.
+            // Если бок прижат И forward-скорость почти нулевая → сбрасываем газ в 0.
+            // Без forward force wall friction отпускает; те же wheels с уже выкрученным
+            // углом начинают физически разворачивать кузов, пока он катится по инерции.
+            // Это работает БЫСТРЕЕ, чем StuckTimer → Recover (тот ждёт 0.6с, за это
+            // время AI снова вдавливается). Если разгрузки не хватит и машина всё-таки
+            // встанет — StuckTimer всё равно дотащит Recover как safety net.
+            float forwardThrottle = 1f;
+            bool sideTouching = leftSideBlocked || rightSideBlocked;
+            if (sideTouching && Math.Abs(p.SelfSpeed) < profile.RecoverTriggerSpeed)
+                forwardThrottle = 0f;
 
             // ── Отсчёт grace (окно обязательного движения вперёд после отката) ──
             // На истечении grace сбрасываем PostRecoverSteerBias — после окна
@@ -165,19 +209,38 @@ namespace FlatOutLike.Services.AI
                 brain.ApproachTimer = 0f;
 
             // Запуск манёвра отката — подавлен внутри grace-окна.
-            // Bias = engageSteer если препятствие БЫЛО причиной (или подкравшейся
-            // причиной) затыка — picker уже выбрал сторону огибания, и мы хотим
-            // сохранить это направление через grace-окно после реверса.
-            // Если затык не от стены (нет obstacleBlocksPath) — bias = 0, после
-            // реверса нормальный target-axis.
+            // Bias выбирает направление руля в grace-окне ПОСЛЕ реверса:
+            //   • obstacleBlocksPath  → engageSteer (picker уже выбрал сторону
+            //     огибания forward-препятствия) — сохраняем через grace.
+            //   • leftSideBlocked     → +1 (стена слева, держим руль ВПРАВО).
+            //   • rightSideBlocked    → -1 (стена справа, держим руль ВЛЕВО).
+            //     Этот кейс закрывает «угловой wedge»: машина прошла кромку
+            //     стены, нос чист, но бортом упёрлась в угол → active push
+            //     корректно крутит engageSteer, но физика прижимает кузов;
+            //     StuckTimer вытягивает Recover. Без side-bias после реверса
+            //     target-axis рулит обратно в ту же стену → бесконечный цикл.
+            //     С side-bias grace-окно держит руль ПРОЧЬ от стены 1.5с,
+            //     машина успевает развернуть нос и обогнуть угол.
+            //   • иначе — bias = 0 (затык не геометрический, target-axis ок).
             if (brain.GraceTimer <= 0f && engaged
                 && (brain.StuckTimer    >= profile.StuckTime
                  || brain.OffAxisTimer  >= profile.CircleBreakTime
                  || brain.ApproachTimer >= profile.ApproachTime))
             {
-                float bias = obstacleBlocksPath ? engageSteer : 0f;
+                float bias;
+                if      (obstacleBlocksPath) bias = engageSteer;
+                else if (leftSideBlocked)    bias =  1f;
+                else if (rightSideBlocked)   bias = -1f;
+                else                         bias =  0f;
+
                 EnterRecover(ref brain, profile, bias);
-                return Reverse(steer);
+                // Реверс с bias (не target-axis), если bias задан: при LeftBlocked
+                // bias=+1 → Reverse(+1)=(-1,-1) → колесо ВЛЕВО в реверсе → нос
+                // отворачивает ВПРАВО, прочь от стены (передне-левый кейс wedge'а).
+                // Симметрично для RightBlocked. Без этого реверс шёл по target-axis
+                // (обычно ≈0 = прямо назад), машина откатывалась параллельно стене
+                // и на grace-форварде сразу налетала на тот же угол.
+                return Reverse(Math.Abs(bias) > 0.5f ? bias : steer);
             }
 
             // ── FSM ─────────────────────────────────────────────────────────────
@@ -193,24 +256,27 @@ namespace FlatOutLike.Services.AI
                     if (dist <= profile.RamTriggerDistance && forwardDot > profile.RamAlignmentDot)
                     {
                         brain.State = AIState.Ram;
-                        return Drive(engageSteer, profile.NitroOnRam);
+                        return Drive(engageSteer, forwardThrottle, profile.NitroOnRam);
                     }
-                    return Drive(engageSteer, false);
+                    return Drive(engageSteer, forwardThrottle, false);
 
                 case AIState.Ram:
                     // → Pursue: цель ушла (гистерезис RamExit > RamTrigger)
                     if (dist > profile.RamExitDistance)
                     {
                         brain.State = AIState.Pursue;
-                        return Drive(engageSteer, false);
+                        return Drive(engageSteer, forwardThrottle, false);
                     }
                     // Nitro только когда реально нацелились на цель — буст вне курса
                     // только расширяет радиус поворота и подкармливает орбиту.
                     // Газ заглушаем при обходе стены (engageSteer ≠ steer): forwardDot
                     // к цели может быть выше порога, но фактически руль вывернут на стену.
+                    // Также nitro отключаем когда forwardThrottle=0 (side-stuck) — какой
+                    // буст при разгрузке газа.
                     bool aimed = forwardDot > profile.RamAlignmentDot
                               && Math.Abs(engageSteer - steer) < 0.01f;
-                    return Drive(engageSteer, profile.NitroOnRam && aimed);
+                    return Drive(engageSteer, forwardThrottle,
+                                 profile.NitroOnRam && aimed && forwardThrottle > 0.5f);
 
                 case AIState.Recover:
                     return TickRecover(ref brain, profile, steer, deltaTime);
@@ -238,15 +304,24 @@ namespace FlatOutLike.Services.AI
                 brain.OffAxisTimer  = 0f;
                 brain.StuckTimer    = 0f;
                 brain.ApproachTimer = 0f;
-                return Drive(steer, false);
+                // Throttle=1 на выходной тик — следующий FixedUpdate войдёт в основной
+                // Tick и пересчитает throttle через side-stuck-release, если нужно.
+                return Drive(steer, 1f, false);
             }
 
-            return Reverse(steer);
+            // Реверс с bias (если задан): bias направляет руль в реверсе так,
+            // чтобы нос отворачивал прочь от стены (для side-stuck-wedge'а), а не
+            // по target-axis. Без bias — обычная семантика Reverse(steer):
+            // -steer разворачивает нос к цели во время отката.
+            float reverseSteer = Math.Abs(brain.PostRecoverSteerBias) > 0.5f
+                ? brain.PostRecoverSteerBias
+                : steer;
+            return Reverse(reverseSteer);
         }
 
         // ── Хелперы ────────────────────────────────────────────────────────────
-        private static AIDecision Drive(float steer, bool nitro) =>
-            new AIDecision(new Vector2(steer, 1f), false, nitro);
+        private static AIDecision Drive(float steer, float throttle, bool nitro) =>
+            new AIDecision(new Vector2(steer, throttle), false, nitro);
 
         private static AIDecision Reverse(float steer) =>
             new AIDecision(new Vector2(-steer, -1f), false, false);

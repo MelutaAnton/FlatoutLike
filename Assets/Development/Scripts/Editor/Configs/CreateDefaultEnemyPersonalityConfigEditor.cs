@@ -76,7 +76,8 @@ namespace FlatOutLike.Editor.Configs
             {
                 "_stuckTime", "_circleBreakTime", "_graceTime",
                 "_ramAlignmentDot", "_minApproachSpeed", "_approachTime",
-                "_obstacleAvoidDistance", "_obstacleSideAvoidDistance"
+                "_obstacleAvoidDistance", "_obstacleSideAvoidDistance",
+                "_recoverDuration"
             };
 
             // Поднимаем временный инстанс, чтобы прочитать C#-дефолты конструктора.
@@ -123,6 +124,7 @@ namespace FlatOutLike.Editor.Configs
             float approachTime              = defaultValues.TryGetValue("_approachTime",              out var t)  ? t  : float.NaN;
             float obstacleAvoidDistance     = defaultValues.TryGetValue("_obstacleAvoidDistance",     out var o)  ? o  : float.NaN;
             float obstacleSideAvoidDistance = defaultValues.TryGetValue("_obstacleSideAvoidDistance", out var os) ? os : float.NaN;
+            float recoverDuration           = defaultValues.TryGetValue("_recoverDuration",           out var r)  ? r  : float.NaN;
 
             Debug.Log($"[Editor] Synced tuning fields on existing EnemyPersonalityConfig_Aggressor: " +
                       $"_stuckTime={stuckTime}, " +
@@ -132,7 +134,8 @@ namespace FlatOutLike.Editor.Configs
                       $"_minApproachSpeed={minApproachSpeed}, " +
                       $"_approachTime={approachTime}, " +
                       $"_obstacleAvoidDistance={obstacleAvoidDistance}, " +
-                      $"_obstacleSideAvoidDistance={obstacleSideAvoidDistance}");
+                      $"_obstacleSideAvoidDistance={obstacleSideAvoidDistance}, " +
+                      $"_recoverDuration={recoverDuration}");
         }
 
         // ─────────────────────────────────────────────────────────────────────

@@ -30,6 +30,14 @@ namespace FlatOutLike.Controllers.Enemies
         [SerializeField] private EnemyPersonalityConfig _profile;
         [SerializeField] private Rigidbody             _rigidbody;
 
+        [Header("Diagnostics")]
+        // Печать состояния AI в Console каждые _diagInterval секунд. Используется
+        // для отладки wedge-сценариев — видно state, таймеры, скорость, дистанции
+        // лучей и итоговое решение. В релизной сборке выключить.
+        [SerializeField] private bool  _diagEnabled  = true;
+        [SerializeField] private float _diagInterval = 0.25f;
+        private float _diagTimer;
+
         [Header("Obstacle Avoidance")]
         // Подъём origin'а над землёй — чтобы лучи шли на уровне «груди» машины,
         // а не цепляли текстуру земли. Используется и для forward-, и для side-лучей.
@@ -143,6 +151,24 @@ namespace FlatOutLike.Controllers.Enemies
 
             // ── Пушим результат в источник ввода, который читает CarController ───
             _aiInput.Set(decision.Move, decision.Handbrake, decision.Nitro);
+
+            // ── Диагностика (раз в _diagInterval секунд) ─────────────────────────
+            if (_diagEnabled)
+            {
+                _diagTimer -= Time.fixedDeltaTime;
+                if (_diagTimer <= 0f)
+                {
+                    _diagTimer = _diagInterval;
+                    string ds(float d) => d > 100f ? "∞" : d.ToString("F1");
+                    Debug.Log(
+                        $"[AI] state={_brain.State} hasTarget={hasTarget} " +
+                        $"speed={selfSpeed:F2} dist={(hasTarget ? Vector3.Distance(selfPos, _target.transform.position).ToString("F1") : "-")}" +
+                        $" | rays: C={ds(distCenter)} L={ds(distLeft)} R={ds(distRight)} sL={ds(distSideLeft)} sR={ds(distSideRight)}" +
+                        $" | timers: stuck={_brain.StuckTimer:F2} off={_brain.OffAxisTimer:F2} appr={_brain.ApproachTimer:F2} grace={_brain.GraceTimer:F2} rec={_brain.RecoverTimer:F2}" +
+                        $" | bias={_brain.PostRecoverSteerBias:F2}" +
+                        $" | OUT steer={decision.Move.x:F2} throttle={decision.Move.y:F2} nitro={decision.Nitro}");
+                }
+            }
         }
 
         /// <summary>

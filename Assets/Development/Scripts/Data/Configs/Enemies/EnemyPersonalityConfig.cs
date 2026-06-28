@@ -22,7 +22,7 @@ namespace FlatOutLike.Data.Configs.Enemies
         [SerializeField] private float _ramExitDistance      = 18f;  // гистерезис: за пределами в Ram → обратно в Pursue
 
         [Header("Recovery")]
-        [SerializeField] private float _recoverDuration      = 1.2f; // секунды реверса после застревания
+        [SerializeField] private float _recoverDuration      = 1.5f; // секунды реверса после застревания (бамп с 1.2 — wedge-обход за меньше попыток; 1.8 оказался слишком долгим)
         [SerializeField] private float _recoverTriggerSpeed  = 1.5f; // м/с — ниже этого в Ram → застряли, вход в Recover
 
         [Header("Control Tuning")]
