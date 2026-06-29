@@ -16,6 +16,7 @@ MonoBehaviour:
   _retreatHpThreshold: 0
   _pickupPriority: 0.5
   _targetSwitchCooldown: 2
+  _targetSelectionMode: 0
   _pursueStartDistance: 60
   _ramTriggerDistance: 12
   _ramExitDistance: 18

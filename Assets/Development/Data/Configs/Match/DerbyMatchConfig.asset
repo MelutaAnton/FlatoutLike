@@ -19,8 +19,8 @@ MonoBehaviour:
     profile: {fileID: 11400000, guid: fb31982b6bad63b4ea0b592eeac717ae, type: 2}
     stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
   - carPrefab: {fileID: 5193657774753180251, guid: 09f0e70c4c13d76438e9aa8a6f1a936b, type: 3}
-    profile: {fileID: 11400000, guid: fb31982b6bad63b4ea0b592eeac717ae, type: 2}
+    profile: {fileID: 11400000, guid: f5fa50482b95aa04c8c20ce5e962bba6, type: 2}
     stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
   - carPrefab: {fileID: 5193657774753180251, guid: 09f0e70c4c13d76438e9aa8a6f1a936b, type: 3}
-    profile: {fileID: 11400000, guid: fb31982b6bad63b4ea0b592eeac717ae, type: 2}
+    profile: {fileID: 11400000, guid: 3a6f127e42825e244a50d82767f99bd5, type: 2}
     stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}

@@ -21,7 +21,8 @@ namespace FlatOutLike.Editor.Configs
     /// Что делает:
     ///   1. Создаёт (идемпотентно) Assets/Development/Data/Configs/Match/DerbyMatchConfig.asset.
     ///   2. Заполняет поля: _playerCarPrefab = Car_Sport_09, _playerStats = CarStatsConfig_Default,
-    ///      _enemies[3] = { carPrefab=Car_Enemy, profile=Aggressor, stats=Default } (×3).
+    ///      _enemies[3] = { carPrefab=Car_Enemy, stats=Default } с профилями:
+    ///        entry[0] = Aggressor, entry[1] = Coward, entry[2] = PlayerHunter.
     ///      _enemyCarPrefab на уровне конфига ОТСУТСТВУЕТ — prefab хранится внутри каждого entry.
     ///   3. Находит в активной сцене GameLifetimeScope и проставляет:
     ///        _derbyMatchConfig → новый ассет
@@ -51,7 +52,9 @@ namespace FlatOutLike.Editor.Configs
         private const string PlayerPrefabPath  = "Assets/Development/Prefabs/Vehicles/Car_Sport_09.prefab";
         private const string EnemyPrefabPath   = "Assets/Development/Prefabs/Vehicles/Car_Enemy.prefab";
         private const string CarStatsPath      = "Assets/Development/Data/Configs/Car/CarStatsConfig_Default.asset";
-        private const string PersonalityPath   = "Assets/Development/Data/Configs/Enemies/EnemyPersonalityConfig_Aggressor.asset";
+        private const string AggressorPath     = "Assets/Development/Data/Configs/Enemies/EnemyPersonalityConfig_Aggressor.asset";
+        private const string CowardPath        = "Assets/Development/Data/Configs/Enemies/EnemyPersonalityConfig_Coward.asset";
+        private const string PlayerHunterPath  = "Assets/Development/Data/Configs/Enemies/EnemyPersonalityConfig_PlayerHunter.asset";
         private const string DamageConfigPath  = "Assets/Development/Data/Configs/Combat/DamageConfig.asset";
         private const string VfxConfigPath     = "Assets/Development/Data/Configs/Vfx/VfxConfig.asset";
 
@@ -99,10 +102,23 @@ namespace FlatOutLike.Editor.Configs
             if (carStats == null)
                 Debug.LogWarning("[Editor] CarStatsConfig_Default не найден по " + CarStatsPath);
 
-            var aggressorProfile = AssetDatabase.LoadAssetAtPath<EnemyPersonalityConfig>(PersonalityPath);
+            var aggressorProfile = AssetDatabase.LoadAssetAtPath<EnemyPersonalityConfig>(AggressorPath);
             if (aggressorProfile == null)
-                Debug.LogWarning("[Editor] EnemyPersonalityConfig_Aggressor не найден по " + PersonalityPath +
+                Debug.LogWarning("[Editor] EnemyPersonalityConfig_Aggressor не найден по " + AggressorPath +
                                  ". Запусти 'FlatOutLike/Configs/Create Default EnemyPersonalityConfig' сначала.");
+
+            var cowardProfile = AssetDatabase.LoadAssetAtPath<EnemyPersonalityConfig>(CowardPath);
+            if (cowardProfile == null)
+                Debug.LogWarning("[Editor] EnemyPersonalityConfig_Coward не найден по " + CowardPath +
+                                 ". Запусти 'FlatOutLike/Configs/Create EnemyPersonalityConfig Coward' сначала.");
+
+            var playerHunterProfile = AssetDatabase.LoadAssetAtPath<EnemyPersonalityConfig>(PlayerHunterPath);
+            if (playerHunterProfile == null)
+                Debug.LogWarning("[Editor] EnemyPersonalityConfig_PlayerHunter не найден по " + PlayerHunterPath +
+                                 ". Запусти 'FlatOutLike/Configs/Create EnemyPersonalityConfig PlayerHunter' сначала.");
+
+            // Профили в порядке enemy entry: 0=Aggressor, 1=Coward, 2=PlayerHunter
+            var profiles = new EnemyPersonalityConfig[] { aggressorProfile, cowardProfile, playerHunterProfile };
 
             // ── 4. Заполняем поля DerbyMatchConfig через SerializedObject ─────
             var configSo = new SerializedObject(config);
@@ -113,8 +129,8 @@ namespace FlatOutLike.Editor.Configs
 
             // ── 5. Заполняем массив _enemies (Serializable struct) ────────────
             // struct EnemySpawnEntry { GameObject carPrefab; EnemyPersonalityConfig profile; CarStatsConfig stats; }
-            // Шаг 5a: все 3 врага используют Car_Enemy + Aggressor + Default stats.
-            // На шаге 5b модели/профили будут дифференцированы (Aggressor/Defender/Speedster).
+            // Шаг 5b: entry[0]=Aggressor, entry[1]=Coward, entry[2]=PlayerHunter.
+            // carPrefab и stats одинаковые для всех — дифференциация только в профиле.
             var enemiesProp = configSo.FindProperty("_enemies");
             enemiesProp.arraySize = EnemyCount;
 
@@ -122,8 +138,13 @@ namespace FlatOutLike.Editor.Configs
             {
                 var element = enemiesProp.GetArrayElementAtIndex(i);
                 element.FindPropertyRelative("carPrefab").objectReferenceValue = enemyPrefab;
-                element.FindPropertyRelative("profile").objectReferenceValue   = aggressorProfile;
-                element.FindPropertyRelative("stats").objectReferenceValue     = carStats;
+                // Каждый враг получает свой профиль: 0=Aggressor, 1=Coward, 2=PlayerHunter.
+                // Если профиль не загружен (null) — поле не трогаем, не падаем.
+                // Guard i < profiles.Length: при EnemyCount > числа профилей лишние entry
+                // просто остаются без профиля (не IndexOutOfRange).
+                if (i < profiles.Length && profiles[i] != null)
+                    element.FindPropertyRelative("profile").objectReferenceValue = profiles[i];
+                element.FindPropertyRelative("stats").objectReferenceValue       = carStats;
             }
 
             configSo.ApplyModifiedProperties();
@@ -134,7 +155,11 @@ namespace FlatOutLike.Editor.Configs
                       "_playerCarPrefab=" + (playerPrefab != null ? playerPrefab.name : "NULL") +
                       ", _playerStats=" + (carStats != null ? carStats.name : "NULL") +
                       ", _enemies[" + EnemyCount + "] carPrefab=" + (enemyPrefab != null ? enemyPrefab.name : "NULL") +
-                      " profile=Aggressor stats=Default (шаг 5a).");
+                      " profiles=[" +
+                      (aggressorProfile != null    ? aggressorProfile.name    : "NULL") + "," +
+                      (cowardProfile != null       ? cowardProfile.name       : "NULL") + "," +
+                      (playerHunterProfile != null ? playerHunterProfile.name : "NULL") +
+                      "] stats=Default (шаг 5b).");
 
             // ── 6. Находим GameLifetimeScope в активной сцене ─────────────────
             var scope = Object.FindAnyObjectByType<GameLifetimeScope>();

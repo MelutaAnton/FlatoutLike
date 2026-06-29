@@ -4,3 +4,4 @@
 - [Step 4 AI Enemy Editor Scripts](project_step4_ai_enemy_scripts.md) — EnemyPersonalityConfig asset; SetupEnemyCar instantiates enemy, fills EnemyCarController refs via SO, calls ConvertCar(); ConvertCar() extracted to public static; FillRefs now fills _sceneCars too
 - [Step 5 Physics Layers](project_step5_physics_layers.md) — CreatePhysicsLayersEditor; WallName→internal; AISensorConfig mask=Wall|Hazard (not Everything); run order: Layers→EnemyCar→AISensor
 - [Step 5a Derby Scripts](project_step5a_derby_scripts.md) — 4 скрипта: enemy prefab, арена 60x60, 7 spawn-points, DerbyMatchConfig; prefab-contents паттерн; порядок запуска полный
+- [Step 5b Personality Configs](project_step5b_personality_configs.md) — 2 профиля Coward/PlayerHunter; CopyAsset-паттерн; enum-поля через enumValueIndex; DerbyMatchConfig теперь entry[0..2]=разные профили

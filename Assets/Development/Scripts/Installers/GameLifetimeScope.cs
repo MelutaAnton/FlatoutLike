@@ -12,6 +12,7 @@ using FlatOutLike.Services.AI;
 using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
 using FlatOutLike.Services.Flow;
+using FlatOutLike.Services.Match;
 using FlatOutLike.Services.Meta;
 using FlatOutLike.Services.Vfx;
 using UnityEngine;
@@ -84,6 +85,10 @@ namespace FlatOutLike.Installers
 
             // AI (Шаг 4)
             builder.Register<EnemyAIService>(Lifetime.Singleton).As<IEnemyAIService>();
+
+            // Match (Шаг 5b) — реестр машин и выбор цели
+            builder.Register<CarRegistry>(Lifetime.Singleton).As<ICarRegistry>();
+            builder.Register<TargetSelectionService>(Lifetime.Singleton).As<ITargetSelectionService>();
 
             // Pool (Шаг 5a) — единственный источник пулов для всех фабрик
             builder.Register<PoolManager>(Lifetime.Singleton).As<IPoolManager>();

@@ -138,9 +138,9 @@ namespace FlatOutLike.Editor.Setup
                     Debug.LogWarning("[Editor] CarStatsConfig_Default не найден по " + CarStatsPath);
 
                 // ── 6. Заполняем SerializedField-ссылки EnemyCarController ───
-                // _target намеренно оставляем null: в рантайме CarFactory вызывает
-                // enemyController.Configure(profile, stats, playerController), что
-                // задаёт цель до InjectGameObject → до Construct.
+                // _target намеренно оставляем null: в рантайме цель выбирает
+                // ITargetSelectionService (по профилю) в первом FixedUpdate —
+                // CarFactory.Configure(profile, stats) цель больше не передаёт.
                 var so = new SerializedObject(enemyController);
                 so.FindProperty("_car").objectReferenceValue          = carController;
                 so.FindProperty("_rigidbody").objectReferenceValue    = rb;

@@ -1,3 +1,4 @@
+using FlatOutLike.Models;
 using UnityEngine;
 
 namespace FlatOutLike.Data.Configs.Enemies
@@ -14,7 +15,8 @@ namespace FlatOutLike.Data.Configs.Enemies
         [SerializeField, Range(0f, 1f)] private float _ramAggression      = 1f;
         [SerializeField, Range(0f, 1f)] private float _retreatHpThreshold = 0f;   // Aggressor никогда не отступает
         [SerializeField, Range(0f, 1f)] private float _pickupPriority     = 0.5f; // зарезервировано — шаг 5
-        [SerializeField, Min(0f)]       private float _targetSwitchCooldown = 2f; // зарезервировано — шаг 5
+        [SerializeField, Min(0f)]       private float _targetSwitchCooldown = 2f;
+        [SerializeField] private TargetSelectionMode  _targetSelectionMode = TargetSelectionMode.Nearest;
 
         [Header("Engagement Distances")]
         [SerializeField] private float _pursueStartDistance  = 60f;  // за пределами → Idle / держим Pursue
@@ -45,10 +47,11 @@ namespace FlatOutLike.Data.Configs.Enemies
         /// <summary>Дистанция до препятствия по перпендикулярному side-лучу, при которой запрещаем target-steer заворачивать в эту сторону (защита от тычка боком).</summary>
         [SerializeField, Min(0f)] private float _obstacleSideAvoidDistance = 1.5f;
 
-        public float RamAggression       => _ramAggression;
-        public float RetreatHpThreshold  => _retreatHpThreshold;
-        public float PickupPriority      => _pickupPriority;
+        public float RamAggression        => _ramAggression;
+        public float RetreatHpThreshold   => _retreatHpThreshold;
+        public float PickupPriority       => _pickupPriority;
         public float TargetSwitchCooldown => _targetSwitchCooldown;
+        public TargetSelectionMode TargetSelectionMode => _targetSelectionMode;
         public float PursueStartDistance => _pursueStartDistance;
         public float RamTriggerDistance  => _ramTriggerDistance;
         public float RamExitDistance     => _ramExitDistance;

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Enemies;
 using FlatOutLike.Data.Configs.Match;
+using FlatOutLike.Services.Match;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -14,20 +15,29 @@ namespace FlatOutLike.Factories.Car
     /// Порядок гарантирован: Instantiate → Configure (до инъекции) → InjectGameObject.
     /// Это позволяет Construct читать актуальные _config / _profile / _statsConfig,
     /// а не значения по умолчанию из prefab.
+    ///
+    /// После спавна регистрирует все машины в <see cref="ICarRegistry"/> —
+    /// это позволяет <c>TargetSelectionService</c> видеть всех участников матча.
     /// </summary>
     public sealed class CarFactory : ICarFactory
     {
         private readonly IObjectResolver _resolver;
+        private readonly ICarRegistry    _registry;
 
-        public CarFactory(IObjectResolver resolver)
+        public CarFactory(IObjectResolver resolver, ICarRegistry registry)
         {
             _resolver = resolver;
+            _registry = registry;
         }
 
         /// <inheritdoc/>
         public IReadOnlyList<CarController> SpawnMatch(DerbyMatchConfig config, IReadOnlyList<Transform> spawnPoints)
         {
             var allCars = new List<CarController>();
+
+            // Очищаем реестр в самом начале — даже при невалидном конфиге не должно
+            // остаться стейл-машин от прошлого матча (важно для повторного спавна на 5e).
+            _registry.Clear();
 
             if (spawnPoints == null || spawnPoints.Count == 0)
             {
@@ -45,7 +55,7 @@ namespace FlatOutLike.Factories.Car
             CarController playerController = null;
             if (config.PlayerCarPrefab != null && spawnPoints[0] != null)
             {
-                var sp = spawnPoints[0];
+                var sp       = spawnPoints[0];
                 var playerGo = Object.Instantiate(config.PlayerCarPrefab, sp.position, sp.rotation);
 
                 playerController = playerGo.GetComponent<CarController>();
@@ -57,7 +67,10 @@ namespace FlatOutLike.Factories.Car
                 _resolver.InjectGameObject(playerGo);
 
                 if (playerController != null)
+                {
                     allCars.Add(playerController);
+                    _registry.Register(playerController, isPlayer: true);
+                }
             }
             else
             {
@@ -72,8 +85,8 @@ namespace FlatOutLike.Factories.Car
                 return allCars;
             }
 
-            int enemyCount      = enemies.Count;
-            int availableSlots  = spawnPoints.Count - 1; // минус слот для игрока
+            int enemyCount     = enemies.Count;
+            int availableSlots = spawnPoints.Count - 1; // минус слот для игрока
 
             if (availableSlots < enemyCount)
             {
@@ -85,9 +98,9 @@ namespace FlatOutLike.Factories.Car
             int spawnCount = Mathf.Min(enemyCount, availableSlots);
             for (int i = 0; i < spawnCount; i++)
             {
-                var entry      = enemies[i];
-                var sp         = spawnPoints[i + 1];
-                int carId      = i + 1; // уникальный id; 0 зарезервирован за игроком
+                var entry = enemies[i];
+                var sp    = spawnPoints[i + 1];
+                int carId = i + 1; // уникальный id; 0 зарезервирован за игроком
 
                 if (entry.carPrefab == null)
                 {
@@ -110,11 +123,10 @@ namespace FlatOutLike.Factories.Car
                 if (carController != null)
                     carController.Configure(carId, entry.stats);
 
-                // EnemyCarController.Configure задаёт профиль, статы и цель.
-                // SetTarget(playerController) безопасен даже если playerController == null —
-                // EnemyCarController проверяет target в FixedUpdate через hasTarget.
+                // Configure задаёт только профиль и статы. Цель не передаётся:
+                // ITargetSelectionService выберет её автоматически в первом FixedUpdate.
                 if (enemyController != null)
-                    enemyController.Configure(entry.profile, entry.stats, playerController);
+                    enemyController.Configure(entry.profile, entry.stats);
 
                 // InjectGameObject: порядок вызовов Construct на компонентах не гарантирован,
                 // но CarController и EnemyCarController спроектированы так, что оба варианта
@@ -122,7 +134,10 @@ namespace FlatOutLike.Factories.Car
                 _resolver.InjectGameObject(enemyGo);
 
                 if (carController != null)
+                {
                     allCars.Add(carController);
+                    _registry.Register(carController, isPlayer: false);
+                }
             }
 
             return allCars;

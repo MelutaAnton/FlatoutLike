@@ -26,7 +26,7 @@ namespace FlatOutLike.Controllers.Enemies
     public sealed class EnemyCarController : MonoBehaviour
     {
         [SerializeField] private CarController          _car;         // соседняя машина, которой управляем
-        [SerializeField] private CarController          _target;      // машина игрока (переназначается через SetTarget)
+        [SerializeField] private CarController          _target;      // текущая цель (кэш; обновляется сервисом выбора цели)
         [SerializeField] private CarStatsConfig         _statsConfig; // зарезервировано под per-enemy override'ы статов
         [SerializeField] private EnemyPersonalityConfig _profile;
         [SerializeField] private AISensorConfig         _sensorConfig;
@@ -40,11 +40,13 @@ namespace FlatOutLike.Controllers.Enemies
         [SerializeField] private float _diagInterval = 0.25f;
         private float _diagTimer;
 
-        private IEnemyAIService _ai;
-        private IDamageService  _damage;
-        private AIInputProvider _aiInput;
-        private AIBrainState    _brain;
-        private bool            _initialized;
+        private IEnemyAIService         _ai;
+        private IDamageService          _damage;
+        private ITargetSelectionService _targetSelection;
+        private AIInputProvider         _aiInput;
+        private AIBrainState            _brain;
+        private float                   _targetSwitchTimer;
+        private bool                    _initialized;
 
         // Буфер для RaycastNonAlloc, чтобы не аллоцировать массив каждый FixedUpdate.
         // 8 хитов — с запасом: путь луча обычно пересекает 1-2 коллайдера (свой кузов
@@ -52,10 +54,11 @@ namespace FlatOutLike.Controllers.Enemies
         private readonly RaycastHit[] _hitBuffer = new RaycastHit[8];
 
         [Inject]
-        public void Construct(IEnemyAIService ai, IDamageService damage)
+        public void Construct(IEnemyAIService ai, IDamageService damage, ITargetSelectionService targetSelection)
         {
-            _ai     = ai;
-            _damage = damage;
+            _ai              = ai;
+            _damage          = damage;
+            _targetSelection = targetSelection;
 
             _aiInput = new AIInputProvider();
             _brain   = new AIBrainState { State = AIState.Idle, RecoverTimer = 0f };
@@ -70,26 +73,31 @@ namespace FlatOutLike.Controllers.Enemies
         }
 
         /// <summary>
-        /// Задаёт профиль, статы и цель до инъекции VContainer.
+        /// Задаёт профиль и статы до инъекции VContainer.
         /// Вызывается фабрикой до InjectGameObject, чтобы Construct читал актуальные значения.
         /// Sensor config (_sensorConfig) остаётся из prefab — не переопределяется.
+        /// Цель больше не задаётся здесь: её выбирает <see cref="ITargetSelectionService"/> в FixedUpdate.
         /// </summary>
-        public void Configure(EnemyPersonalityConfig profile, CarStatsConfig stats, CarController target)
+        public void Configure(EnemyPersonalityConfig profile, CarStatsConfig stats)
         {
             _profile     = profile;
             _statsConfig = stats;
-            SetTarget(target);
         }
-
-        /// <summary>
-        /// Заменяет текущую цель. Вызывается Factory / targeting-сервисом (Step 5).
-        /// Безопасно вызывать до Construct — target читается только внутри FixedUpdate.
-        /// </summary>
-        public void SetTarget(CarController target) => _target = target;
 
         private void FixedUpdate()
         {
             if (!_initialized || _car == null || _profile == null || _rigidbody == null || _sensorConfig == null) return;
+
+            // ── Обновление цели по кулдауну ──────────────────────────────────────
+            // Первый вызов: _targetSwitchTimer = 0 → условие сразу истинно, цель выбирается мгновенно.
+            // Далее — раз в TargetSwitchCooldown секунд или при гибели текущей цели.
+            _targetSwitchTimer -= Time.fixedDeltaTime;
+            bool targetDead = _target != null && _damage.GetHp(_target.CarId) <= 0f;
+            if (_targetSwitchTimer <= 0f || _target == null || targetDead)
+            {
+                _target            = _targetSelection.SelectTarget(_car, _profile.TargetSelectionMode);
+                _targetSwitchTimer = _profile.TargetSwitchCooldown;
+            }
 
             bool hasTarget = _target != null;
 

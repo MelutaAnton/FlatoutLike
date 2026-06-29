@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 343221990c62bb8428dd9c028ee15d64, type: 3}
+  m_Name: EnemyPersonalityConfig_PlayerHunter
+  m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Enemies.EnemyPersonalityConfig
+  _ramAggression: 1
+  _retreatHpThreshold: 0
+  _pickupPriority: 0.5
+  _targetSwitchCooldown: 2
+  _targetSelectionMode: 2
+  _pursueStartDistance: 60
+  _ramTriggerDistance: 12
+  _ramExitDistance: 18
+  _recoverDuration: 1.5
+  _recoverTriggerSpeed: 1.5
+  _nitroOnRam: 1
+  _steerSharpness: 1.5
+  _ramAlignmentDot: 0.5
+  _stuckTime: 0.6
+  _circleBreakTime: 1
+  _graceTime: 1.5
+  _minApproachSpeed: 1
+  _approachTime: 1.5
+  _obstacleAvoidDistance: 8
+  _obstacleSideAvoidDistance: 1.5
