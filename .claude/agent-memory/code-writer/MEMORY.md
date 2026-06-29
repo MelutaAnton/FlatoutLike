@@ -1,3 +1,4 @@
 - [Project Architecture — Bootstrap Step 1](project_architecture.md) — namespaces, DI registrations, FSM/EventBus/Input patterns established in step 1
 - [Step 3 — Damage & VFX Stack](step3_damage_vfx.md) — DamageService, VfxFactory, CarDamageVisualController, derby events, VfxEffectType enum, CarController changes
 - [Step 4 — AI Enemy Car](step4_ai_enemy.md) — AiInputProvider, EnemyAIService FSM, EnemyCarController, _sceneCars InjectGameObject pattern, CarController.SetInputSource/MaxArmor
+- [asmdef + EditMode тесты](project_asmdef_tests.md) — три asmdef-файла (FlatOutLike/Editor/Tests), Layers.cs, 9 тестов EnemyAIService

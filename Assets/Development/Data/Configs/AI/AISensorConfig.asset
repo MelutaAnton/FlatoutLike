@@ -18,4 +18,4 @@ MonoBehaviour:
   _sideRayLength: 2.5
   _obstacleLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1536

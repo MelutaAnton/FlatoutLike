@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using FlatOutLike.Data.Configs.AI;
 using FlatOutLike.Controllers.Enemies;
+using FlatOutLike.Models;
 
 namespace FlatOutLike.Editor.Configs
 {
@@ -49,10 +50,14 @@ namespace FlatOutLike.Editor.Configs
             EnsureFolder(FolderConfigs,        "AI");
 
             // ── Создание ассета ───────────────────────────────────────────────
-            // C#-дефолты класса уже задают правильные значения геометрии.
+            // C#-дефолты класса задают правильные геометрические значения,
+            // но маску сразу перезаписываем через SyncFields — чтобы не зависеть
+            // от дефолта поля _obstacleLayerMask в AISensorConfig.
             var config = ScriptableObject.CreateInstance<AISensorConfig>();
             AssetDatabase.CreateAsset(config, AssetPath);
-            AssetDatabase.SaveAssets();
+            // SyncFields перезаписывает поля геометрии и маску препятствий;
+            // сохраняет ассет внутри — повторный SaveAssets ниже не нужен.
+            SyncFields(config);
             AssetDatabase.Refresh();
 
             Undo.RegisterCreatedObjectUndo(config, "Create AISensorConfig");
@@ -79,21 +84,43 @@ namespace FlatOutLike.Editor.Configs
             SetFloat(so, "_raySideAngle", 30.0f);
             SetFloat(so, "_sideRayLength", 2.5f);
 
-            // LayerMask сериализуется как int; ~0 = Everything.
+            // Avoidance-лучи должны реагировать ТОЛЬКО на Wall и Hazard.
+            // Слой Vehicle намеренно исключён: AI-сенсор не должен воспринимать другие
+            // машины как «стены» и застревать в «орбите» вокруг цели.
+            // ВАЖНО: LayerMask.GetMask вернёт 0, если слои не зарегистрированы.
+            //        Запусти 'FlatOutLike/Setup/Create Physics Layers' ДО этого скрипта.
             var maskProp = so.FindProperty("_obstacleLayerMask");
             if (maskProp != null)
-                maskProp.intValue = ~0;
+            {
+                int obstaclesMask = LayerMask.GetMask(Layers.Wall, Layers.Hazard);
+                if (obstaclesMask == 0)
+                {
+                    // Слои ещё не созданы — сохраняем текущее значение (не зануляем avoidance).
+                    Debug.LogWarning("[Editor] LayerMask.GetMask вернул 0 — слои '" +
+                                     Layers.Wall + "' и '" + Layers.Hazard + "' не найдены. " +
+                                     "Маска _obstacleLayerMask НЕ изменена. " +
+                                     "Сначала запусти 'FlatOutLike/Setup/Create Physics Layers'.");
+                }
+                else
+                {
+                    maskProp.intValue = obstaclesMask;
+                }
+            }
             else
+            {
                 Debug.LogWarning("[Editor] Field _obstacleLayerMask not found on AISensorConfig, skipping");
+            }
 
             so.ApplyModifiedProperties();
 
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
 
-            Debug.Log("[Editor] Synced fields on existing AISensorConfig: " +
+            int loggedMask = LayerMask.GetMask(Layers.Wall, Layers.Hazard);
+            Debug.Log("[Editor] Synced fields on AISensorConfig: " +
                       "_rayOriginUp=0.5, _rayLength=12, _raySideAngle=30, " +
-                      "_sideRayLength=2.5, _obstacleLayerMask=Everything (~0)");
+                      "_sideRayLength=2.5, _obstacleLayerMask=" +
+                      (loggedMask != 0 ? $"Wall|Hazard ({loggedMask})" : "не изменена (слои не зарегистрированы)"));
         }
 
         /// <summary>

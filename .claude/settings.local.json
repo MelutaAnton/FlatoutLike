@@ -48,7 +48,10 @@
       "Bash(git *)",
       "Bash(powershell.exe *)",
       "Bash(del \"E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Models\\\\AiState.cs\")",
-      "Bash(del \"E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Core\\\\Input\\\\AiInputProvider.cs\")"
+      "Bash(del \"E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Core\\\\Input\\\\AiInputProvider.cs\")",
+      "Bash(find Assets/Development/Scripts -maxdepth 2 -name \"*.asmdef\")",
+      "Bash(find Assets/Development -name \"*.asmdef\")",
+      "Bash(ls Assets/Development/Scripts/Views/UI/)"
     ]
   }
 }

@@ -4,3 +4,5 @@
 - [VFX Naming Divergence](project-vfx-naming-divergence.md) — код использует Vfx*, а CLAUDE.md/скиллы — VFX*; грепать оба написания
 - [VContainer Inject Order](project-vcontainer-inject-order.md) — InjectGameObject инжектит в порядке GetComponents (Inspector); cross-Construct запись в общее поле = fragile-ordering риск
 - [SO New-Field Asset Gap](project-so-newfield-asset-gap.md) — новые [SerializeField] в конфиге с существующим .asset не получают C#-дефолты; Create*Editor идемпотентно скипает → нужен re-serialize
+- [asmdef VContainer Transitive](project-asmdef-vcontainer-transitive.md) — Editor-asmdef обязан ref VContainer (editor-скрипты трогают GameLifetimeScope : LifetimeScope); ссылки asmdef не транзитивны → CS0012
+- [AI ApproachTimer Reverse Gap](project-ai-approachtimer-reverse-gap.md) — moonwalk-guard кроет только StuckTimer; ApproachTimer знакобойный → откинутая назад машина может реверсить дальше; watch дерби шага 5

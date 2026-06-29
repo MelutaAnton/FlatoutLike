@@ -1,0 +1,19 @@
+{
+    "name": "FlatOutLike.Editor",
+    "rootNamespace": "FlatOutLike.Editor",
+    "references": [
+        "FlatOutLike",
+        "VContainer"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

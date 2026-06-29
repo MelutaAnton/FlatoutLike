@@ -17,7 +17,8 @@ namespace FlatOutLike.Editor.Setup
     public static class AddCrashWallToTestDrivingEditor
     {
         private const string ScenePath = "Assets/Development/Scenes/_TestDriving.unity";
-        private const string WallName  = "CrashTestWall";
+        // internal — чтобы CreatePhysicsLayersEditor мог назначить слой Wall по тому же имени
+        internal const string WallName  = "CrashTestWall";
 
         [MenuItem("FlatOutLike/Setup/Add Crash Wall to Test Driving")]
         public static void AddCrashWall()
