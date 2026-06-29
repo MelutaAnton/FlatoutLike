@@ -216,7 +216,7 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 
 ## Editor-автоматизация (обязательно)
 
-Любая рутина в Unity Editor автоматизируется через `[MenuItem(...)]` скрипт под `TowerShooter/<Category>/<Action>`. Никогда не писать "сделайте это руками в Inspector".
+Любая рутина в Unity Editor автоматизируется через `[MenuItem(...)]` скрипт под `FlatOutLike/<Category>/<Action>`. Никогда не писать "сделайте это руками в Inspector".
 
 - Категории и менюшная иерархия — skill `add-editor-script`.
 - Низкоуровневые нюансы (Undo, идемпотентность, теги, заполнение SerializeField на Composition Root) — `.claude/rules/editor-files.md` (auto-loaded для `**/Editor/**`).

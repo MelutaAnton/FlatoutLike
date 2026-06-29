@@ -46,11 +46,22 @@ metadata:
 ## Field names (GameLifetimeScope — Step 4 addition)
 - `_sceneCars` — GameObject[] (all car root GameObjects; filled with transform.root.gameObject of each CarController)
 
+## AISensorConfig (added after Step 4)
+- File: `Assets/Development/Scripts/Editor/Configs/CreateDefaultAISensorConfigEditor.cs`
+- Menu: `FlatOutLike/Configs/Create Default AISensorConfig`
+- Asset: `Assets/Development/Data/Configs/AI/AISensorConfig.asset` (папка AI создаётся программно)
+- Class namespace: `FlatOutLike.Data.Configs.AI`
+- Field names: `_rayOriginUp` (float), `_rayLength` (float), `_raySideAngle` (float), `_sideRayLength` (float), `_obstacleLayerMask` (LayerMask → intValue = ~0)
+- After asset creation/sync: finds `EnemyCarController` in active scene, sets `_sensorConfig` via SerializedObject, marks scene dirty
+- Idempotency: если ассет есть — SyncFields (upsert значений) → FillEnemyControllerRef; если нет — Create → FillEnemyControllerRef
+- LayerMask сериализуется как intValue; ~0 = Everything = -1; использовать `maskProp.intValue = ~0`
+
 ## Correct run sequence for Step 4
 1. `FlatOutLike/Setup/Build Driving Test Scene` (if not done in Step 2)
 2. `FlatOutLike/Configs/Create Default EnemyPersonalityConfig`
-3. `FlatOutLike/Setup/Setup Enemy Car (Step 4)`
-4. `FlatOutLike/Setup/Fill GameLifetimeScope Refs (Step 4)`
+3. `FlatOutLike/Configs/Create Default AISensorConfig`
+4. `FlatOutLike/Setup/Setup Enemy Car (Step 4)`
+5. `FlatOutLike/Setup/Fill GameLifetimeScope Refs (Step 4)`
 
 ## Key design decisions
 - Player identification: CarController without EnemyCarController on same GO (not by name or _carId)

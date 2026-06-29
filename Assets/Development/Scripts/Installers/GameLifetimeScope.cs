@@ -50,6 +50,7 @@ namespace FlatOutLike.Installers
             // Combat (Шаг 3)
             builder.RegisterInstance(_damageConfig);
             builder.Register<DamageService>(Lifetime.Singleton).As<IDamageService>();
+            builder.Register<DamageStageResolver>(Lifetime.Singleton).As<IDamageStageResolver>();
 
             // VFX (Шаг 3)
             builder.RegisterInstance(_vfxConfig);

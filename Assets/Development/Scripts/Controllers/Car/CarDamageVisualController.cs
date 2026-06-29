@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Models;
+using FlatOutLike.Services.Combat;
 using FlatOutLike.Services.Vfx;
 using UnityEngine;
 using VContainer;
@@ -19,6 +20,7 @@ namespace FlatOutLike.Controllers.Car
 
         private IEventBus _eventBus;
         private IVfxService _vfx;
+        private IDamageStageResolver _stageResolver;
         private bool _initialized;
         private int _currentStageIndex = -1;
 
@@ -31,10 +33,11 @@ namespace FlatOutLike.Controllers.Car
         private HashSet<Material> _preserved; // стекло/фары — исключены из _damageRenderers
 
         [Inject]
-        public void Construct(IEventBus eventBus, IVfxService vfx)
+        public void Construct(IEventBus eventBus, IVfxService vfx, IDamageStageResolver stageResolver)
         {
             _eventBus = eventBus;
             _vfx = vfx;
+            _stageResolver = stageResolver;
             _initialized = true;
             // OnEnable срабатывает до Construct на старте сцены, поэтому подписываемся здесь явно.
             _eventBus.Subscribe<CarDamagedEvent>(OnCarDamaged);
@@ -152,7 +155,7 @@ namespace FlatOutLike.Controllers.Car
             float ratio = e.RemainingHp / maxArmor;
             _targetDamage01 = Mathf.Clamp01(1f - ratio); // непрерывно гонит шейдер, независимо от стадии
 
-            int newIndex = FindStageIndex(ratio);
+            int newIndex = _stageResolver.ResolveStageIndex(_visualConfig.Stages, ratio);
 
             if (newIndex == _currentStageIndex) return;
 
@@ -166,36 +169,6 @@ namespace FlatOutLike.Controllers.Car
 
             if (newIndex >= 0 && newIndex < _visualConfig.Stages.Count)
                 ApplyStage(_visualConfig.Stages[newIndex], goingDeeper);
-        }
-
-        /// <summary>
-        /// Возвращает индекс стадии с минимальным hpThreshold, который при этом
-        /// >= текущему HP-соотношению. По мере падения HP последовательно входим в более глубокие стадии.
-        /// Стадии должны быть отсортированы по hpThreshold по убыванию (например, 1.0, 0.66, 0.33).
-        /// </summary>
-        private int FindStageIndex(float ratio)
-        {
-            var stages = _visualConfig.Stages;
-            if (stages == null || stages.Count == 0) return -1;
-
-            int result = -1;
-            float minThreshold = float.MaxValue;
-
-            for (int i = 0; i < stages.Count; i++)
-            {
-                float threshold = stages[i].hpThreshold;
-                if (threshold >= ratio && threshold < minThreshold)
-                {
-                    minThreshold = threshold;
-                    result = i;
-                }
-            }
-
-            // Fallback: ratio выше всех порогов (например, только что заспавнились) — берём первую стадию.
-            if (result == -1)
-                result = 0;
-
-            return result;
         }
 
         /// <param name="goingDeeper">True при входе в более повреждённую стадию; false при восстановлении HP.</param>
