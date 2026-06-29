@@ -70,6 +70,18 @@ namespace FlatOutLike.Controllers.Enemies
         }
 
         /// <summary>
+        /// Задаёт профиль, статы и цель до инъекции VContainer.
+        /// Вызывается фабрикой до InjectGameObject, чтобы Construct читал актуальные значения.
+        /// Sensor config (_sensorConfig) остаётся из prefab — не переопределяется.
+        /// </summary>
+        public void Configure(EnemyPersonalityConfig profile, CarStatsConfig stats, CarController target)
+        {
+            _profile     = profile;
+            _statsConfig = stats;
+            SetTarget(target);
+        }
+
+        /// <summary>
         /// Заменяет текущую цель. Вызывается Factory / targeting-сервисом (Step 5).
         /// Безопасно вызывать до Construct — target читается только внутри FixedUpdate.
         /// </summary>

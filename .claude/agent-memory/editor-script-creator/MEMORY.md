@@ -3,3 +3,4 @@
 - [Step 3 Damage+VFX Editor Scripts](project_step3_damage_vfx_scripts.md) — 7 scripts for DamageConfig/VfxConfig/CarDamageVisualConfig/ParticleController/CarDamageVisualController/CrashWall/LifetimeScope refs; field names for all Step 3 classes; VFX prefab LoadPrefabContents pattern
 - [Step 4 AI Enemy Editor Scripts](project_step4_ai_enemy_scripts.md) — EnemyPersonalityConfig asset; SetupEnemyCar instantiates enemy, fills EnemyCarController refs via SO, calls ConvertCar(); ConvertCar() extracted to public static; FillRefs now fills _sceneCars too
 - [Step 5 Physics Layers](project_step5_physics_layers.md) — CreatePhysicsLayersEditor; WallName→internal; AISensorConfig mask=Wall|Hazard (not Everything); run order: Layers→EnemyCar→AISensor
+- [Step 5a Derby Scripts](project_step5a_derby_scripts.md) — 4 скрипта: enemy prefab, арена 60x60, 7 spawn-points, DerbyMatchConfig; prefab-contents паттерн; порядок запуска полный

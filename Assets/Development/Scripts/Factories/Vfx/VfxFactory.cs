@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using FlatOutLike.Controllers.Vfx;
+using FlatOutLike.Core.Pool;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Models;
 using UnityEngine;
@@ -8,23 +9,25 @@ using VContainer.Unity;
 
 namespace FlatOutLike.Factories.Vfx
 {
+    /// <summary>
+    /// Фабрика VFX-эффектов. Внутренние пулы делегированы в <see cref="IPoolManager"/>;
+    /// контракт <see cref="IVfxFactory"/> не изменился — damage-VFX цепочка работает прежде.
+    /// </summary>
     public sealed class VfxFactory : IVfxFactory
     {
         private readonly IObjectResolver _resolver;
-        private readonly VfxConfig _config;
+        private readonly VfxConfig       _config;
+        private readonly IPoolManager    _pool;
 
-        private readonly Dictionary<VfxEffectType, Queue<ParticleController>> _pools
-            = new Dictionary<VfxEffectType, Queue<ParticleController>>();
+        // Маппинг type → prefab; нужен чтобы Get знал, какой prefab передать IPoolManager.
         private readonly Dictionary<VfxEffectType, GameObject> _prefabs
             = new Dictionary<VfxEffectType, GameObject>();
-        // Отслеживает, к какому VfxEffectType принадлежит каждый контроллер, для корректного возврата в Pool.
-        private readonly Dictionary<ParticleController, VfxEffectType> _controllerTypes
-            = new Dictionary<ParticleController, VfxEffectType>();
 
-        public VfxFactory(IObjectResolver resolver, VfxConfig config)
+        public VfxFactory(IObjectResolver resolver, VfxConfig config, IPoolManager pool)
         {
             _resolver = resolver;
-            _config = config;
+            _config   = config;
+            _pool     = pool;
             Prewarm();
         }
 
@@ -37,82 +40,40 @@ namespace FlatOutLike.Factories.Vfx
                 if (entry.prefab == null) continue;
 
                 _prefabs[entry.type] = entry.prefab;
-                var queue = new Queue<ParticleController>();
-
-                for (int i = 0; i < entry.poolSize; i++)
-                {
-                    var instance = CreateInstance(entry.prefab, entry.type);
-                    if (instance != null)
-                        queue.Enqueue(instance);
-                }
-
-                _pools[entry.type] = queue;
+                _pool.Prewarm(entry.prefab, entry.poolSize);
             }
         }
 
+        /// <summary>
+        /// Берёт VFX-объект из пула, инжектирует зависимости, запускает эффект.
+        /// После окончания <see cref="ParticleController"/> автоматически возвращает объект в пул.
+        /// </summary>
         public ParticleController Spawn(VfxEffectType type, Vector3 pos, Quaternion rot)
         {
-            if (!_pools.TryGetValue(type, out var queue))
+            if (!_prefabs.TryGetValue(type, out var prefab))
             {
-                Debug.LogWarning($"[VfxFactory] No pool registered for {type}. Check VfxConfig.");
+                Debug.LogWarning($"[VfxFactory] Нет префаба для {type}. Проверьте VfxConfig.");
                 return null;
             }
 
-            ParticleController controller = queue.Count > 0
-                ? queue.Dequeue()
-                : Instantiate(type);
+            var go = _pool.Get(prefab);
 
-            if (controller == null) return null;
+            // Каждый раз инжектируем — после возврата в пул зависимости могут измениться
+            // (теоретически). На практике это no-op после первого Construct,
+            // но гарантирует корректность при переиспользовании.
+            _resolver.InjectGameObject(go);
 
-            controller.gameObject.SetActive(true);
-            _resolver.InjectGameObject(controller.gameObject);
-            controller.Launch(pos, rot, ReturnToPool);
-            return controller;
-        }
-
-        private ParticleController Instantiate(VfxEffectType type)
-        {
-            if (!_prefabs.TryGetValue(type, out var prefab) || prefab == null)
-            {
-                Debug.LogWarning($"[VfxFactory] No prefab registered for {type}.");
-                return null;
-            }
-            return CreateInstance(prefab, type);
-        }
-
-        private ParticleController CreateInstance(GameObject prefab, VfxEffectType type)
-        {
-            var go = Object.Instantiate(prefab);
-            go.SetActive(false);
             var pc = go.GetComponent<ParticleController>();
             if (pc == null)
             {
-                Debug.LogWarning($"[VfxFactory] Prefab {prefab.name} is missing ParticleController component.");
-                Object.Destroy(go);
+                Debug.LogWarning($"[VfxFactory] Префаб {prefab.name} не содержит ParticleController. Объект возвращён в пул.");
+                _pool.Return(go);
                 return null;
             }
-            _controllerTypes[pc] = type;
+
+            // Колбэк возвращает объект в пул через IPoolManager — никаких прямых манипуляций с очередью.
+            pc.Launch(pos, rot, c => _pool.Return(c.gameObject));
             return pc;
-        }
-
-        private void ReturnToPool(ParticleController controller)
-        {
-            if (controller == null) return;
-
-            controller.gameObject.SetActive(false);
-
-            if (!_controllerTypes.TryGetValue(controller, out var type))
-            {
-                Object.Destroy(controller.gameObject);
-                return;
-            }
-
-            if (!_pools.TryGetValue(type, out var queue))
-            {
-                queue = new Queue<ParticleController>();
-                _pools[type] = queue;
-            }
-            queue.Enqueue(controller);
         }
     }
 }

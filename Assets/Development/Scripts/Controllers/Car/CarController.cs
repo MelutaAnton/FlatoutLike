@@ -28,6 +28,17 @@ namespace FlatOutLike.Controllers.Car
         public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
 
         /// <summary>
+        /// Задаёт идентификатор и конфиг машины до инъекции VContainer.
+        /// Вызывается фабрикой до InjectGameObject, чтобы Construct читал актуальные значения,
+        /// а не дефолты из prefab (carId=0, config=null).
+        /// </summary>
+        public void Configure(int carId, CarStatsConfig stats)
+        {
+            _carId  = carId;
+            _config = stats;
+        }
+
+        /// <summary>
         /// Заменяет активный источник ввода в рантайме.
         /// Используется <c>EnemyCarController</c>, чтобы подменить <c>AIInputProvider</c>
         /// после того как VContainer заинжектил дефолтный <c>KeyboardInputProvider</c>.
