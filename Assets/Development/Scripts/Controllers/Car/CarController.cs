@@ -20,6 +20,7 @@ namespace FlatOutLike.Controllers.Car
 
         private IInputProvider _input;
         private ICarMovementService _movement;
+        private INitroService _nitro;
         private IEventBus _eventBus;
         private bool _initialized;
 
@@ -51,13 +52,14 @@ namespace FlatOutLike.Controllers.Car
 
         [Inject]
         public void Construct(IInputProvider input, ICarMovementService movement,
-            IDamageService damage, IEventBus eventBus)
+            IDamageService damage, INitroService nitro, IEventBus eventBus)
         {
             // Не зависит от порядка: AI-обёртка (EnemyCarController) могла уже
             // установить AIInputProvider через SetInputSource до запуска этого Construct.
             // Никогда не перезаписываем существующий источник keyboard-синглтоном.
             _input ??= input;
             _movement = movement;
+            _nitro    = nitro;
             _eventBus = eventBus;
 
             if (_rigidbody != null && _config != null)
@@ -67,7 +69,10 @@ namespace FlatOutLike.Controllers.Car
             }
 
             if (_config != null)
+            {
                 damage.RegisterCar(CarId, _config.MaxArmor, _config.Mass);
+                nitro.RegisterCar(CarId, _config.NitroCapacity);
+            }
 
             ApplyWheelFriction();
 
@@ -116,6 +121,17 @@ namespace FlatOutLike.Controllers.Car
             ApplyMotor(motor);
             ApplySteer(steer);
             ApplyBrake(brake);
+            ApplyNitro();
+        }
+
+        /// <summary>
+        /// Применяет импульс нитро если кнопка зажата и бак не пуст.
+        /// Расход делегируется в <see cref="INitroService"/> — логика вне контроллера.
+        /// </summary>
+        private void ApplyNitro()
+        {
+            if (_input.Nitro && _nitro.TryConsume(CarId, _config.NitroDrainRate * Time.fixedDeltaTime))
+                _rigidbody.AddForce(transform.forward * _config.NitroForce);
         }
 
         private void ApplyMotor(float torque)

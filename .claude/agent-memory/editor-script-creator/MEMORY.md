@@ -5,3 +5,4 @@
 - [Step 5 Physics Layers](project_step5_physics_layers.md) — CreatePhysicsLayersEditor; WallName→internal; AISensorConfig mask=Wall|Hazard (not Everything); run order: Layers→EnemyCar→AISensor
 - [Step 5a Derby Scripts](project_step5a_derby_scripts.md) — 4 скрипта: enemy prefab, арена 60x60, 7 spawn-points, DerbyMatchConfig; prefab-contents паттерн; порядок запуска полный
 - [Step 5b Personality Configs](project_step5b_personality_configs.md) — 2 профиля Coward/PlayerHunter; CopyAsset-паттерн; enum-поля через enumValueIndex; DerbyMatchConfig теперь entry[0..2]=разные профили
+- [Step 5c Pickup Scripts](project_step5c_pickup_scripts.md) — 4 скрипта: Pickup prefabs (Repair/Nitro), PickupConfig, PickupZones; kinematic RB утилита; DerbyMatchConfig расширен _pickupConfig; field names, порядок запуска

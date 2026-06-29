@@ -9,6 +9,7 @@ using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Enemies;
 using FlatOutLike.Data.Configs.Match;
+using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Installers;
 
@@ -31,6 +32,8 @@ namespace FlatOutLike.Editor.Configs
     ///        _vfxConfig        → VfxConfig.asset
     ///        _chaseCamera      → ChaseCarCameraBehaviour из активной сцены
     ///        _sceneCars        → очищает (арена использует фабрику, не ручной спавн)
+    ///        _pickupConfig     → PickupConfig.asset (шаг 5c)
+    ///        [_pickupZones заполняет отдельный скрипт Populate Pickup Zones]
     ///   4. ApplyModifiedProperties + MarkSceneDirty + SaveScene.
     ///
     /// Если scope или SpawnPoints не найдены — LogWarning без краша.
@@ -41,6 +44,9 @@ namespace FlatOutLike.Editor.Configs
     ///   FlatOutLike/Configs/Create Default DamageConfig
     ///   FlatOutLike/Configs/Create Default VfxConfig
     ///   FlatOutLike/Setup/Build Enemy Car Prefab
+    ///   FlatOutLike/Setup/Build Pickup Prefabs          (шаг 5c)
+    ///   FlatOutLike/Configs/Create Default PickupConfig (шаг 5c)
+    ///   FlatOutLike/Spawn/Populate Pickup Zones         (шаг 5c — заполняет _pickupZones)
     /// </summary>
     public static class CreateDefaultDerbyMatchConfigEditor
     {
@@ -56,7 +62,8 @@ namespace FlatOutLike.Editor.Configs
         private const string CowardPath        = "Assets/Development/Data/Configs/Enemies/EnemyPersonalityConfig_Coward.asset";
         private const string PlayerHunterPath  = "Assets/Development/Data/Configs/Enemies/EnemyPersonalityConfig_PlayerHunter.asset";
         private const string DamageConfigPath  = "Assets/Development/Data/Configs/Combat/DamageConfig.asset";
-        private const string VfxConfigPath     = "Assets/Development/Data/Configs/Vfx/VfxConfig.asset";
+        private const string VfxConfigPath      = "Assets/Development/Data/Configs/Vfx/VfxConfig.asset";
+        private const string PickupConfigPath   = "Assets/Development/Data/Configs/Pickups/PickupConfig.asset";
 
         private const int EnemyCount = 3;
 
@@ -219,6 +226,29 @@ namespace FlatOutLike.Editor.Configs
 
             // ── 8. Заполняем _spawnPoints из дочерних объектов SpawnPoints ────
             FillSpawnPoints(scopeSo);
+
+            // ── 8b. Проводим _pickupConfig (Шаг 5c) ──────────────────────────
+            // _pickupZones заполняет отдельный скрипт Populate Pickup Zones;
+            // _pickupConfig — конфиг пикапов — прописываем здесь вместе с прочими ссылками.
+            var pickupConfig = AssetDatabase.LoadAssetAtPath<PickupConfig>(PickupConfigPath);
+            if (pickupConfig == null)
+            {
+                Debug.LogWarning("[Editor] PickupConfig не найден по " + PickupConfigPath +
+                                 ". Запусти 'FlatOutLike/Configs/Create Default PickupConfig'. " +
+                                 "Поле _pickupConfig в GameLifetimeScope останется пустым.");
+            }
+            else
+            {
+                var pickupConfigProp = scopeSo.FindProperty("_pickupConfig");
+                if (pickupConfigProp == null)
+                    Debug.LogWarning("[Editor] Поле '_pickupConfig' не найдено в GameLifetimeScope. " +
+                                     "Убедись, что code-writer добавил его в GameLifetimeScope.cs.");
+                else
+                {
+                    pickupConfigProp.objectReferenceValue = pickupConfig;
+                    Debug.Log("[Editor] GameLifetimeScope._pickupConfig = PickupConfig.");
+                }
+            }
 
             // ── 9. Применяем и сохраняем ─────────────────────────────────────
             scopeSo.ApplyModifiedProperties();

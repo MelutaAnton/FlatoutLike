@@ -20,6 +20,7 @@ namespace FlatOutLike.Data.Configs.Car
         [SerializeField] private float _maxArmor = 100f;
         [SerializeField] private float _nitroCapacity = 100f;
         [SerializeField] private float _nitroForce = 2000f;
+        [SerializeField] private float _nitroDrainRate = 25f;
 
         public float Acceleration => _acceleration;
         public float TopSpeed => _topSpeed;
@@ -33,5 +34,7 @@ namespace FlatOutLike.Data.Configs.Car
         public float MaxArmor => _maxArmor;
         public float NitroCapacity => _nitroCapacity;
         public float NitroForce => _nitroForce;
+        /// <summary>Расход нитро в единицах/секунду пока кнопка нитро зажата.</summary>
+        public float NitroDrainRate => _nitroDrainRate;
     }
 }

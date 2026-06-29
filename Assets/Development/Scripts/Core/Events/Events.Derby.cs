@@ -44,4 +44,20 @@ namespace FlatOutLike.Core.Events
             Killer = killer;
         }
     }
+
+    /// <summary>
+    /// Публикуется пикапом при подборе машиной.
+    /// Подписчики (HUD, статистика матча) узнают, кто и что подобрал.
+    /// </summary>
+    public readonly struct PickupCollectedEvent
+    {
+        public readonly CarId      Collector;
+        public readonly PickupType Type;
+
+        public PickupCollectedEvent(CarId collector, PickupType type)
+        {
+            Collector = collector;
+            Type      = type;
+        }
+    }
 }

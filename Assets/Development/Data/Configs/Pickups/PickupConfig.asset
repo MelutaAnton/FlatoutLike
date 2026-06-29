@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc77be5a2f942594cbd579e635749766, type: 3}
+  m_Name: PickupConfig
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Pickups.PickupConfig
+  _repairFraction: 0.4
+  _nitroFillFraction: 1
+  _respawnInterval: 8
+  _entries:
+  - type: 0
+    prefab: {fileID: 1381767372751655852, guid: 562ff209b96930646ac183c6a1ba8efa, type: 3}
+    poolSize: 2
+  - type: 1
+    prefab: {fileID: 5988938298657748184, guid: f0bf11187d09e0f408aad62d15fa03de, type: 3}
+    poolSize: 2

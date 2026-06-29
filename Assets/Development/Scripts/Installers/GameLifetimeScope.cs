@@ -5,8 +5,10 @@ using FlatOutLike.Core.Input;
 using FlatOutLike.Core.Pool;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Match;
+using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Factories.Car;
+using FlatOutLike.Factories.Pickup;
 using FlatOutLike.Factories.Vfx;
 using FlatOutLike.Services.AI;
 using FlatOutLike.Services.Car;
@@ -14,6 +16,7 @@ using FlatOutLike.Services.Combat;
 using FlatOutLike.Services.Flow;
 using FlatOutLike.Services.Match;
 using FlatOutLike.Services.Meta;
+using FlatOutLike.Services.Pickups;
 using FlatOutLike.Services.Vfx;
 using UnityEngine;
 using VContainer;
@@ -54,6 +57,19 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private ChaseCarCameraBehaviour _chaseCamera;
 
+        // ── Шаг 5c: Pickup-система ─────────────────────────────────────────────
+        /// <summary>
+        /// Конфиг пикапов: типы, prefab'ы пула, размеры пула, тайминги.
+        /// Заполняется editor-скриптом; на сценах без пикапов оставить null.
+        /// </summary>
+        [SerializeField] private PickupConfig _pickupConfig;
+
+        /// <summary>
+        /// Зоны спавна пикапов на арене (Transform-точка + тип пикапа).
+        /// Создаются editor-скриптом; порядок не важен.
+        /// </summary>
+        [SerializeField] private PickupZone[] _pickupZones;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -89,6 +105,20 @@ namespace FlatOutLike.Installers
             // Match (Шаг 5b) — реестр машин и выбор цели
             builder.Register<CarRegistry>(Lifetime.Singleton).As<ICarRegistry>();
             builder.Register<TargetSelectionService>(Lifetime.Singleton).As<ITargetSelectionService>();
+
+            // Nitro (Шаг 5c)
+            builder.Register<NitroService>(Lifetime.Singleton).As<INitroService>();
+
+            // Pickup-система (Шаг 5c).
+            // Все три регистрации — условные: если _pickupConfig не задан (тест-сцены без пикапов),
+            // VContainer не попытается создать PickupFactory/PickupSpawnerService и не упадёт.
+            if (_pickupConfig != null)
+            {
+                builder.RegisterInstance(_pickupConfig);
+                builder.Register<PickupFactory>(Lifetime.Singleton).As<IPickupFactory>();
+                // EntryPoint → VContainer вызывает ITickable.Tick через PlayerLoop-диспетчер автоматически.
+                builder.RegisterEntryPoint<PickupSpawnerService>().As<IPickupSpawnerService>();
+            }
 
             // Pool (Шаг 5a) — единственный источник пулов для всех фабрик
             builder.Register<PoolManager>(Lifetime.Singleton).As<IPoolManager>();
@@ -133,6 +163,10 @@ namespace FlatOutLike.Installers
                     if (_chaseCamera != null && cars != null && cars.Count > 0 && cars[0] != null)
                         _chaseCamera.SetTarget(cars[0].transform);
                 }
+
+                // Шаг 5c: запускаем спавнер пикапов только если конфиг и зоны настроены.
+                if (_pickupConfig != null && _pickupZones != null && _pickupZones.Length > 0)
+                    container.Resolve<IPickupSpawnerService>().StartSpawning(_pickupZones);
             });
         }
     }

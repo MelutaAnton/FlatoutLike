@@ -4,3 +4,4 @@
 - [asmdef + EditMode тесты](project_asmdef_tests.md) — три asmdef-файла (FlatOutLike/Editor/Tests), Layers.cs, 9 тестов EnemyAIService
 - [Step 5a — Pool + CarFactory](step5a_pool_and_car_factory.md) — IPoolManager/PoolManager/GameObjectPool/PooledInstance, CarFactory, DerbyMatchConfig, Configure-паттерн на контроллерах
 - [Step 5b — Target Selection](step5b_target_selection.md) — CarRegistry, TargetSelectionService, TargetSelectionMode enum, EnemyPersonalityConfig новое поле, SetTarget удалён
+- [Step 5c — Nitro + Pickups](step5c_nitro_pickups.md) — NitroService, RepairPickup/NitroPickup, PickupFactory, PickupSpawnerService (ITickable EntryPoint), DamageService.Repair, условные регистрации
