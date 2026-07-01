@@ -727,6 +727,30 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 8736848838553184272, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 898112348901cf84f8f34047aac299c4, type: 2}
+    - target: {fileID: 8736848838553184337, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 898112348901cf84f8f34047aac299c4, type: 2}
+    - target: {fileID: 8736848838553184345, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 898112348901cf84f8f34047aac299c4, type: 2}
+    - target: {fileID: 8736848838553185046, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 898112348901cf84f8f34047aac299c4, type: 2}
+    - target: {fileID: 8736848838553185137, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 898112348901cf84f8f34047aac299c4, type: 2}
+    - target: {fileID: 8736848838553185186, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 898112348901cf84f8f34047aac299c4, type: 2}
     - target: {fileID: 8736848838553185336, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -923,6 +947,11 @@ MonoBehaviour:
   _sceneCars:
   - {fileID: 732182282}
   - {fileID: 199019995}
+  _derbyMatchConfig: {fileID: 0}
+  _spawnPoints: []
+  _chaseCamera: {fileID: 0}
+  _pickupConfig: {fileID: 0}
+  _pickupZones: []
 --- !u!4 &801954830
 Transform:
   m_ObjectHideFlags: 0

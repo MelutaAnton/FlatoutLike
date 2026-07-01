@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 500ce5f3f0e456a489d6fe38c74f5e80, type: 3}
+  m_Name: DestructibleFence_Config
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Destructible.DestructibleConfig
+  _breakImpulseThreshold: 8
+  _debrisPrefabs:
+  - {fileID: 5077459215529983500, guid: 534c538b2900fd645935475a40daa338, type: 3}
+  - {fileID: 5077459215529983500, guid: 534c538b2900fd645935475a40daa338, type: 3}
+  - {fileID: 5077459215529983500, guid: 534c538b2900fd645935475a40daa338, type: 3}
+  _debrisPieceCount: 4
+  _debrisLifetime: 5
+  _debrisScatterForce: 6
+  _debrisPoolSize: 8

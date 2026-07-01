@@ -37,8 +37,7 @@ MonoBehaviour:
     blendShapeWeights: []
     vfxToActivate: 
     enableDetachableParts: 1
-  _preservedMaterials:
-  - {fileID: 2100000, guid: 4cd0c5f263dd7804fba9a55fa969faf8, type: 2}
+  _preservedMaterials: []
   _damageLerpSpeed: 3
   _damageResponse:
     serializedVersion: 2

@@ -1,5 +1,6 @@
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Camera;
+using FlatOutLike.Controllers.Destructible;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Core.Pool;
@@ -8,6 +9,7 @@ using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Factories.Car;
+using FlatOutLike.Factories.Destructible;
 using FlatOutLike.Factories.Pickup;
 using FlatOutLike.Factories.Vfx;
 using FlatOutLike.Services.AI;
@@ -126,6 +128,9 @@ namespace FlatOutLike.Installers
             // Car factory (Шаг 5a)
             builder.Register<CarFactory>(Lifetime.Singleton).As<ICarFactory>();
 
+            // Разрушаемые объекты (Шаг 5d)
+            builder.Register<DestructibleFactory>(Lifetime.Singleton).As<IDestructibleFactory>();
+
             // Derby match config (Шаг 5a); SO — RegisterInstance корректно, инъекция не нужна
             if (_derbyMatchConfig != null)
                 builder.RegisterInstance(_derbyMatchConfig);
@@ -142,9 +147,17 @@ namespace FlatOutLike.Installers
             // и CarDamageVisualController на каждом корне Prefab за один проход.
             builder.RegisterBuildCallback(container =>
             {
-                if (_sceneCars == null) return;
-                foreach (var go in _sceneCars)
-                    if (go != null) container.InjectGameObject(go);
+                // _TestDriving-путь: внедряем машины, расставленные вручную в сцене
+                if (_sceneCars != null)
+                {
+                    foreach (var go in _sceneCars)
+                        if (go != null) container.InjectGameObject(go);
+                }
+
+                // Шаг 5d: инъекция разрушаемых объектов (заборов и т.п.), расставленных на сцене.
+                // Безусловно — не зависит от _sceneCars. Если заборов нет — цикл ничего не делает.
+                foreach (var d in Object.FindObjectsByType<DestructibleObjectController>(FindObjectsSortMode.None))
+                    container.InjectGameObject(d.gameObject);
             });
 
             // ВРЕМЕННЫЙ триггер спавна для шага 5a.
