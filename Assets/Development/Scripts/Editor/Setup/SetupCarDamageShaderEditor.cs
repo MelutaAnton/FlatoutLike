@@ -10,27 +10,32 @@ using FlatOutLike.Data.Configs.Car;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Конвертирует материалы корпуса машины в сцене на использование шейдера
-    /// FlatOutLike/CarDamageLit, создавая per-material _Damage-варианты в
+    /// Конвертирует материалы корпуса машины на ВЫДЕЛЕННЫХ prefab-ассетах в окне
+    /// Project (поддерживается мультивыделение), вне зависимости от открытой сцены.
+    /// Каждый префаб редактируется через LoadPrefabContents → ConvertCar →
+    /// SaveAsPrefabAsset. Для исходных материалов создаются per-material
+    /// _Damage-варианты с шейдером FlatOutLike/CarDamageLit в
     /// Assets/Development/Art/Materials/Damage/. Свойства (_BaseMap, _BaseColor,
-    /// _Metallic, _Smoothness) копируются из оригинального материала с
-    /// URP-fallback'ами (_MainTex, _Color).
+    /// _Metallic, _Smoothness) копируются из оригинала с URP-fallback'ами
+    /// (_MainTex, _Color).
     ///
     /// Исключаются из конвертации:
     ///   • Материалы из списка CarDamageVisualConfig._preservedMaterials (стекло, фары).
     ///   • Рендереры, являющиеся детьми CarController._wheelVisuals.
     ///   • Компоненты ParticleSystemRenderer.
     ///
+    /// Пропускаются целиком: выделенные ассеты без CarController (скрипт работает
+    /// только с префабами машин).
+    ///
     /// Идемпотентность: материалы, уже использующие damage-шейдер, пропускаются;
     ///                  существующие _Damage.mat-ассеты переиспользуются и обновляются.
     ///
     /// Запускать ПОСЛЕ:
-    ///   FlatOutLike/Setup/Build Driving Test Scene
-    ///   FlatOutLike/Configs/Create Default CarDamageVisualConfig
+    ///   FlatOutLike/Configs/Create Default CarDamageVisualConfig  (для preserve-list)
+    ///   и при наличии самого prefab-ассета машины.
     /// </summary>
     public static class SetupCarDamageShaderEditor
     {
-        private const string ScenePath        = "Assets/Development/Scenes/_TestDriving.unity";
         private const string VisualConfigPath = "Assets/Development/Data/Configs/Car/CarDamageVisualConfig.asset";
         private const string DamageShaderName = "FlatOutLike/CarDamageLit";
         private const string DamageMatFolder  = "Assets/Development/Art/Materials/Damage";
@@ -41,22 +46,60 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Convert Car Body To Damage Shader");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Убеждаемся, что _TestDriving открыт ────────────────────────
-            OpenSceneIfNeeded();
-
-            // ── 2. Ищем машину по компоненту ──────────────────────────────────
-            var carController = Object.FindAnyObjectByType<CarController>();
-            if (carController == null)
+            // ── 1. Собираем выделенные prefab-ассеты из окна Project ──────────
+            // Работаем именно с ассетами (не с объектами сцены): для каждого
+            // выделенного объекта берём путь ассета и фильтруем .prefab.
+            var prefabPaths = new List<string>();
+            foreach (var obj in Selection.objects)
             {
-                Debug.LogWarning("[Editor] No CarController found in scene. " +
-                                 "Run 'FlatOutLike/Setup/Build Driving Test Scene' first.");
+                var path = AssetDatabase.GetAssetPath(obj);
+                if (string.IsNullOrEmpty(path)) continue;          // не ассет (объект сцены и т.п.)
+                if (!path.EndsWith(".prefab")) continue;           // только префабы
+                if (!prefabPaths.Contains(path)) prefabPaths.Add(path);
+            }
+
+            if (prefabPaths.Count == 0)
+            {
+                Debug.LogWarning("[Editor] Convert Car Body To Damage Shader: выдели один или несколько " +
+                                 "prefab-ассетов машины в окне Project и запусти снова.");
                 return;
             }
-            Debug.Log("[Editor] Found car: " + carController.gameObject.name);
 
-            ConvertCar(carController);
+            // ── 2. Конвертируем каждый префаб через prefab-contents ───────────
+            int prefabsConverted = 0;
+            foreach (var path in prefabPaths)
+            {
+                var root = PrefabUtility.LoadPrefabContents(path);
+                try
+                {
+                    var carController = root.GetComponentInChildren<CarController>(true);
+                    if (carController == null)
+                    {
+                        Debug.LogWarning("[Editor] '" + path + "' не содержит CarController — пропущен " +
+                                         "(скрипт конвертирует только префабы машин).");
+                        continue;
+                    }
 
+                    // В prefab-contents контексте Undo.RecordObject внутри ConvertCar — no-op,
+                    // но назначение материалов корректно сохраняется через SaveAsPrefabAsset ниже.
+                    ConvertCar(carController);
+                    PrefabUtility.SaveAsPrefabAsset(root, path);
+                    Debug.Log("[Editor] Damage-шейдер конвертирован и сохранён: " + path);
+                    prefabsConverted++;
+                }
+                finally
+                {
+                    // UnloadPrefabContents ОБЯЗАТЕЛЕН в finally — уничтожает preview-сцену
+                    PrefabUtility.UnloadPrefabContents(root);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
             Undo.CollapseUndoOperations(undoGroup);
+
+            Debug.Log("[Editor] Convert Car Body To Damage Shader: обработано префабов — " +
+                      prefabsConverted + " из " + prefabPaths.Count + " выделенных.");
         }
 
         /// <summary>
@@ -262,23 +305,6 @@ namespace FlatOutLike.Editor.Setup
             Debug.Log("[Editor] Convert Car Body To Damage Shader complete for '" + carGo.name + "' — " +
                       "new: " + converted + ", reused: " + reused +
                       ", skipped (preserved/wheel/particle): " + skipped + ".");
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        private static void OpenSceneIfNeeded()
-        {
-            if (SceneManager.GetActiveScene().path == ScenePath) return;
-
-            if (!System.IO.File.Exists(
-                    System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), ScenePath)))
-            {
-                Debug.LogWarning("[Editor] _TestDriving.unity not found at " + ScenePath +
-                                 ". Run 'FlatOutLike/Setup/Build Driving Test Scene' first.");
-                return;
-            }
-
-            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            Debug.Log("[Editor] Opened _TestDriving.unity.");
         }
 
         private static void EnsureFolder(string parent, string folderName)
