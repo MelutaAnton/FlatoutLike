@@ -14,5 +14,12 @@ namespace FlatOutLike.Factories.Destructible
         /// с параметрами из <paramref name="config"/>.
         /// </summary>
         void SpawnDebris(Vector3 origin, DestructibleConfig config);
+
+        /// <summary>
+        /// То же, но каждый обломок дополнительно наследует <paramref name="baseVelocity"/> —
+        /// используется, когда источник разрушения движется (например, лобовое стекло
+        /// при вылете водителя: осколки летят по ходу машины).
+        /// </summary>
+        void SpawnDebris(Vector3 origin, DestructibleConfig config, Vector3 baseVelocity);
     }
 }

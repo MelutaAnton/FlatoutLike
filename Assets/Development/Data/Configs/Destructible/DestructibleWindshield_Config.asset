@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 500ce5f3f0e456a489d6fe38c74f5e80, type: 3}
+  m_Name: DestructibleWindshield_Config
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Destructible.DestructibleConfig
+  _breakImpulseThreshold: 999
+  _debrisPrefabs:
+  - {fileID: 4536365345558627941, guid: 93edafa2c245bcf41b594e08aa587be4, type: 3}
+  _debrisPieceCount: 12
+  _debrisLifetime: 3
+  _debrisScatterForce: 4
+  _debrisPoolSize: 24

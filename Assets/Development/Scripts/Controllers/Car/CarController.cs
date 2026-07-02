@@ -227,7 +227,14 @@ namespace FlatOutLike.Controllers.Car
             Vector3 carVelocity = _rigidbody != null ? _rigidbody.linearVelocity : Vector3.zero;
             var ejectCommand = new EjectCommand(_driver, CarId, EjectReason.CarDestroyed, _ejectConfig, _eventBus, transform, carVelocity);
             if (ejectCommand.CanExecute())
+            {
                 ejectCommand.Execute();
+
+                // Водитель вылетел «через лобовое» — разбиваем стекло (если компонент навешан).
+                var windshield = GetComponent<WindshieldController>();
+                if (windshield != null)
+                    windshield.Shatter(carVelocity);
+            }
         }
 
         private void OnDestroy()

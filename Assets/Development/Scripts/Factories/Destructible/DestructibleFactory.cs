@@ -25,6 +25,9 @@ namespace FlatOutLike.Factories.Destructible
         }
 
         public void SpawnDebris(Vector3 origin, DestructibleConfig config)
+            => SpawnDebris(origin, config, Vector3.zero);
+
+        public void SpawnDebris(Vector3 origin, DestructibleConfig config, Vector3 baseVelocity)
         {
             if (config.DebrisPrefabs == null || config.DebrisPrefabs.Length == 0)
             {
@@ -65,7 +68,8 @@ namespace FlatOutLike.Factories.Destructible
                     Random.Range(0.2f, 1f),
                     Random.Range(-1f, 1f)
                 );
-                var impulse = direction.normalized * config.DebrisScatterForce;
+                // Случайный разлёт + наследуемая скорость источника (Vector3.zero для статики)
+                var impulse = direction.normalized * config.DebrisScatterForce + baseVelocity;
 
                 // Небольшое смещение спавна, чтобы обломки не накладывались в одной точке
                 var offset = new Vector3(
