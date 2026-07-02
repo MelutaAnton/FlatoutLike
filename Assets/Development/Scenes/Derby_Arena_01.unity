@@ -56223,6 +56223,7 @@ MonoBehaviour:
   _vfxConfig: {fileID: 11400000, guid: 4171a5cc56e2fd144849b212670b5674, type: 2}
   _sceneCars: []
   _derbyMatchConfig: {fileID: 11400000, guid: 36cb8441751c2744983f67fd1e7f9781, type: 2}
+  _rewardConfig: {fileID: 11400000, guid: 118860e63a283a549ace9c54aecb68fe, type: 2}
   _spawnPoints:
   - {fileID: 1324765113}
   - {fileID: 1047133215}

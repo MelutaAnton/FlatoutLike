@@ -23,6 +23,7 @@ namespace FlatOutLike.Controllers.Car
         private INitroService _nitro;
         private IEventBus _eventBus;
         private bool _initialized;
+        private bool _wrecked;
 
         public CarId CarId   => new CarId(_carId);
         public float MaxArmor => _config != null ? _config.MaxArmor : 0f;
@@ -61,6 +62,7 @@ namespace FlatOutLike.Controllers.Car
             _movement = movement;
             _nitro    = nitro;
             _eventBus = eventBus;
+            _eventBus.Subscribe<CarDestroyedEvent>(OnAnyCarDestroyed);
 
             if (_rigidbody != null && _config != null)
             {
@@ -106,6 +108,13 @@ namespace FlatOutLike.Controllers.Car
         private void FixedUpdate()
         {
             if (!_initialized) return;
+            if (_wrecked)
+            {
+                // Машина уничтожена: газ/руль/нитро больше не применяются, машина катится по инерции.
+                ApplyMotor(0f);
+                ApplySteer(0f);
+                return;
+            }
             if (_config == null || _rigidbody == null) return;
 
             float throttle = _input.Move.y;
@@ -190,6 +199,22 @@ namespace FlatOutLike.Controllers.Car
             Vector3 point = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
 
             _eventBus.Publish(new CarCollisionEvent(attacker, CarId, impactSpeed, point));
+        }
+
+        /// <summary>
+        /// Помечает машину уничтоженной, если событие относится к ней самой.
+        /// Дальше FixedUpdate перестаёт применять газ/руль/нитро — машина катится по инерции.
+        /// </summary>
+        private void OnAnyCarDestroyed(CarDestroyedEvent e)
+        {
+            if (e.Target == CarId)
+                _wrecked = true;
+        }
+
+        private void OnDestroy()
+        {
+            if (_eventBus != null)
+                _eventBus.Unsubscribe<CarDestroyedEvent>(OnAnyCarDestroyed);
         }
     }
 }

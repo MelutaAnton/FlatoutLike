@@ -60,4 +60,22 @@ namespace FlatOutLike.Core.Events
             Type      = type;
         }
     }
+
+    /// <summary>
+    /// Публикуется <c>DerbyMatchService</c> по завершении матча (остался один живой участник).
+    /// Winner = <see cref="CarId.None"/>, если единственного выжившего определить не удалось.
+    /// </summary>
+    public readonly struct DerbyMatchEndedEvent
+    {
+        public readonly CarId Winner;
+        public readonly int   PlayerKills;
+        public readonly float Duration;
+
+        public DerbyMatchEndedEvent(CarId winner, int playerKills, float duration)
+        {
+            Winner      = winner;
+            PlayerKills = playerKills;
+            Duration    = duration;
+        }
+    }
 }

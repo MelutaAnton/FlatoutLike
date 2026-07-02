@@ -23,11 +23,11 @@ namespace FlatOutLike.Services.Flow
                 { GameState.MainMenu,                 emptyState },
                 { GameState.GarageMeta,               emptyState },
                 { GameState.StuntsHub,                emptyState },
-                { GameState.DerbyMatch,               emptyState },
+                { GameState.DerbyMatch,               new DerbyMatchState() },
                 { GameState.StuntsHighJumpDriving,    emptyState },
                 { GameState.StuntsHighJumpFlight,     emptyState },
                 { GameState.StuntsHighJumpScoring,    emptyState },
-                { GameState.MatchEnd,                 emptyState },
+                { GameState.MatchEnd,                 new MatchEndState() },
                 { GameState.Paused,                   emptyState }
             };
 

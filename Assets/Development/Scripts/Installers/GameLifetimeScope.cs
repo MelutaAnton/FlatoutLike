@@ -7,6 +7,7 @@ using FlatOutLike.Core.Pool;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
+using FlatOutLike.Data.Configs.Rewards;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Factories.Car;
 using FlatOutLike.Factories.Destructible;
@@ -48,6 +49,12 @@ namespace FlatOutLike.Installers
         [SerializeField] private DerbyMatchConfig _derbyMatchConfig;
 
         /// <summary>
+        /// Конфиг наград за Derby-матч (монеты за килл/победу).
+        /// Заполняется на арене вместе с _derbyMatchConfig; в _TestDriving оставить null.
+        /// </summary>
+        [SerializeField] private RewardConfig _rewardConfig;
+
+        /// <summary>
         /// Точки спавна машин для Derby-матча. Index 0 = игрок, 1.. = враги.
         /// Создаются editor-скриптом на арене.
         /// </summary>
@@ -87,6 +94,11 @@ namespace FlatOutLike.Installers
             // Flow
             builder.Register<GameFlowService>(Lifetime.Singleton).As<IGameFlowService>();
             builder.RegisterComponentInHierarchy<GameBootstrap>();
+
+            // Награды (Шаг 5e) — зачисляет RewardEarnedEvent в профиль игрока.
+            // Регистрируется безусловно (не зависит от _derbyMatchConfig/_rewardConfig),
+            // т.к. награды может публиковать любой источник (Derby, HighJump, миссии).
+            builder.Register<RewardCrediterService>(Lifetime.Singleton);
 
             // Car
             builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();
@@ -133,11 +145,24 @@ namespace FlatOutLike.Installers
 
             // Derby match config (Шаг 5a); SO — RegisterInstance корректно, инъекция не нужна
             if (_derbyMatchConfig != null)
+            {
                 builder.RegisterInstance(_derbyMatchConfig);
+
+                // DerbyMatchService (Шаг 5e) — требует ещё и RewardConfig, поэтому условие двойное.
+                if (_rewardConfig != null)
+                {
+                    builder.RegisterInstance(_rewardConfig);
+                    builder.Register<DerbyMatchService>(Lifetime.Singleton).As<IDerbyMatchService>();
+                }
+            }
 
             // Eager-инициализация DamageService, чтобы его ctor подписался на CarCollisionEvent
             // даже когда явный consumer не запрашивает его из container.
             builder.RegisterBuildCallback(c => c.Resolve<IDamageService>());
+
+            // Eager-инициализация RewardCrediterService, чтобы он подписался на RewardEarnedEvent
+            // до того как матч успеет завершиться и опубликовать награду.
+            builder.RegisterBuildCallback(c => c.Resolve<RewardCrediterService>());
 
             // Путь _TestDriving: внедряем машины, расставленные вручную в сцене.
             // Заменяет RegisterComponentInHierarchy<CarController> и
@@ -160,21 +185,28 @@ namespace FlatOutLike.Installers
                     container.InjectGameObject(d.gameObject);
             });
 
-            // ВРЕМЕННЫЙ триггер спавна для шага 5a.
-            // На шаге 5e спавн переедет в DerbyMatchService (там же будет логика матча).
-            // Арена использует фабрику (_sceneCars пуст), _TestDriving — старый _sceneCars путь;
-            // пути взаимоисключающие по сцене.
+            // Триггер старта Derby-матча (Шаг 5e). Спавн и логика матча теперь в DerbyMatchService;
+            // здесь только запуск и привязка camera-таргета к заспавненной машине игрока.
+            // Арена использует фабрику через DerbyMatchService (_sceneCars пуст),
+            // _TestDriving — старый _sceneCars путь; пути взаимоисключающие по сцене.
             builder.RegisterBuildCallback(container =>
             {
                 if (_derbyMatchConfig != null
+                    && _rewardConfig != null
                     && _spawnPoints != null
                     && _spawnPoints.Length > 0)
                 {
-                    var cars = container.Resolve<ICarFactory>().SpawnMatch(_derbyMatchConfig, _spawnPoints);
+                    var cars = container.Resolve<IDerbyMatchService>().StartMatch(_spawnPoints);
 
                     // Привязываем chase-камеру к машине игрока (index 0), заспавненной в рантайме.
                     if (_chaseCamera != null && cars != null && cars.Count > 0 && cars[0] != null)
                         _chaseCamera.SetTarget(cars[0].transform);
+                }
+                else if (_derbyMatchConfig != null && _rewardConfig == null)
+                {
+                    // Диагностика: арена настроена, но reward-конфиг не проставлен — иначе спавн молча не произойдёт.
+                    Debug.LogWarning("[GameLifetimeScope] _derbyMatchConfig задан, но _rewardConfig == null — " +
+                                     "Derby-матч не запустится. Прогони FlatOutLike/Configs/Create Default RewardConfig.");
                 }
 
                 // Шаг 5c: запускаем спавнер пикапов только если конфиг и зоны настроены.
