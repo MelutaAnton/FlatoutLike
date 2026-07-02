@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace FlatOutLike.Controllers.Camera
 {
-    public sealed class ChaseCarCameraBehaviour : MonoBehaviour
+    public sealed class ChaseCarCameraBehaviour : MonoBehaviour, ICameraBehaviour
     {
         [SerializeField] private Transform _target;
         [SerializeField] private ChaseCameraConfig _config;
@@ -22,6 +22,8 @@ namespace FlatOutLike.Controllers.Camera
             _target = target;
             _targetRigidbody = target != null ? target.GetComponentInParent<Rigidbody>() : null;
         }
+
+        public void SetBehaviourActive(bool active) => enabled = active;
 
         private void LateUpdate()
         {

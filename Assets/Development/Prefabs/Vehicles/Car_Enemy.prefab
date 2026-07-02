@@ -142,6 +142,38 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!1 &4987600364740096419
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9094996047751961392}
+  m_Layer: 0
+  m_Name: DriverSeat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9094996047751961392
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4987600364740096419}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.6, z: 0.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2016713563217576478}
+  m_Father: {fileID: 792185774130568935}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5193657774753180251
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,6 +213,7 @@ Transform:
   - {fileID: 8348480130171306694}
   - {fileID: 4686481445879849949}
   - {fileID: 7814494804719859117}
+  - {fileID: 9094996047751961392}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &8884895612362164604
@@ -257,6 +290,7 @@ MonoBehaviour:
   - {fileID: 8736848838553185534}
   - {fileID: 8736848838553185489}
   _config: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
+  _driver: {fileID: 6218797251777775558}
 --- !u!114 &6930264446805689031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -761,3 +795,80 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5524131213863272450, guid: b2a19f5ceeacec34989a9407e00f2d7a, type: 3}
   m_PrefabInstance: {fileID: 3861323933060492714}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5238630077216727080
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9094996047751961392}
+    m_Modifications:
+    - target: {fileID: 4137828793460046879, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_Name
+      value: Driver_Default
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7922623412175742189, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+--- !u!4 &2016713563217576478 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+  m_PrefabInstance: {fileID: 5238630077216727080}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6218797251777775558 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2233435127781648366, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
+  m_PrefabInstance: {fileID: 5238630077216727080}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e47223aaf3d3649428fe90cf31c83a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Driver.DriverController

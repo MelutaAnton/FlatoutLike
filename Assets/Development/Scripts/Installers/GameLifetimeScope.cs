@@ -4,7 +4,9 @@ using FlatOutLike.Controllers.Destructible;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Core.Pool;
+using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Combat;
+using FlatOutLike.Data.Configs.Driver;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Rewards;
@@ -14,6 +16,7 @@ using FlatOutLike.Factories.Destructible;
 using FlatOutLike.Factories.Pickup;
 using FlatOutLike.Factories.Vfx;
 using FlatOutLike.Services.AI;
+using FlatOutLike.Services.Camera;
 using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
 using FlatOutLike.Services.Flow;
@@ -60,11 +63,26 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private Transform[] _spawnPoints;
 
+        // ── Шаг 6: Eject + камера водителя ──────────────────────────────────────
         /// <summary>
-        /// Chase-камера арены. Цель выставляется в рантайме на заспавненную машину игрока
-        /// (машины создаёт CarFactory, поэтому в сцене камеру не к чему привязать заранее).
+        /// Camera rig арены — переключатель между chase-камерой (следование за машиной)
+        /// и orbit-камерой (вокруг катапультированного водителя). Заполняется editor-скриптом;
+        /// в тест-сценах без камеры оставить null.
         /// </summary>
-        [SerializeField] private ChaseCarCameraBehaviour _chaseCamera;
+        [SerializeField] private CameraRig _cameraRig;
+
+        /// <summary>
+        /// Параметры импульса катапультирования водителя. В тест-сценах без ragdoll — null:
+        /// тогда в контейнер регистрируется fallback-инстанс (см. Configure) — VContainer
+        /// не умеет опциональные параметры инъекции.
+        /// </summary>
+        [SerializeField] private DriverEjectConfig _driverEjectConfig;
+
+        /// <summary>
+        /// Параметры орбитальной камеры вокруг катапультированного водителя.
+        /// В тест-сценах без камеры оставить null.
+        /// </summary>
+        [SerializeField] private OrbitCameraConfig _orbitCameraConfig;
 
         // ── Шаг 5c: Pickup-система ─────────────────────────────────────────────
         /// <summary>
@@ -134,6 +152,27 @@ namespace FlatOutLike.Installers
                 builder.RegisterEntryPoint<PickupSpawnerService>().As<IPickupSpawnerService>();
             }
 
+            // Eject + камера водителя (Шаг 6).
+            // DriverEjectConfig регистрируется БЕЗУСЛОВНО: VContainer игнорирует C#-значения
+            // по умолчанию в [Inject] Construct и бросает VContainerException на незарегистрированный
+            // тип — условная регистрация роняла бы InjectGameObject любой машины в тест-сценах.
+            // С fallback-инстансом eject там всё равно не срабатывает (_driver == null у машин).
+            builder.RegisterInstance(_driverEjectConfig != null
+                ? _driverEjectConfig
+                : ScriptableObject.CreateInstance<DriverEjectConfig>());
+
+            // Камерные регистрации — условные (паттерн pickup-конфига): тест-сцены без камеры
+            // не должны падать при резолве.
+
+            if (_orbitCameraConfig != null)
+                builder.RegisterInstance(_orbitCameraConfig);
+
+            if (_cameraRig != null)
+            {
+                builder.RegisterComponent<ICameraRig>(_cameraRig);
+                builder.Register<CameraService>(Lifetime.Singleton).As<ICameraService>();
+            }
+
             // Pool (Шаг 5a) — единственный источник пулов для всех фабрик
             builder.Register<PoolManager>(Lifetime.Singleton).As<IPoolManager>();
 
@@ -199,8 +238,9 @@ namespace FlatOutLike.Installers
                     var cars = container.Resolve<IDerbyMatchService>().StartMatch(_spawnPoints);
 
                     // Привязываем chase-камеру к машине игрока (index 0), заспавненной в рантайме.
-                    if (_chaseCamera != null && cars != null && cars.Count > 0 && cars[0] != null)
-                        _chaseCamera.SetTarget(cars[0].transform);
+                    // ICameraService зарегистрирован только если _cameraRig задан (условная регистрация выше).
+                    if (_cameraRig != null && cars != null && cars.Count > 0 && cars[0] != null)
+                        container.Resolve<ICameraService>().FollowPlayerCar(cars[0].transform);
                 }
                 else if (_derbyMatchConfig != null && _rewardConfig == null)
                 {

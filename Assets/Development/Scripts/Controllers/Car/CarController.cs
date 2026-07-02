@@ -1,6 +1,9 @@
+using FlatOutLike.Controllers.Driver;
+using FlatOutLike.Core.Commands;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Data.Configs.Car;
+using FlatOutLike.Data.Configs.Driver;
 using FlatOutLike.Models;
 using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
@@ -17,17 +20,20 @@ namespace FlatOutLike.Controllers.Car
         [SerializeField] private WheelCollider[] _steerWheels;
         [SerializeField] private Transform[] _wheelVisuals;
         [SerializeField] private CarStatsConfig _config;
+        [SerializeField] private DriverController _driver;
 
         private IInputProvider _input;
         private ICarMovementService _movement;
         private INitroService _nitro;
         private IEventBus _eventBus;
+        private DriverEjectConfig _ejectConfig;
         private bool _initialized;
         private bool _wrecked;
 
         public CarId CarId   => new CarId(_carId);
         public float MaxArmor => _config != null ? _config.MaxArmor : 0f;
         public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
+        public DriverController Driver => _driver;
 
         /// <summary>
         /// Задаёт идентификатор и конфиг машины до инъекции VContainer.
@@ -53,7 +59,7 @@ namespace FlatOutLike.Controllers.Car
 
         [Inject]
         public void Construct(IInputProvider input, ICarMovementService movement,
-            IDamageService damage, INitroService nitro, IEventBus eventBus)
+            IDamageService damage, INitroService nitro, IEventBus eventBus, DriverEjectConfig ejectConfig = null)
         {
             // Не зависит от порядка: AI-обёртка (EnemyCarController) могла уже
             // установить AIInputProvider через SetInputSource до запуска этого Construct.
@@ -62,6 +68,7 @@ namespace FlatOutLike.Controllers.Car
             _movement = movement;
             _nitro    = nitro;
             _eventBus = eventBus;
+            _ejectConfig = ejectConfig; // scope всегда регистрирует инстанс (fallback в тест-сценах); null-guard в CanExecute остаётся
             _eventBus.Subscribe<CarDestroyedEvent>(OnAnyCarDestroyed);
 
             if (_rigidbody != null && _config != null)
@@ -204,11 +211,21 @@ namespace FlatOutLike.Controllers.Car
         /// <summary>
         /// Помечает машину уничтоженной, если событие относится к ней самой.
         /// Дальше FixedUpdate перестаёт применять газ/руль/нитро — машина катится по инерции.
+        /// Заодно катапультирует водителя (Шаг 6) — команда вызывается из контроллера,
+        /// а не из сервиса, т.к. решение "катапультировать" привязано к Unity-событию машины.
         /// </summary>
         private void OnAnyCarDestroyed(CarDestroyedEvent e)
         {
-            if (e.Target == CarId)
-                _wrecked = true;
+            if (e.Target != CarId) return;
+            if (_wrecked) return; // повторное событие по той же машине — eject уже отработал
+
+            _wrecked = true;
+
+            // transform = корень машины: водитель игнорирует столкновения с её коллайдерами
+            // при вылете «через лобовое» (иначе включение ragdoll-коллайдеров в салоне взрывает физику).
+            var ejectCommand = new EjectCommand(_driver, CarId, EjectReason.CarDestroyed, _ejectConfig, _eventBus, transform);
+            if (ejectCommand.CanExecute())
+                ejectCommand.Execute();
         }
 
         private void OnDestroy()

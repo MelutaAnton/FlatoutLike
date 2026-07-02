@@ -7,3 +7,4 @@
 - [Step 5b Personality Configs](project_step5b_personality_configs.md) — 2 профиля Coward/PlayerHunter; CopyAsset-паттерн; enum-поля через enumValueIndex; DerbyMatchConfig теперь entry[0..2]=разные профили
 - [Step 5c Pickup Scripts](project_step5c_pickup_scripts.md) — 4 скрипта: Pickup prefabs (Repair/Nitro), PickupConfig, PickupZones; kinematic RB утилита; DerbyMatchConfig расширен _pickupConfig; field names, порядок запуска
 - [Step 5d Hazard Scripts](project_step5d_hazard_scripts.md) — 3 скрипта: BuildHazardPrefabs (12 prefabs из Junkyard_1), DestructibleConfig (привязка к Fence), PopulateHazards (24 инстанса, radius 4-13); field names DestructibleObjectController/DebrisPieceController/DestructibleConfig
+- [Step 6 Driver Ragdoll Scripts](project_step6_driver_ragdoll_scripts.md) — 5 скриптов написаны против locked contract ДО готовности рантайма; programmatic ragdoll via HumanBodyBones; null-check FindProperty pattern

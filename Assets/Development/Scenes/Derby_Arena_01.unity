@@ -56232,7 +56232,9 @@ MonoBehaviour:
   - {fileID: 1178000177}
   - {fileID: 1136840575}
   - {fileID: 1563075935}
-  _chaseCamera: {fileID: 1046931806}
+  _cameraRig: {fileID: 1046931807}
+  _driverEjectConfig: {fileID: 11400000, guid: 802ee8af9a92d4f42a75c81f43380b84, type: 2}
+  _orbitCameraConfig: {fileID: 11400000, guid: 1065ba30060a1d14488a748461023df6, type: 2}
   _pickupConfig: {fileID: 11400000, guid: 5a1aafd6daee7aa4f9c67d3a21e84ec4, type: 2}
   _pickupZones:
   - point: {fileID: 1336742087}
@@ -117221,6 +117223,8 @@ GameObject:
   - component: {fileID: 1046931802}
   - component: {fileID: 1046931805}
   - component: {fileID: 1046931806}
+  - component: {fileID: 1046931808}
+  - component: {fileID: 1046931807}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -117360,6 +117364,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Camera.ChaseCarCameraBehaviour
   _target: {fileID: 0}
   _config: {fileID: 11400000, guid: 05c393071b6f4da47a6c0d75647e6676, type: 2}
+--- !u!114 &1046931807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1046931801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 485213d959c4857459b9441e174cc592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Camera.CameraRig
+  _chase: {fileID: 1046931806}
+  _orbit: {fileID: 1046931808}
+--- !u!114 &1046931808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1046931801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47f7f18ed62e21041b3b5180af158786, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Camera.OrbitDriverCameraBehaviour
+  _config: {fileID: 11400000, guid: 1065ba30060a1d14488a748461023df6, type: 2}
 --- !u!1 &1047133214
 GameObject:
   m_ObjectHideFlags: 0

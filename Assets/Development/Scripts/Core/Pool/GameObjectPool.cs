@@ -51,7 +51,10 @@ namespace FlatOutLike.Core.Pool
             var go = Object.Instantiate(_prefab);
             go.SetActive(false);
 
-            var marker = go.GetComponent<PooledInstance>() ?? go.AddComponent<PooledInstance>();
+            // Не использовать ?? с Unity-объектами: fake-null обходит перегруженный ==.
+            var marker = go.GetComponent<PooledInstance>();
+            if (marker == null)
+                marker = go.AddComponent<PooledInstance>();
             marker.SourcePrefab = _prefab;
 
             return go;

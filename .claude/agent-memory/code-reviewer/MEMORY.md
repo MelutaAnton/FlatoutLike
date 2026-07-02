@@ -6,3 +6,4 @@
 - [SO New-Field Asset Gap](project-so-newfield-asset-gap.md) — новые [SerializeField] в конфиге с существующим .asset не получают C#-дефолты; Create*Editor идемпотентно скипает → нужен re-serialize
 - [asmdef VContainer Transitive](project-asmdef-vcontainer-transitive.md) — Editor-asmdef обязан ref VContainer (editor-скрипты трогают GameLifetimeScope : LifetimeScope); ссылки asmdef не транзитивны → CS0012
 - [AI ApproachTimer Reverse Gap](project-ai-approachtimer-reverse-gap.md) — moonwalk-guard кроет только StuckTimer; ApproachTimer знакобойный → откинутая назад машина может реверсить дальше; watch дерби шага 5
+- [VContainer Optional Params](project-vcontainer-optional-params.md) — VContainer 1.18 игнорирует C# default-значения в [Inject] Construct; `Foo x = null` бросает если Foo не зарегистрирован — «optional DI» не работает

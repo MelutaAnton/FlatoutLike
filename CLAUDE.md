@@ -140,6 +140,8 @@ Assets/
 - Инициализацию переносить в `Construct()`, а не в `Start()`.
 - `NavMeshAgent` требует baked NavMesh — автоматизировать через Editor-скрипт.
 - Mixamo-модели могут ломать Ragdoll Setup Wizard — см. skill `setup-ragdoll`.
+- **`??` / `?.` запрещены с Unity-объектами** (`GetComponent<T>() ?? AddComponent<T>()` — бага): fake-null Unity-объекта обходит перегруженный `==`, в Editor-контексте `GetComponent` при промахе возвращает такой fake-null → `MissingComponentException` при первом обращении. Всегда явный `if (x == null)`.
+- **Ragdoll + SkinnedMeshRenderer = исчезающий меш**: SMR не пересчитывает bounds по вершинам — когда ragdoll уводит кости от запечённого AABB, фрустум-каллинг вырезает меш в зависимости от ракурса (тело пропадает, остаются мелкие рендереры на костях). При активации ragdoll ставить `smr.updateWhenOffscreen = true` (см. `DriverController.Eject`).
 
 ## Известные нюансы Unity Physics
 

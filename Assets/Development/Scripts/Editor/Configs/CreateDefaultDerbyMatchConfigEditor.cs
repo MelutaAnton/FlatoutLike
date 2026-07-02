@@ -30,7 +30,6 @@ namespace FlatOutLike.Editor.Configs
     ///        _spawnPoints      → Transform'ы SpawnPoint_0..6 (из объекта SpawnPoints)
     ///        _damageConfig     → DamageConfig.asset
     ///        _vfxConfig        → VfxConfig.asset
-    ///        _chaseCamera      → ChaseCarCameraBehaviour из активной сцены
     ///        _sceneCars        → очищает (арена использует фабрику, не ручной спавн)
     ///        _pickupConfig     → PickupConfig.asset (шаг 5c)
     ///        [_pickupZones заполняет отдельный скрипт Populate Pickup Zones]
@@ -207,22 +206,8 @@ namespace FlatOutLike.Editor.Configs
             sceneCarsProp.arraySize = 0;
             Debug.Log("[Editor] GameLifetimeScope._sceneCars очищен (используется путь CarFactory).");
 
-            // Chase-камера: ищем в сцене компонент, проставляем ссылку в scope.
-            // _target у камеры не трогаем — GameLifetimeScope.SetTarget вызывается при спавне игрока.
-            var chaseCamera = Object.FindAnyObjectByType<ChaseCarCameraBehaviour>();
-            if (chaseCamera == null)
-            {
-                Debug.LogWarning("[Editor] ChaseCarCameraBehaviour не найден в активной сцене. " +
-                                 "Убедись, что 'FlatOutLike/Scenes/Build Derby Arena' уже выполнен. " +
-                                 "Поле _chaseCamera в GameLifetimeScope останется пустым.");
-            }
-            else
-            {
-                Debug.Log("[Editor] Найден ChaseCarCameraBehaviour на '" + chaseCamera.gameObject.name + "'.");
-            }
-            scopeSo.FindProperty("_chaseCamera").objectReferenceValue = chaseCamera;
-            Debug.Log("[Editor] GameLifetimeScope._chaseCamera = " +
-                      (chaseCamera != null ? chaseCamera.gameObject.name : "NULL") + ".");
+            // Камера с шага 6 настраивается отдельным скриптом 'FlatOutLike/Setup/Setup Camera Rig (Step 6)':
+            // поле _chaseCamera из GameLifetimeScope удалено, chase-камера живёт внутри CameraRig.
 
             // ── 8. Заполняем _spawnPoints из дочерних объектов SpawnPoints ────
             FillSpawnPoints(scopeSo);

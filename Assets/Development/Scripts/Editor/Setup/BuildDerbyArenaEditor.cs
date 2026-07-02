@@ -271,8 +271,8 @@ namespace FlatOutLike.Editor.Setup
         {
             // Chase-камера: Main Camera с компонентом ChaseCarCameraBehaviour.
             // _config заполняется здесь через SerializedObject.
-            // _target НЕ задаём — GameLifetimeScope вызывает _chaseCamera.SetTarget(playerCar)
-            // после спавна машины игрока в рантайме.
+            // _target НЕ задаём — после спавна игрока GameLifetimeScope зовёт
+            // ICameraService.FollowPlayerCar (Шаг 6), который активирует chase через CameraRig.
             Camera mainCam = Camera.main;
             GameObject camGo;
 
