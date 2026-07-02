@@ -9,8 +9,9 @@ namespace FlatOutLike.Editor.Configs
     /// Создаёт (или обновляет) Assets/Development/Data/Configs/Driver/DriverEjectConfig_Default.asset.
     ///
     /// Поля:
-    ///   _forwardImpulse = 8  (импульс выброса водителя вперёд при eject)
-    ///   _upImpulse      = 6  (импульс выброса водителя вверх при eject)
+    ///   _forwardImpulse         = 8   (импульс выброса водителя вперёд при eject)
+    ///   _upImpulse              = 6   (импульс выброса водителя вверх при eject)
+    ///   _carVelocityInheritance = 0.6 (доля скорости машины, наследуемая водителем)
     ///
     /// Идемпотентность: если ассет уже существует — поля перезаписываются, GUID сохраняется.
     /// </summary>
@@ -50,8 +51,9 @@ namespace FlatOutLike.Editor.Configs
 
             // ── 3. Заполняем поля через SerializedObject ──────────────────────
             var so = new SerializedObject(config);
-            so.FindProperty("_forwardImpulse").floatValue = 8f;
-            so.FindProperty("_upImpulse").floatValue       = 6f;
+            so.FindProperty("_forwardImpulse").floatValue          = 8f;
+            so.FindProperty("_upImpulse").floatValue               = 6f;
+            so.FindProperty("_carVelocityInheritance").floatValue  = 0.6f;
             so.ApplyModifiedProperties();
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssets();
@@ -59,7 +61,7 @@ namespace FlatOutLike.Editor.Configs
             Selection.activeObject = config;
             EditorGUIUtility.PingObject(config);
 
-            Debug.Log("[Editor] DriverEjectConfig заполнен: _forwardImpulse=8, _upImpulse=6.");
+            Debug.Log("[Editor] DriverEjectConfig заполнен: _forwardImpulse=8, _upImpulse=6, _carVelocityInheritance=0.6.");
         }
 
         // ─────────────────────────────────────────────────────────────────────

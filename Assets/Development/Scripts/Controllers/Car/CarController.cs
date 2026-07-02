@@ -223,7 +223,9 @@ namespace FlatOutLike.Controllers.Car
 
             // transform = корень машины: водитель игнорирует столкновения с её коллайдерами
             // при вылете «через лобовое» (иначе включение ragdoll-коллайдеров в салоне взрывает физику).
-            var ejectCommand = new EjectCommand(_driver, CarId, EjectReason.CarDestroyed, _ejectConfig, _eventBus, transform);
+            // Скорость машины в момент гибели — водитель наследует её долю (полишинг вылета).
+            Vector3 carVelocity = _rigidbody != null ? _rigidbody.linearVelocity : Vector3.zero;
+            var ejectCommand = new EjectCommand(_driver, CarId, EjectReason.CarDestroyed, _ejectConfig, _eventBus, transform, carVelocity);
             if (ejectCommand.CanExecute())
                 ejectCommand.Execute();
         }
