@@ -15,9 +15,6 @@ MonoBehaviour:
   _breakImpulseThreshold: 5
   _debrisPrefabs:
   - {fileID: 1567555557758300228, guid: 3d0762fb22daada409c25a0e01c1edf9, type: 3}
-  - {fileID: 1567555557758300228, guid: 3d0762fb22daada409c25a0e01c1edf9, type: 3}
-  - {fileID: 1567555557758300228, guid: 3d0762fb22daada409c25a0e01c1edf9, type: 3}
-  - {fileID: 1567555557758300228, guid: 3d0762fb22daada409c25a0e01c1edf9, type: 3}
   _debrisPieceCount: 4
   _debrisLifetime: 5
   _debrisScatterForce: 6
