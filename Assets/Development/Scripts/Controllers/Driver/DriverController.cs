@@ -25,6 +25,18 @@ namespace FlatOutLike.Controllers.Driver
         /// <summary>Таз ragdoll — используется как цель орбитальной камеры после катапультирования.</summary>
         public Transform CameraTarget => _pelvis != null ? _pelvis.transform : transform;
 
+        /// <summary>
+        /// Rigidbody таза ragdoll — точка приложения steer-коррекции и буста в полёте
+        /// (см. <c>DriverFlightController</c>). Может быть <c>null</c> до настройки префаба.
+        /// </summary>
+        public Rigidbody Pelvis => _pelvis;
+
+        /// <summary>
+        /// Все кости ragdoll (включая таз) — полётные силы прикладываются РАВНОМЕРНО ко всем,
+        /// иначе разгоняемый таз растягивает CharacterJoint'ы и скиннед-меш даёт «иглы».
+        /// </summary>
+        public IReadOnlyList<Rigidbody> Bones => _boneRigidbodies;
+
         private void Awake()
         {
             // Кэшируем коллайдеры костей и выключаем их на время поездки —
@@ -59,6 +71,14 @@ namespace FlatOutLike.Controllers.Driver
             foreach (var skinned in GetComponentsInChildren<SkinnedMeshRenderer>(true))
                 skinned.updateWhenOffscreen = true;
 
+            // Joint projection жёстко ограничивает растяжение костей при больших скоростях —
+            // без неё длинный полёт с ускорением вытягивает конечности (визуальные «иглы»).
+            foreach (var joint in GetComponentsInChildren<CharacterJoint>(true))
+            {
+                joint.enableProjection = true;
+                joint.projectionDistance = 0.05f;
+            }
+
             SetBoneCollidersEnabled(true);
 
             if (_boneRigidbodies != null)
@@ -66,6 +86,7 @@ namespace FlatOutLike.Controllers.Driver
                 foreach (var bone in _boneRigidbodies)
                 {
                     if (bone == null || bone == _pelvis) continue; // таз обрабатывается отдельно ниже
+                    HardenBonePhysics(bone);
                     bone.isKinematic = false;
                     bone.detectCollisions = true;
                     bone.linearVelocity = velocity;
@@ -74,10 +95,25 @@ namespace FlatOutLike.Controllers.Driver
 
             if (_pelvis != null)
             {
+                HardenBonePhysics(_pelvis);
                 _pelvis.isKinematic = false;
                 _pelvis.detectCollisions = true;
                 _pelvis.AddForce(velocity, ForceMode.VelocityChange);
             }
+        }
+
+        /// <summary>
+        /// Анти-взрыв для скоростных приземлений (High Jump, ~30 м/с): мелкие быстрые кости
+        /// туннелируют в землю, депенетрация выстреливает их от тела быстрее, чем джойнт-солвер
+        /// сходится — конечности «вытягиваются в иглы». CCD убирает туннелирование,
+        /// лимит депенетрации гасит выталкивающий импульс, доп. итерации дают солверу сойтись.
+        /// </summary>
+        private static void HardenBonePhysics(Rigidbody bone)
+        {
+            bone.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            bone.maxDepenetrationVelocity = 3f;
+            bone.solverIterations = 12;
+            bone.solverVelocityIterations = 12;
         }
 
         private void SetBoneCollidersEnabled(bool value)

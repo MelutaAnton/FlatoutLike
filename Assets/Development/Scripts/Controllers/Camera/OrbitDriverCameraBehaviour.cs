@@ -16,7 +16,14 @@ namespace FlatOutLike.Controllers.Camera
         private float _angleDegrees;
         private Vector3 _velocity;
 
-        public void SetTarget(Transform target) => _target = target;
+        public void SetTarget(Transform target)
+        {
+            _target = target;
+            // Стартовый угол из конфига: с OrbitSpeed=0 даёт фиксированный ракурс
+            // (180° = «сзади по ходу трассы», как chase при езде — HighJump-режим).
+            if (_config != null)
+                _angleDegrees = _config.StartAngleDegrees;
+        }
 
         public void SetBehaviourActive(bool active) => enabled = active;
 

@@ -7,3 +7,5 @@
 - [asmdef VContainer Transitive](project-asmdef-vcontainer-transitive.md) — Editor-asmdef обязан ref VContainer (editor-скрипты трогают GameLifetimeScope : LifetimeScope); ссылки asmdef не транзитивны → CS0012
 - [AI ApproachTimer Reverse Gap](project-ai-approachtimer-reverse-gap.md) — moonwalk-guard кроет только StuckTimer; ApproachTimer знакобойный → откинутая назад машина может реверсить дальше; watch дерби шага 5
 - [VContainer Optional Params](project-vcontainer-optional-params.md) — VContainer 1.18 игнорирует C# default-значения в [Inject] Construct; `Foo x = null` бросает если Foo не зарегистрирован — «optional DI» не работает
+- [asmdef UI Missing](project-asmdef-ui-missing.md) — FlatOutLike/Editor asmdef НЕ ссылаются на UnityEngine.UI; первое `using UnityEngine.UI` без ref роняет всю сборку (CS0234)
+- [Test asmdef VContainer](project-test-asmdef-vcontainer.md) — EditMode test asmdef без VContainer ref; `new`-инстанс сервиса с ITickable может дать CS0012 → уронить всю test-сборку

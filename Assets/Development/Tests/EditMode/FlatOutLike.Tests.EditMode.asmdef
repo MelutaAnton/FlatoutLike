@@ -3,6 +3,7 @@
     "rootNamespace": "FlatOutLike.Tests",
     "references": [
         "FlatOutLike",
+        "VContainer",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

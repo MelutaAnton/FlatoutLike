@@ -2,7 +2,8 @@
     "name": "FlatOutLike",
     "rootNamespace": "FlatOutLike",
     "references": [
-        "VContainer"
+        "VContainer",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

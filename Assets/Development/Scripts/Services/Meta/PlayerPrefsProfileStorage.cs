@@ -6,10 +6,12 @@ namespace FlatOutLike.Services.Meta
     {
         // Single source of truth — never duplicated elsewhere
         private const string CoinsKey = "FlatOutLike.Profile.Coins";
+        private const string BestHighJumpHeightKey = "FlatOutLike.Profile.BestHighJumpHeight";
 
         public void Save(IPlayerProfile profile)
         {
             PlayerPrefs.SetInt(CoinsKey, profile.Coins);
+            PlayerPrefs.SetFloat(BestHighJumpHeightKey, profile.BestHighJumpHeight);
             PlayerPrefs.Save();
         }
 
@@ -23,7 +25,8 @@ namespace FlatOutLike.Services.Meta
 
             profile = new PlayerProfile
             {
-                Coins = PlayerPrefs.GetInt(CoinsKey)
+                Coins = PlayerPrefs.GetInt(CoinsKey),
+                BestHighJumpHeight = PlayerPrefs.GetFloat(BestHighJumpHeightKey, 0f)
             };
             return true;
         }

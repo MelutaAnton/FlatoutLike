@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6003179557159821878}
   - component: {fileID: 2233435127781648366}
+  - component: {fileID: 2638526928023356356}
   m_Layer: 0
   m_Name: Driver_Default
   m_TagString: Untagged
@@ -59,6 +60,18 @@ MonoBehaviour:
   - {fileID: 6703246217203120274}
   - {fileID: 4823412493223668701}
   _pelvis: {fileID: 5072046163217133416}
+--- !u!114 &2638526928023356356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4137828793460046879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 704e80aa805c5c14abda246f0cdeb065, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Driver.DriverFlightController
 --- !u!1001 &7554120245844924666
 PrefabInstance:
   m_ObjectHideFlags: 0

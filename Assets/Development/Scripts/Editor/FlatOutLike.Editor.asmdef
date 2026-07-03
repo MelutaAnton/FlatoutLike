@@ -3,7 +3,8 @@
     "rootNamespace": "FlatOutLike.Editor",
     "references": [
         "FlatOutLike",
-        "VContainer"
+        "VContainer",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

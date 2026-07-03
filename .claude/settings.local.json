@@ -51,7 +51,13 @@
       "Bash(del \"E:\\\\UnityProjects\\\\PortfolioProjects\\\\Flatuot2_Like\\\\Assets\\\\Development\\\\Scripts\\\\Core\\\\Input\\\\AiInputProvider.cs\")",
       "Bash(find Assets/Development/Scripts -maxdepth 2 -name \"*.asmdef\")",
       "Bash(find Assets/Development -name \"*.asmdef\")",
-      "Bash(ls Assets/Development/Scripts/Views/UI/)"
+      "Bash(ls Assets/Development/Scripts/Views/UI/)",
+      "Bash(cat Assets/Development/Scripts/Models/GameState.cs)",
+      "Bash(cat Assets/Development/Scripts/Models/StuntType.cs)",
+      "Bash(cat Assets/Development/Scripts/Models/RewardSource.cs)",
+      "Bash(cat Assets/Development/Scripts/Models/EjectReason.cs)",
+      "Bash(cat Assets/Development/Scripts/Services/Meta/IMetaProgressService.cs)",
+      "Bash(cat Assets/Development/Scripts/Services/Flow/IGameFlowService.cs)"
     ]
   }
 }

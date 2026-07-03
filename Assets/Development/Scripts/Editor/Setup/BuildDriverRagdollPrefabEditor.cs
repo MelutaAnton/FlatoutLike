@@ -39,6 +39,39 @@ namespace FlatOutLike.Editor.Setup
 
         private const float TotalMassKg = 70f;
 
+        /// <summary>
+        /// Точечный апгрейд СУЩЕСТВУЮЩЕГО Driver_Default.prefab до шага 7:
+        /// идемпотентно добавляет DriverFlightController без полной пересборки ragdoll'а.
+        /// </summary>
+        [MenuItem("FlatOutLike/Setup/Add Flight Controller To Driver Prefab (Step 7)")]
+        public static void AddFlightControllerToDriverPrefab()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(DriverPrefabPath) == null)
+            {
+                Debug.LogWarning("[Editor] " + DriverPrefabPath +
+                                 " не найден. Сначала запусти 'Build Driver Ragdoll Prefab'.");
+                return;
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(DriverPrefabPath);
+            try
+            {
+                if (root.GetComponent<DriverFlightController>() != null)
+                {
+                    Debug.Log("[Editor] DriverFlightController уже есть на Driver_Default.prefab — пропускаем.");
+                    return;
+                }
+
+                root.AddComponent<DriverFlightController>();
+                PrefabUtility.SaveAsPrefabAsset(root, DriverPrefabPath);
+                Debug.Log("[Editor] DriverFlightController добавлен в Driver_Default.prefab.");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
         [MenuItem("FlatOutLike/Setup/Build Driver Ragdoll Prefab")]
         public static void BuildDriverRagdollPrefab()
         {
@@ -233,6 +266,13 @@ namespace FlatOutLike.Editor.Setup
             dcSo.ApplyModifiedProperties();
             Debug.Log("[Editor] DriverController: _animator, _boneRigidbodies[" + boneRigidbodies.Count +
                       "], _pelvis заполнены.");
+
+            // ── DriverFlightController (Шаг 7): управление полётом после eject ──
+            if (root.GetComponent<DriverFlightController>() == null)
+            {
+                Undo.AddComponent<DriverFlightController>(root);
+                Debug.Log("[Editor] DriverFlightController добавлен на корень водителя.");
+            }
 
             // ── Сохраняем как prefab-ассет ──────────────────────────────────────
             var prefabAsset = PrefabUtility.SaveAsPrefabAssetAndConnect(

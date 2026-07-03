@@ -226,15 +226,10 @@ namespace FlatOutLike.Controllers.Car
             // Скорость машины в момент гибели — водитель наследует её долю (полишинг вылета).
             Vector3 carVelocity = _rigidbody != null ? _rigidbody.linearVelocity : Vector3.zero;
             var ejectCommand = new EjectCommand(_driver, CarId, EjectReason.CarDestroyed, _ejectConfig, _eventBus, transform, carVelocity);
+            // Стекло разбивает WindshieldController сам — по DriverEjectedEvent своей машины
+            // (единый путь для Derby и трамплина High Jump).
             if (ejectCommand.CanExecute())
-            {
                 ejectCommand.Execute();
-
-                // Водитель вылетел «через лобовое» — разбиваем стекло (если компонент навешан).
-                var windshield = GetComponent<WindshieldController>();
-                if (windshield != null)
-                    windshield.Shatter(carVelocity);
-            }
         }
 
         private void OnDestroy()

@@ -1,6 +1,7 @@
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Camera;
 using FlatOutLike.Controllers.Destructible;
+using FlatOutLike.Controllers.Stunts;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Core.Pool;
@@ -10,6 +11,7 @@ using FlatOutLike.Data.Configs.Driver;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Rewards;
+using FlatOutLike.Data.Configs.Stunts;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Factories.Car;
 using FlatOutLike.Factories.Destructible;
@@ -19,10 +21,12 @@ using FlatOutLike.Services.AI;
 using FlatOutLike.Services.Camera;
 using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
+using FlatOutLike.Services.Driver;
 using FlatOutLike.Services.Flow;
 using FlatOutLike.Services.Match;
 using FlatOutLike.Services.Meta;
 using FlatOutLike.Services.Pickups;
+using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
 using UnityEngine;
 using VContainer;
@@ -96,6 +100,20 @@ namespace FlatOutLike.Installers
         /// Создаются editor-скриптом; порядок не важен.
         /// </summary>
         [SerializeField] private PickupZone[] _pickupZones;
+
+        // ── Шаг 7: Stunts High Jump ──────────────────────────────────────────────
+        /// <summary>
+        /// Параметры управления водителем в полёте (steer-коррекция, буст). Регистрируется
+        /// БЕЗУСЛОВНО (fallback-инстанс, паттерн DriverEjectConfig) — DriverFlightController
+        /// живёт на префабе водителя и инжектится даже в Derby-сценах без трамплина.
+        /// </summary>
+        [SerializeField] private DriverFlightConfig _driverFlightConfig;
+
+        /// <summary>
+        /// Правила подсчёта очков «High Jump». Заполняется на сцене трамплина;
+        /// на сценах без него оставить null — сессия и скоринг не регистрируются.
+        /// </summary>
+        [SerializeField] private HighJumpRulesConfig _highJumpRulesConfig;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -173,6 +191,25 @@ namespace FlatOutLike.Installers
                 builder.Register<CameraService>(Lifetime.Singleton).As<ICameraService>();
             }
 
+            // Полёт водителя (Шаг 7). DriverFlightConfig — БЕЗУСЛОВНО, тот же резон, что и
+            // DriverEjectConfig: DriverFlightController сидит на префабе водителя и инжектится
+            // во всех сценах, включая Derby, где трамплина и сессии нет.
+            builder.RegisterInstance(_driverFlightConfig != null
+                ? _driverFlightConfig
+                : ScriptableObject.CreateInstance<DriverFlightConfig>());
+
+            builder.Register<FlipDetectorService>(Lifetime.Singleton).As<IFlipDetectorService>();
+            builder.Register<DriverFlightService>(Lifetime.Singleton).As<IDriverFlightService>();
+
+            // Скоринг и сессия «High Jump» — условно: только на сценах с трамплином.
+            if (_highJumpRulesConfig != null)
+            {
+                builder.RegisterInstance(_highJumpRulesConfig);
+                builder.Register<HighJumpScoreService>(Lifetime.Singleton).As<IHighJumpScoreService>();
+                // EntryPoint → VContainer вызывает ITickable.Tick через PlayerLoop-диспетчер автоматически.
+                builder.RegisterEntryPoint<HighJumpSessionService>().As<IHighJumpSessionService>();
+            }
+
             // Pool (Шаг 5a) — единственный источник пулов для всех фабрик
             builder.Register<PoolManager>(Lifetime.Singleton).As<IPoolManager>();
 
@@ -211,17 +248,51 @@ namespace FlatOutLike.Installers
             // и CarDamageVisualController на каждом корне Prefab за один проход.
             builder.RegisterBuildCallback(container =>
             {
-                // _TestDriving-путь: внедряем машины, расставленные вручную в сцене
-                if (_sceneCars != null)
+                // _TestDriving-путь: внедряем машины, расставленные вручную в сцене,
+                // и регистрируем их в ICarRegistry (первая = игрок). Без регистрации
+                // CameraService не узнаёт игрока и не переключает камеру на ragdoll при eject.
+                if (_sceneCars != null && _sceneCars.Length > 0)
                 {
-                    foreach (var go in _sceneCars)
-                        if (go != null) container.InjectGameObject(go);
+                    var registry = container.Resolve<ICarRegistry>();
+                    for (int i = 0; i < _sceneCars.Length; i++)
+                    {
+                        var go = _sceneCars[i];
+                        if (go == null) continue;
+
+                        container.InjectGameObject(go);
+
+                        var sceneCar = go.GetComponent<CarController>();
+                        if (sceneCar != null)
+                            registry.Register(sceneCar, isPlayer: i == 0);
+                    }
                 }
 
                 // Шаг 5d: инъекция разрушаемых объектов (заборов и т.п.), расставленных на сцене.
                 // Безусловно — не зависит от _sceneCars. Если заборов нет — цикл ничего не делает.
                 foreach (var d in Object.FindObjectsByType<DestructibleObjectController>(FindObjectsSortMode.None))
                     container.InjectGameObject(d.gameObject);
+
+                // Шаг 7: инъекция триггеров и debug-оверлея трамплина, расставленных на сцене.
+                // Безусловно (паттерн DestructibleObjectController выше) — если объектов нет, цикл пуст.
+                foreach (var eject in Object.FindObjectsByType<EjectTriggerZone>(FindObjectsSortMode.None))
+                    container.InjectGameObject(eject.gameObject);
+                foreach (var landing in Object.FindObjectsByType<LandingZone>(FindObjectsSortMode.None))
+                    container.InjectGameObject(landing.gameObject);
+                foreach (var overlay in Object.FindObjectsByType<HighJumpDebugOverlayController>(FindObjectsSortMode.None))
+                    container.InjectGameObject(overlay.gameObject);
+
+                // _TestDriving-путь: chase-камера на первую сцено-машину (арена привязывает камеру
+                // отдельно, в build-callback ниже, после спавна через DerbyMatchService).
+                if (_cameraRig != null && _sceneCars != null && _sceneCars.Length > 0 && _sceneCars[0] != null)
+                {
+                    var firstCar = _sceneCars[0].GetComponent<CarController>();
+                    if (firstCar != null)
+                        container.Resolve<ICameraService>().FollowPlayerCar(firstCar.transform);
+                }
+
+                // Шаг 7: запускаем сессию «High Jump», если сцена трамплина сконфигурирована.
+                if (_highJumpRulesConfig != null)
+                    container.Resolve<IHighJumpSessionService>().StartSession();
             });
 
             // Триггер старта Derby-матча (Шаг 5e). Спавн и логика матча теперь в DerbyMatchService;
