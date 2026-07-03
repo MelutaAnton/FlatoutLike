@@ -65,6 +65,21 @@ namespace FlatOutLike.Controllers.Driver
             if (_animator != null)
                 _animator.enabled = false;
 
+            // «Иглы» на меше в полёте: служебные кости скелета, лежащие ПОД контейнером "Root"
+            // (а не под физкостями), после eject остаются в точке вылета — вершины одежды
+            // с их весами растягиваются от тела до места старта (чем дальше улетел, тем длиннее).
+            // Перепарентование: таз наверх, контейнер скелета — под таз; worldPositionStays=true,
+            // ничего не сдвигается, но служебные кости теперь едут вместе с телом.
+            if (_pelvis != null)
+            {
+                Transform skeletonRoot = _pelvis.transform.parent;
+                if (skeletonRoot != null && skeletonRoot != transform)
+                {
+                    _pelvis.transform.SetParent(transform, worldPositionStays: true);
+                    skeletonRoot.SetParent(_pelvis.transform, worldPositionStays: true);
+                }
+            }
+
             // Ragdoll уводит кости далеко от запечённых bounds SkinnedMeshRenderer'а —
             // без пересчёта по вершинам фрустум-каллинг вырезает меш при части ракурсов
             // (тело исчезает, остаётся только причёска на кости головы).
