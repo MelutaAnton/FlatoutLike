@@ -43,6 +43,18 @@ namespace FlatOutLike.Controllers.Driver
             // физика сидящего ragdoll не должна взаимодействовать с кузовом.
             GetComponentsInChildren(includeInactive: true, _boneColliders);
             SetBoneCollidersEnabled(false);
+
+            // Сидячее состояние — принудительно kinematic, НЕ полагаемся на флаги префаба:
+            // ragdoll, собранный Wizard'ом, приходит dynamic+gravity, и физика всю поездку
+            // копит скорость падения в костях → на eject водителя вбивает в землю.
+            if (_boneRigidbodies != null)
+            {
+                foreach (var bone in _boneRigidbodies)
+                {
+                    if (bone != null)
+                        bone.isKinematic = true;
+                }
+            }
         }
 
         /// <summary>
@@ -113,7 +125,9 @@ namespace FlatOutLike.Controllers.Driver
                 HardenBonePhysics(_pelvis);
                 _pelvis.isKinematic = false;
                 _pelvis.detectCollisions = true;
-                _pelvis.AddForce(velocity, ForceMode.VelocityChange);
+                // Скорость ЗАДАЁТСЯ, а не добавляется (AddForce): у dynamic-собранного ragdoll
+                // в костях может сидеть накопленная скорость — итог был бы непредсказуем.
+                _pelvis.linearVelocity = velocity;
             }
         }
 
