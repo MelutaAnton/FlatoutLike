@@ -142,6 +142,7 @@ Assets/
 - Mixamo-модели могут ломать Ragdoll Setup Wizard — см. skill `setup-ragdoll`.
 - **`??` / `?.` запрещены с Unity-объектами** (`GetComponent<T>() ?? AddComponent<T>()` — бага): fake-null Unity-объекта обходит перегруженный `==`, в Editor-контексте `GetComponent` при промахе возвращает такой fake-null → `MissingComponentException` при первом обращении. Всегда явный `if (x == null)`.
 - **Ragdoll + SkinnedMeshRenderer = исчезающий меш**: SMR не пересчитывает bounds по вершинам — когда ragdoll уводит кости от запечённого AABB, фрустум-каллинг вырезает меш в зависимости от ракурса (тело пропадает, остаются мелкие рендереры на костях). При активации ragdoll ставить `smr.updateWhenOffscreen = true` (см. `DriverController.Eject`).
+- **Ragdoll модульного аватара = «иглы» на одежде при дальнем полёте**: служебные кости скелета под контейнером `Root` (не под физкостями) после детача остаются в точке активации ragdoll — вершины с их весами растягиваются от тела до места старта, тем длиннее, чем дальше улетел. Фикс: при активации ragdoll перепарентовать таз под корень персонажа, а контейнер скелета — под таз (`worldPositionStays: true`, см. `DriverController.Eject`).
 
 ## Известные нюансы Unity Physics
 
