@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cea1200d5c09cbb499b5483dd9e316ed, type: 3}
   m_Name: ChaseCameraConfig_Default
   m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Camera.ChaseCameraConfig
-  _followDistance: 6
-  _height: 2.5
+  _followDistance: 7.5
+  _height: 3.2
   _positionSmoothing: 0.2
   _rotationSmoothing: 5
   _lookAheadFactor: 0.3
+  _fieldOfView: 66
+  _lookAtHeightOffset: 1.2
+  _maxLookAhead: 5

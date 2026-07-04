@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6384a006d2d8cf54e9d547efcc7f70b4, type: 3}
   m_Name: DamageConfig
   m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Combat.DamageConfig
-  _damageScale: 3
+  _damageScale: 1
   _minImpactSpeed: 3
   _wallMassRatio: 1
