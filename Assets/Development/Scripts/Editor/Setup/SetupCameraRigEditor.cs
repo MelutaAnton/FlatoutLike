@@ -17,7 +17,10 @@ namespace FlatOutLike.Editor.Setup
     /// <see cref="SetupCinemachineCameraRigEditor.Setup"/> (замена ChaseCarCameraBehaviour/
     /// OrbitDriverCameraBehaviour на CinemachineChaseCameraBehaviour/CinemachineOrbitDriverCameraBehaviour).
     /// Этот скрипт лишь довызывает её и дозаполняет GameLifetimeScope-специфичные поля Step 6:
-    ///   _cameraRig, _driverEjectConfig, _orbitCameraConfig.
+    ///   _cameraRig, _driverEjectConfig, _orbitCameraConfig, _cameraShakeConfig, _cameraShaker.
+    /// CinemachineImpulseSource/Listener/CinemachineCameraShaker создаются внутри
+    /// SetupCinemachineCameraRigEditor.Setup() (шаг EnsureImpulse) — здесь только находим
+    /// уже созданный CinemachineCameraShaker и грузим CameraShakeConfig_Default.asset.
     ///
     /// Идемпотентность: проверяем наличие именно компонента, а не только GameObject —
     /// повторный запуск не дублирует компоненты, только обновляет ссылки.
@@ -33,8 +36,17 @@ namespace FlatOutLike.Editor.Setup
     /// </summary>
     public static class SetupCameraRigEditor
     {
-        private const string DriverEjectConfigPath  = "Assets/Development/Data/Configs/Driver/DriverEjectConfig_Default.asset";
-        private const string OrbitCameraConfigPath  = "Assets/Development/Data/Configs/Camera/OrbitCameraConfig_Default.asset";
+        private const string DriverEjectConfigDefaultPath  = "Assets/Development/Data/Configs/Driver/DriverEjectConfig_Default.asset";
+        private const string DriverEjectConfigHighJumpPath = "Assets/Development/Data/Configs/Driver/DriverEjectConfig_HighJump.asset";
+        private const string OrbitCameraConfigDefaultPath  = "Assets/Development/Data/Configs/Camera/OrbitCameraConfig_Default.asset";
+        private const string OrbitCameraConfigHighJumpPath = "Assets/Development/Data/Configs/Camera/OrbitCameraConfig_HighJump.asset";
+        private const string CameraShakeConfigPath   = "Assets/Development/Data/Configs/Camera/CameraShakeConfig_Default.asset";
+
+        // Per-scene конфиги (правило проекта): HighJump живёт на своих ассетах eject/orbit.
+        // Жёсткая прошивка _Default затирала HighJump-настройки при повторном прогоне
+        // в Stunts_HighJump (регрессия «водитель подлетает на 2 м вместо 60»).
+        private static bool IsHighJumpScene =>
+            SceneManager.GetActiveScene().name == FlatOutLike.Models.SceneKeys.StuntsHighJump;
 
         [MenuItem("FlatOutLike/Setup/Setup Camera Rig (Step 6)")]
         public static void SetupCameraRig()
@@ -62,15 +74,27 @@ namespace FlatOutLike.Editor.Setup
             }
             else
             {
-                var ejectConfig = AssetDatabase.LoadAssetAtPath<DriverEjectConfig>(DriverEjectConfigPath);
+                string ejectConfigPath = IsHighJumpScene ? DriverEjectConfigHighJumpPath : DriverEjectConfigDefaultPath;
+                var ejectConfig = AssetDatabase.LoadAssetAtPath<DriverEjectConfig>(ejectConfigPath);
                 if (ejectConfig == null)
-                    Debug.LogWarning("[Editor] DriverEjectConfig_Default не найден по " + DriverEjectConfigPath +
+                    Debug.LogWarning("[Editor] DriverEjectConfig не найден по " + ejectConfigPath +
                                       ". Запусти 'FlatOutLike/Configs/Create Default DriverEjectConfig' сначала.");
 
-                var orbitConfig = AssetDatabase.LoadAssetAtPath<OrbitCameraConfig>(OrbitCameraConfigPath);
+                string orbitConfigPath = IsHighJumpScene ? OrbitCameraConfigHighJumpPath : OrbitCameraConfigDefaultPath;
+                var orbitConfig = AssetDatabase.LoadAssetAtPath<OrbitCameraConfig>(orbitConfigPath);
                 if (orbitConfig == null)
-                    Debug.LogWarning("[Editor] OrbitCameraConfig_Default не найден по " + OrbitCameraConfigPath +
+                    Debug.LogWarning("[Editor] OrbitCameraConfig не найден по " + orbitConfigPath +
                                       ". Запусти 'FlatOutLike/Configs/Create Default OrbitCameraConfig' сначала.");
+
+                var shakeConfig = AssetDatabase.LoadAssetAtPath<CameraShakeConfig>(CameraShakeConfigPath);
+                if (shakeConfig == null)
+                    Debug.LogWarning("[Editor] CameraShakeConfig_Default не найден по " + CameraShakeConfigPath +
+                                      ". Запусти 'FlatOutLike/Configs/Create Default CameraShakeConfig' сначала.");
+
+                var shaker = Object.FindAnyObjectByType<CinemachineCameraShaker>();
+                if (shaker == null)
+                    Debug.LogWarning("[Editor] CinemachineCameraShaker не найден в сцене. " +
+                                      "Ожидается после SetupCinemachineCameraRigEditor.EnsureImpulse().");
 
                 var scopeSo = new SerializedObject(scope);
 
@@ -81,23 +105,45 @@ namespace FlatOutLike.Editor.Setup
                     Debug.LogWarning("[Editor] Поле GameLifetimeScope._cameraRig не найдено. " +
                                       "Возможно, рантайм Step 6 ещё не скомпилировался.");
 
+                // null НЕ прошиваем: если ассет не найден, оставляем существующую ссылку —
+                // иначе повторный прогон затирал бы рабочую проводку сцены пустотой.
                 var ejectProp = scopeSo.FindProperty("_driverEjectConfig");
                 if (ejectProp != null)
-                    ejectProp.objectReferenceValue = ejectConfig;
+                {
+                    if (ejectConfig != null)
+                        ejectProp.objectReferenceValue = ejectConfig;
+                }
                 else
                     Debug.LogWarning("[Editor] Поле GameLifetimeScope._driverEjectConfig не найдено. " +
                                       "Возможно, рантайм Step 6 ещё не скомпилировался.");
 
                 var orbitCfgProp = scopeSo.FindProperty("_orbitCameraConfig");
                 if (orbitCfgProp != null)
-                    orbitCfgProp.objectReferenceValue = orbitConfig;
+                {
+                    if (orbitConfig != null)
+                        orbitCfgProp.objectReferenceValue = orbitConfig;
+                }
                 else
                     Debug.LogWarning("[Editor] Поле GameLifetimeScope._orbitCameraConfig не найдено. " +
                                       "Возможно, рантайм Step 6 ещё не скомпилировался.");
 
+                var shakeConfigProp = scopeSo.FindProperty("_cameraShakeConfig");
+                if (shakeConfigProp != null)
+                    shakeConfigProp.objectReferenceValue = shakeConfig;
+                else
+                    Debug.LogWarning("[Editor] Поле GameLifetimeScope._cameraShakeConfig не найдено. " +
+                                      "Возможно, рантайм тряски камеры ещё не скомпилировался.");
+
+                var shakerProp = scopeSo.FindProperty("_cameraShaker");
+                if (shakerProp != null)
+                    shakerProp.objectReferenceValue = shaker;
+                else
+                    Debug.LogWarning("[Editor] Поле GameLifetimeScope._cameraShaker не найдено. " +
+                                      "Возможно, рантайм тряски камеры ещё не скомпилировался.");
+
                 scopeSo.ApplyModifiedProperties();
-                Debug.Log("[Editor] GameLifetimeScope: _cameraRig / _driverEjectConfig / _orbitCameraConfig " +
-                          "заполнены (там, где поля существуют).");
+                Debug.Log("[Editor] GameLifetimeScope: _cameraRig / _driverEjectConfig / _orbitCameraConfig / " +
+                          "_cameraShakeConfig / _cameraShaker заполнены (там, где поля существуют).");
             }
 
             // ── 5. Сохраняем сцену ───────────────────────────────────────────────

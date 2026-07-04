@@ -88,6 +88,14 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private OrbitCameraConfig _orbitCameraConfig;
 
+        /// <summary>
+        /// Тряска камеры (Cinemachine Impulse) от столкновений машин в дерби.
+        /// Оба поля условные: заполняются вместе на риге арены; в тест-сценах без рига
+        /// оставить null — CameraShakeService не регистрируется.
+        /// </summary>
+        [SerializeField] private CameraShakeConfig _cameraShakeConfig;
+        [SerializeField] private CinemachineCameraShaker _cameraShaker;
+
         // ── Шаг 5c: Pickup-система ─────────────────────────────────────────────
         /// <summary>
         /// Конфиг пикапов: типы, prefab'ы пула, размеры пула, тайминги.
@@ -191,6 +199,15 @@ namespace FlatOutLike.Installers
                 builder.Register<CameraService>(Lifetime.Singleton).As<ICameraService>();
             }
 
+            // Тряска камеры от столкновений (Impulse). Условно — оба поля заполняются
+            // вместе на риге арены; тест-сцены без них просто не получают сервис.
+            if (_cameraShakeConfig != null && _cameraShaker != null)
+            {
+                builder.RegisterInstance(_cameraShakeConfig);
+                builder.RegisterComponent<ICameraShaker>(_cameraShaker);
+                builder.Register<CameraShakeService>(Lifetime.Singleton).As<ICameraShakeService>();
+            }
+
             // Полёт водителя (Шаг 7). DriverFlightConfig — БЕЗУСЛОВНО, тот же резон, что и
             // DriverEjectConfig: DriverFlightController сидит на префабе водителя и инжектится
             // во всех сценах, включая Derby, где трамплина и сессии нет.
@@ -239,6 +256,12 @@ namespace FlatOutLike.Installers
             // Eager-инициализация RewardCrediterService, чтобы он подписался на RewardEarnedEvent
             // до того как матч успеет завершиться и опубликовать награду.
             builder.RegisterBuildCallback(c => c.Resolve<RewardCrediterService>());
+
+            // Eager-инициализация CameraShakeService — иначе никто не резолвит его из контейнера,
+            // и подписка на CarCollisionEvent в конструкторе не произойдёт. Регистрируем условно,
+            // только если сервис вообще был зарегистрирован (см. блок выше).
+            if (_cameraShakeConfig != null && _cameraShaker != null)
+                builder.RegisterBuildCallback(c => c.Resolve<ICameraShakeService>());
 
             // Путь _TestDriving: внедряем машины, расставленные вручную в сцене.
             // Заменяет RegisterComponentInHierarchy<CarController> и

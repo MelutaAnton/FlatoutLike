@@ -1,8 +1,8 @@
 ﻿<Solution>
   <Project Path="ithappy.Battle_Stadium.csproj" />
+  <Project Path="FlatOutLike.Editor.csproj" />
   <Project Path="FlatOutLike.csproj" />
   <Project Path="FlatOutLike.Tests.EditMode.csproj" />
-  <Project Path="FlatOutLike.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>

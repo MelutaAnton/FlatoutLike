@@ -15,7 +15,9 @@ namespace FlatOutLike.Editor.Setup
     /// CM_ChaseCamera (CinemachineCamera + CinemachineFollow + CinemachineRotationComposer +
     /// CinemachineChaseCameraBehaviour) и CM_OrbitCamera (CinemachineCamera + CinemachineOrbitalFollow +
     /// CinemachineRotationComposer + CinemachineOrbitDriverCameraBehaviour), плюс перепрошивает
-    /// CameraRig._chase / _orbit на новые Cinemachine-адаптеры.
+    /// CameraRig._chase / _orbit на новые Cinemachine-адаптеры, плюс Impulse-тряску
+    /// (CinemachineImpulseListener на vcam + CinemachineImpulseSource/CinemachineCameraShaker
+    /// на Main Camera).
     ///
     /// Заменяет собой старые ChaseCarCameraBehaviour / OrbitDriverCameraBehaviour — эти классы
     /// удалены рантайм-агентом; если на сцене остались их компоненты, они превратились в
@@ -42,6 +44,11 @@ namespace FlatOutLike.Editor.Setup
 
         private const int ChasePriority = 10;
         private const int OrbitPriority = 0;
+
+        // Дистанция затухания импульса-тряски: удары дальше этого радиуса на арене
+        // (60x60, см. память проекта) почти не ощущаются игроком.
+        private const float ImpulseDissipationDistance = 40f;
+        private const float ImpulseDuration = 0.25f;
 
         // ── Точка входа меню ────────────────────────────────────────────────
 
@@ -91,7 +98,10 @@ namespace FlatOutLike.Editor.Setup
                 EnsureCameraRig(mainCam.gameObject, chase, orbit);
             }
 
-            // ── 6. Сохраняем сцену ───────────────────────────────────────────
+            // ── 6. Impulse-тряска: listener на chase/orbit vcam + source+shaker на Main Camera ──
+            EnsureImpulse(chase.gameObject, orbit.gameObject);
+
+            // ── 7. Сохраняем сцену ───────────────────────────────────────────
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
             Undo.CollapseUndoOperations(undoGroup);
@@ -339,6 +349,92 @@ namespace FlatOutLike.Editor.Setup
 
             Debug.Log("[Editor] CameraRig._chase / _orbit заполнены новыми Cinemachine-адаптерами.");
             return rig;
+        }
+
+        /// <summary>
+        /// Идемпотентно гарантирует Impulse-тряску камеры:
+        /// - CinemachineImpulseListener на <paramref name="chaseGo"/> и <paramref name="orbitGo"/>
+        ///   (заставляет обе vcam реагировать на импульсы; настройки Reset() по умолчанию —
+        ///   ChannelMask=1, Gain=1 — совпадают с ImpulseChannel=1 источника, менять не нужно);
+        /// - CinemachineImpulseSource + CinemachineCameraShaker на Main Camera (рядом с Brain).
+        ///   ImpulseType = Dissipating — чтобы удары дальше <see cref="ImpulseDissipationDistance"/>
+        ///   на арене ощущались слабее (CinemachineCameraShaker.Shake передаёт мировую позицию
+        ///   удара, а не позицию рига — см. комментарий в самом классе).
+        /// Амплитуда тряски не задаётся здесь — она приходит из скорости (velocity),
+        /// переданной в GenerateImpulseAtPositionWithVelocity() при вызове из кода.
+        /// </summary>
+        public static CinemachineCameraShaker EnsureImpulse(GameObject chaseGo, GameObject orbitGo)
+        {
+            EnsureImpulseListener(chaseGo);
+            EnsureImpulseListener(orbitGo);
+
+            var mainCam = Camera.main;
+            if (mainCam == null)
+            {
+                Debug.LogWarning("[Editor] Main Camera не найдена — Impulse Source/Shaker не настроены.");
+                return null;
+            }
+
+            var hostGo = mainCam.gameObject;
+
+            var impulseSource = hostGo.GetComponent<CinemachineImpulseSource>();
+            if (impulseSource == null)
+            {
+                impulseSource = Undo.AddComponent<CinemachineImpulseSource>(hostGo);
+                Debug.Log("[Editor] Добавлен CinemachineImpulseSource на '" + hostGo.name + "'.");
+            }
+
+            // Настройки формы импульса фиксируем явно (Reset() по умолчанию даёт Uniform,
+            // а нам нужно затухание по дистанции).
+            Undo.RecordObject(impulseSource, "Configure Camera Shake Impulse Source");
+            impulseSource.ImpulseDefinition.ImpulseShape = CinemachineImpulseDefinition.ImpulseShapes.Bump;
+            impulseSource.ImpulseDefinition.ImpulseDuration = ImpulseDuration;
+            impulseSource.ImpulseDefinition.ImpulseType = CinemachineImpulseDefinition.ImpulseTypes.Dissipating;
+            impulseSource.ImpulseDefinition.DissipationDistance = ImpulseDissipationDistance;
+            impulseSource.ImpulseDefinition.DissipationRate = 0.25f;
+            EditorUtility.SetDirty(impulseSource);
+
+            var shaker = hostGo.GetComponent<CinemachineCameraShaker>();
+            if (shaker == null)
+            {
+                shaker = Undo.AddComponent<CinemachineCameraShaker>(hostGo);
+                Debug.Log("[Editor] Добавлен CinemachineCameraShaker на '" + hostGo.name + "'.");
+            }
+
+            var so = new SerializedObject(shaker);
+            var sourceProp = so.FindProperty("_impulseSource");
+            if (sourceProp != null)
+                sourceProp.objectReferenceValue = impulseSource;
+            else
+                Debug.LogWarning("[Editor] Поле CinemachineCameraShaker._impulseSource не найдено. " +
+                                  "Возможно, рантайм ещё не скомпилировался.");
+            so.ApplyModifiedProperties();
+
+            Debug.Log("[Editor] Impulse Source/Shaker на '" + hostGo.name + "' настроены " +
+                      "(Shape=Bump, Duration=" + ImpulseDuration + "s, Type=Dissipating, " +
+                      "DissipationDistance=" + ImpulseDissipationDistance + ").");
+
+            return shaker;
+        }
+
+        /// <summary>
+        /// Идемпотентно гарантирует CinemachineImpulseListener на vcam-объекте. Дефолтные
+        /// настройки Reset() (ChannelMask=1, Gain=1) совпадают с ImpulseChannel=1 источника —
+        /// дополнительная настройка не требуется.
+        /// </summary>
+        private static void EnsureImpulseListener(GameObject vcamGo)
+        {
+            if (vcamGo == null) return;
+
+            if (vcamGo.GetComponent<CinemachineImpulseListener>() == null)
+            {
+                Undo.AddComponent<CinemachineImpulseListener>(vcamGo);
+                Debug.Log("[Editor] Добавлен CinemachineImpulseListener на '" + vcamGo.name + "'.");
+            }
+            else
+            {
+                Debug.Log("[Editor] CinemachineImpulseListener уже присутствует на '" + vcamGo.name + "'.");
+            }
         }
     }
 }
