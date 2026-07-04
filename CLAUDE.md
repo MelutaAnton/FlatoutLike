@@ -5,6 +5,7 @@
 ## Технологии
 
 - Unity 6 (6000.3.9f1 LTS), URP
+- Cinemachine 3.1 — все игровые камеры (vcam-адаптеры реализуют `ICameraBehaviour`, переключение через Priority; при сомнении в API смотреть исходник в `Library/PackageCache/com.unity.cinemachine@*/Runtime/`, не гадать по CM2)
 - VContainer (DI-контейнер)
 - C# с SOLID и Clean Architecture
 - Active Input Handling: **Both** (Project Settings → Player)
