@@ -29,6 +29,8 @@ namespace FlatOutLike.Controllers.Car
         private DriverEjectConfig _ejectConfig;
         private bool _initialized;
         private bool _wrecked;
+        private float _currentSteerAngle;
+        private bool _handbrakeActive;
 
         public CarId CarId   => new CarId(_carId);
         public float MaxArmor => _config != null ? _config.MaxArmor : 0f;
@@ -75,6 +77,9 @@ namespace FlatOutLike.Controllers.Car
             {
                 _rigidbody.mass = _config.Mass;
                 _rigidbody.centerOfMass = _config.CenterOfMassOffset;
+                // Камера читает позицию машины каждый render-кадр, а физика двигает её
+                // на 50 Гц — без интерполяции цель «шагает» и камера дрожит на скорости.
+                _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             }
 
             if (_config != null)
@@ -118,6 +123,9 @@ namespace FlatOutLike.Controllers.Car
             if (_wrecked)
             {
                 // Машина уничтожена: газ/руль/нитро больше не применяются, машина катится по инерции.
+                // Ручник мог быть зажат в момент гибели — вернуть заднее сцепление, чтобы обломок
+                // не скользил хвостом с дрифтовым стиффнессом до конца матча.
+                UpdateHandbrakeFriction(false);
                 ApplyMotor(0f);
                 ApplySteer(0f);
                 return;
@@ -131,13 +139,42 @@ namespace FlatOutLike.Controllers.Car
             float forwardSpeed = Vector3.Dot(_rigidbody.linearVelocity, transform.forward);
 
             float motor = _movement.CalculateMotorTorque(throttle, forwardSpeed, _config);
-            float steer = _movement.CalculateSteerAngle(steerInput, forwardSpeed, _config);
+            // Сглаженный руль: _currentSteerAngle — состояние конкретной машины, сервис его не хранит.
+            _currentSteerAngle = _movement.CalculateSmoothedSteerAngle(_currentSteerAngle, steerInput, forwardSpeed, Time.fixedDeltaTime, _config);
             float brake = _movement.CalculateBrakeTorque(handbrake, throttle, forwardSpeed, _config);
 
+            UpdateHandbrakeFriction(handbrake);
+
             ApplyMotor(motor);
-            ApplySteer(steer);
+            ApplySteer(_currentSteerAngle);
             ApplyBrake(brake);
             ApplyNitro();
+        }
+
+        /// <summary>
+        /// Ручник-дрифт: пока зажат, боковое сцепление задних колёс (привод, <see cref="_driveWheels"/>)
+        /// снижается множителем HandbrakeGripFactor — машина срывается в занос вместо блокировки колёс.
+        /// Стиффнесс переключается только при смене состояния (не каждый тик — WheelFrictionCurve копируется по значению).
+        /// </summary>
+        private void UpdateHandbrakeFriction(bool handbrake)
+        {
+            if (handbrake == _handbrakeActive) return;
+            _handbrakeActive = handbrake;
+
+            float stiffness = handbrake ? _config.WheelFriction * _config.HandbrakeGripFactor : _config.WheelFriction;
+            ApplySidewaysStiffness(_driveWheels, stiffness);
+        }
+
+        private void ApplySidewaysStiffness(WheelCollider[] wheels, float stiffness)
+        {
+            if (wheels == null) return;
+            foreach (var wc in wheels)
+            {
+                if (wc == null) continue;
+                var side = wc.sidewaysFriction;
+                side.stiffness = stiffness;
+                wc.sidewaysFriction = side;
+            }
         }
 
         /// <summary>

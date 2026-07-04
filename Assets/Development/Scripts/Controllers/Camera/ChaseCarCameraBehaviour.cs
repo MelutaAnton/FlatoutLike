@@ -45,6 +45,17 @@ namespace FlatOutLike.Controllers.Camera
             transform.position = Vector3.SmoothDamp(
                 transform.position, desired, ref _velocity, _config.PositionSmoothing);
 
+            // Жёсткий потолок отставания: в дрифте желаемая точка мечется вместе с forward
+            // машины, и SmoothDamp может отпустить машину из кадра. Если камера отстала
+            // дальше MaxLagDistance — подтягиваем её на границу лимита.
+            if (_config.MaxLagDistance > 0f)
+            {
+                Vector3 lag = desired - transform.position;
+                float lagDistance = lag.magnitude;
+                if (lagDistance > _config.MaxLagDistance)
+                    transform.position = desired - lag / lagDistance * _config.MaxLagDistance;
+            }
+
             // Look-ahead применяем только к точке взгляда — камера не приближается
             // к машине на скорости, а лишь смотрит чуть дальше по ходу движения.
             Vector3 velocity = _targetRigidbody != null ? _targetRigidbody.linearVelocity : Vector3.zero;

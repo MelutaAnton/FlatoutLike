@@ -12,15 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf7f8b2e590d0d5418cb02c8d14a506e, type: 3}
   m_Name: CarStatsConfig_Default
   m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Car.CarStatsConfig
-  _acceleration: 2000
-  _topSpeed: 25
+  _acceleration: 3500
+  _topSpeed: 30
   _mass: 1200
   _steerAngle: 30
-  _steerSpeedFalloff: 0.5
+  _steerSpeedFalloff: 0.35
   _brakeForce: 3000
-  _engineBrakeForce: 1000
+  _engineBrakeForce: 400
   _wheelFriction: 1
   _centerOfMassOffset: {x: 0, y: -0.4, z: 0}
+  _steerRate: 300
+  _steerReturnRate: 520
+  _handbrakeGripFactor: 0.45
+  _handbrakeBrakeForce: 800
   _maxArmor: 100
   _nitroCapacity: 100
   _nitroForce: 2000

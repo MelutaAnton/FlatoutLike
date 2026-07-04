@@ -6,15 +6,27 @@ namespace FlatOutLike.Data.Configs.Car
     public sealed class CarStatsConfig : ScriptableObject
     {
         [Header("Movement")]
-        [SerializeField] private float _acceleration = 2000f;
-        [SerializeField] private float _topSpeed = 25f;
+        [SerializeField] private float _acceleration = 3500f;
+        [SerializeField] private float _topSpeed = 30f;
         [SerializeField] private float _mass = 1200f;
         [SerializeField] private float _steerAngle = 30f;
-        [SerializeField, Range(0f, 1f)] private float _steerSpeedFalloff = 0.5f;
+        [SerializeField, Range(0f, 1f)] private float _steerSpeedFalloff = 0.35f;
         [SerializeField] private float _brakeForce = 3000f;
-        [SerializeField] private float _engineBrakeForce = 600f;
+        [SerializeField] private float _engineBrakeForce = 400f;
         [SerializeField] private float _wheelFriction = 1f;
         [SerializeField] private Vector3 _centerOfMassOffset = new Vector3(0f, -0.4f, 0f);
+
+        [Header("Steering feel")]
+        /// <summary>Скорость доворота руля к целевому углу, град/с.</summary>
+        [SerializeField] private float _steerRate = 300f;
+        /// <summary>Скорость возврата руля к центру (или смены стороны), град/с. Быстрее SteerRate — ключ к отзывчивости на клавиатуре.</summary>
+        [SerializeField] private float _steerReturnRate = 520f;
+
+        [Header("Handbrake")]
+        /// <summary>Множитель бокового сцепления задних колёс при зажатом ручнике (0..1) — чем меньше, тем охотнее машина уходит в занос.</summary>
+        [SerializeField, Range(0f, 1f)] private float _handbrakeGripFactor = 0.45f;
+        /// <summary>Тормозной момент задних колёс при ручнике — частичный, в отличие от полного BrakeForce, чтобы ручник давал занос, а не мгновенную остановку.</summary>
+        [SerializeField] private float _handbrakeBrakeForce = 800f;
 
         [Header("Reserved for later steps")]
         [SerializeField] private float _maxArmor = 100f;
@@ -31,6 +43,14 @@ namespace FlatOutLike.Data.Configs.Car
         public float EngineBrakeForce => _engineBrakeForce;
         public float WheelFriction => _wheelFriction;
         public Vector3 CenterOfMassOffset => _centerOfMassOffset;
+        /// <summary>Скорость доворота руля к целевому углу, град/с.</summary>
+        public float SteerRate => _steerRate;
+        /// <summary>Скорость возврата руля к центру/смены стороны, град/с.</summary>
+        public float SteerReturnRate => _steerReturnRate;
+        /// <summary>Множитель бокового сцепления задних колёс при ручнике (0..1).</summary>
+        public float HandbrakeGripFactor => _handbrakeGripFactor;
+        /// <summary>Тормозной момент задних колёс при ручнике (частичный, не полный BrakeForce).</summary>
+        public float HandbrakeBrakeForce => _handbrakeBrakeForce;
         public float MaxArmor => _maxArmor;
         public float NitroCapacity => _nitroCapacity;
         public float NitroForce => _nitroForce;

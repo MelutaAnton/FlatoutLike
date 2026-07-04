@@ -5,3 +5,4 @@
 - [Step 5a — Pool + CarFactory](step5a_pool_and_car_factory.md) — IPoolManager/PoolManager/GameObjectPool/PooledInstance, CarFactory, DerbyMatchConfig, Configure-паттерн на контроллерах
 - [Step 5b — Target Selection](step5b_target_selection.md) — CarRegistry, TargetSelectionService, TargetSelectionMode enum, EnemyPersonalityConfig новое поле, SetTarget удалён
 - [Step 5c — Nitro + Pickups](step5c_nitro_pickups.md) — NitroService, RepairPickup/NitroPickup, PickupFactory, PickupSpawnerService (ITickable EntryPoint), DamageService.Repair, условные регистрации
+- [Driving feel polish](driving_feel_polish.md) — CalculateSmoothedSteerAngle (MoveTowards), handbrake drift (stiffness switch), CarStatsConfig new fields, "SO new-field-gap" YAML-patch nuance

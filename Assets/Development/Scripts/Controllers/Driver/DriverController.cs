@@ -143,6 +143,9 @@ namespace FlatOutLike.Controllers.Driver
             bone.maxDepenetrationVelocity = 3f;
             bone.solverIterations = 12;
             bone.solverVelocityIterations = 12;
+            // Орбитальная камера следит за тазом каждый render-кадр — без интерполяции
+            // ragdoll на 50 Гц физики дрожит в кадре (особенно в длинном полёте High Jump).
+            bone.interpolation = RigidbodyInterpolation.Interpolate;
         }
 
         private void SetBoneCollidersEnabled(bool value)

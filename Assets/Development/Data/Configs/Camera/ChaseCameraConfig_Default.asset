@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Camera.ChaseCameraConfig
   _followDistance: 7.5
   _height: 3.2
-  _positionSmoothing: 0.2
-  _rotationSmoothing: 5
+  _positionSmoothing: 0.09
+  _rotationSmoothing: 10
   _lookAheadFactor: 0.3
   _fieldOfView: 66
   _lookAtHeightOffset: 1.2
   _maxLookAhead: 5
+  _maxLagDistance: 2.5
