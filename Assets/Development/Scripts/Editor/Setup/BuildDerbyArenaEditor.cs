@@ -3,7 +3,6 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using FlatOutLike.Controllers.Camera;
 using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Installers;
 using FlatOutLike.Models;
@@ -19,8 +18,9 @@ namespace FlatOutLike.Editor.Setup
     ///                      Если prefab не найден — создаётся запасной Plane для визуала.
     ///   • ArenaFloor     — Plane (60x60) с MeshCollider: функциональный пол арены.
     ///   • ArenaWalls     — 4 невидимых BoxCollider на слое Wall: замкнутый периметр.
-    ///   • Directional Light, Main Camera с ChaseCarCameraBehaviour.
-    ///     _config = ChaseCameraConfig_Default; _target не задан (выставляется в рантайме
+    ///   • Directional Light, Main Camera с CinemachineBrain + CM_ChaseCamera
+    ///     (CinemachineCamera + CinemachineChaseCameraBehaviour, Cinemachine 3.x).
+    ///     _config = ChaseCameraConfig_Default; target не задан (выставляется в рантайме
     ///     через GameLifetimeScope.SetTarget после спавна машины игрока).
     ///   • GameLifetimeScope + GameBootstrap.
     ///
@@ -64,7 +64,7 @@ namespace FlatOutLike.Editor.Setup
             // ── 5. Directional Light ──────────────────────────────────────────
             CreateDirectionalLight();
 
-            // ── 6. Chase-камера (Main Camera + ChaseCarCameraBehaviour + _config) ──
+            // ── 6. Chase-камера (Cinemachine: Main Camera + CM_ChaseCamera + _config) ──
             CreateChaseCamera();
 
             // ── 7. GameLifetimeScope ──────────────────────────────────────────
@@ -269,62 +269,24 @@ namespace FlatOutLike.Editor.Setup
 
         private static void CreateChaseCamera()
         {
-            // Chase-камера: Main Camera с компонентом ChaseCarCameraBehaviour.
-            // _config заполняется здесь через SerializedObject.
-            // _target НЕ задаём — после спавна игрока GameLifetimeScope зовёт
-            // ICameraService.FollowPlayerCar (Шаг 6), который активирует chase через CameraRig.
-            Camera mainCam = Camera.main;
-            GameObject camGo;
+            // Camera rig мигрировал на Cinemachine 3.x — CinemachineBrain на Main Camera
+            // и CM_ChaseCamera (CinemachineCamera + CinemachineFollow + CinemachineRotationComposer +
+            // CinemachineChaseCameraBehaviour) собираются единым переиспользуемым Editor-скриптом
+            // SetupCinemachineCameraRigEditor. Target здесь НЕ задаём — после спавна игрока
+            // GameLifetimeScope зовёт ICameraService.FollowPlayerCar (Шаг 6), который активирует
+            // chase через CameraRig в рантайме.
+            SetupCinemachineCameraRigEditor.EnsureBrain();
 
-            if (mainCam == null)
-            {
-                camGo = new GameObject("Main Camera");
-                Undo.RegisterCreatedObjectUndo(camGo, "Create Main Camera");
-                camGo.tag = "MainCamera";
-                Undo.AddComponent<Camera>(camGo);
-                Undo.AddComponent<AudioListener>(camGo);
-                Debug.Log("[Editor] Создан Main Camera GameObject.");
-            }
-            else
-            {
-                camGo = mainCam.gameObject;
-                Debug.Log("[Editor] Найдена существующая Main Camera, переиспользуем.");
-            }
-
-            // Начальная позиция — разумная стартовая точка;
-            // ChaseCarCameraBehaviour перехватит управление в первом же LateUpdate.
-            camGo.transform.position = new Vector3(0f, 10f, -15f);
-            camGo.transform.rotation = Quaternion.Euler(20f, 0f, 0f);
-
-            // Добавляем ChaseCarCameraBehaviour идемпотентно
-            var chaseCam = camGo.GetComponent<ChaseCarCameraBehaviour>();
-            if (chaseCam == null)
-            {
-                chaseCam = Undo.AddComponent<ChaseCarCameraBehaviour>(camGo);
-                Debug.Log("[Editor] ChaseCarCameraBehaviour добавлен на Main Camera.");
-            }
-            else
-            {
-                Debug.Log("[Editor] ChaseCarCameraBehaviour уже есть на Main Camera, переиспользуем.");
-            }
-
-            // Заполняем _config; _target не трогаем — выставляется в рантайме
             var chaseCamConfig = AssetDatabase.LoadAssetAtPath<ChaseCameraConfig>(ChaseCameraConfigPath);
             if (chaseCamConfig == null)
-            {
                 Debug.LogWarning("[Editor] ChaseCameraConfig_Default не найден по " + ChaseCameraConfigPath +
                                  ". Поле _config не заполнено. Создай ассет и повтори запуск скрипта.");
-            }
-            else
-            {
-                var chaseCamSo = new SerializedObject(chaseCam);
-                chaseCamSo.FindProperty("_config").objectReferenceValue = chaseCamConfig;
-                chaseCamSo.ApplyModifiedProperties();
-                Debug.Log("[Editor] ChaseCarCameraBehaviour._config = ChaseCameraConfig_Default.");
-            }
 
-            Debug.Log("[Editor] Chase-камера настроена на Main Camera. " +
-                      "_target не задан — GameLifetimeScope.SetTarget вызывается при спавне игрока.");
+            SetupCinemachineCameraRigEditor.EnsureChaseCamera(chaseCamConfig, priority: 10);
+
+            Debug.Log("[Editor] Chase-камера (Cinemachine) настроена. Запусти " +
+                      "'FlatOutLike/Setup/Setup Cinemachine Camera Rig' после спавна игрока, " +
+                      "если сцене нужны ещё orbit-камера и CameraRig.");
         }
 
         private static void CreateGameLifetimeScope()

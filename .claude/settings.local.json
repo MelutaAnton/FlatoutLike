@@ -63,7 +63,11 @@
       "Bash(cat ProjectSettings/ProjectVersion.txt)",
       "Bash(ls \"/c/Program Files/Unity/Hub/Editor/\")",
       "Bash('/c/Program Files/Unity/Hub/Editor/6000.3.9f1/Editor/Unity.exe' -batchmode -nographics -quit -projectPath E:/UnityProjects/PortfolioProjects/Flatuot2_Like -executeMethod FlatOutLike.Editor.Setup.BuildHighJumpSceneEditor.BuildHighJumpScene -logFile C:/Users/Meluta/AppData/Local/Temp/claude/E--UnityProjects-PortfolioProjects-Flatuot2-Like/802b2737-8730-400d-ad87-c8976ea30fe7/scratchpad/unity_build_highjump.log)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "Bash(xargs -I{} echo {})",
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(python *)"
     ]
   }
 }

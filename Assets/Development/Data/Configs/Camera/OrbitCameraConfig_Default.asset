@@ -16,3 +16,5 @@ MonoBehaviour:
   _height: 2.5
   _orbitSpeed: 30
   _followDamping: 0.2
+  _startAngleDegrees: 0
+  _fieldOfView: 66

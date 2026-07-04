@@ -3,7 +3,8 @@
     "rootNamespace": "FlatOutLike",
     "references": [
         "VContainer",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

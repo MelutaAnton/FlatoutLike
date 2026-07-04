@@ -13,11 +13,11 @@ namespace FlatOutLike.Editor.Setup
     /// <summary>
     /// Настраивает camera rig для Step 6 (eject + orbit-камера водителя) в открытой сцене.
     ///
-    /// Шаги:
-    ///   1. Находит GameObject с ChaseCarCameraBehaviour (обычно Main Camera).
-    ///   2. Идемпотентно добавляет на него OrbitDriverCameraBehaviour и CameraRig.
-    ///   3. Заполняет CameraRig._chase / _orbit и OrbitDriverCameraBehaviour._config.
-    ///   4. Заполняет GameLifetimeScope._cameraRig, _driverEjectConfig, _orbitCameraConfig.
+    /// С миграцией на Cinemachine 3.x сборка chase+orbit+CameraRig делегирована
+    /// <see cref="SetupCinemachineCameraRigEditor.Setup"/> (замена ChaseCarCameraBehaviour/
+    /// OrbitDriverCameraBehaviour на CinemachineChaseCameraBehaviour/CinemachineOrbitDriverCameraBehaviour).
+    /// Этот скрипт лишь довызывает её и дозаполняет GameLifetimeScope-специфичные поля Step 6:
+    ///   _cameraRig, _driverEjectConfig, _orbitCameraConfig.
     ///
     /// Идемпотентность: проверяем наличие именно компонента, а не только GameObject —
     /// повторный запуск не дублирует компоненты, только обновляет ссылки.
@@ -42,62 +42,16 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Setup Camera Rig (Step 6)");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // ── 1. Ищем камеру с ChaseCarCameraBehaviour ───────────────────────
-            var chase = Object.FindAnyObjectByType<ChaseCarCameraBehaviour>();
-            if (chase == null)
-            {
-                Debug.LogWarning("[Editor] ChaseCarCameraBehaviour не найден в открытой сцене. " +
-                                  "Собери арену/сцену с chase-камерой сначала.");
-                return;
-            }
+            // ── 1-3. Chase + Orbit + CameraRig (Cinemachine) ────────────────────
+            SetupCinemachineCameraRigEditor.Setup();
 
-            var cameraGo = chase.gameObject;
-            Debug.Log("[Editor] Найдена chase-камера на '" + cameraGo.name + "'.");
-
-            // ── 2. Идемпотентно добавляем OrbitDriverCameraBehaviour и CameraRig ─
-            var orbit = cameraGo.GetComponent<OrbitDriverCameraBehaviour>();
-            if (orbit == null)
-            {
-                orbit = Undo.AddComponent<OrbitDriverCameraBehaviour>(cameraGo);
-                Debug.Log("[Editor] Добавлен OrbitDriverCameraBehaviour на '" + cameraGo.name + "'.");
-            }
-            else
-            {
-                Debug.Log("[Editor] OrbitDriverCameraBehaviour уже присутствует на '" + cameraGo.name + "'.");
-            }
-
-            var rig = cameraGo.GetComponent<CameraRig>();
+            var rig = Object.FindAnyObjectByType<CameraRig>();
             if (rig == null)
             {
-                rig = Undo.AddComponent<CameraRig>(cameraGo);
-                Debug.Log("[Editor] Добавлен CameraRig на '" + cameraGo.name + "'.");
+                Debug.LogWarning("[Editor] CameraRig не найден после Setup Cinemachine Camera Rig. " +
+                                  "GameLifetimeScope не заполнен.");
+                return;
             }
-            else
-            {
-                Debug.Log("[Editor] CameraRig уже присутствует на '" + cameraGo.name + "'.");
-            }
-
-            // ── 3a. CameraRig._chase / _orbit ───────────────────────────────────
-            var rigSo = new SerializedObject(rig);
-            var chaseProp = rigSo.FindProperty("_chase");
-            var orbitProp = rigSo.FindProperty("_orbit");
-            if (chaseProp != null) chaseProp.objectReferenceValue = chase;
-            if (orbitProp != null) orbitProp.objectReferenceValue = orbit;
-            rigSo.ApplyModifiedProperties();
-            Debug.Log("[Editor] CameraRig._chase / _orbit заполнены.");
-
-            // ── 3b. OrbitDriverCameraBehaviour._config ──────────────────────────
-            var orbitConfig = AssetDatabase.LoadAssetAtPath<OrbitCameraConfig>(OrbitCameraConfigPath);
-            if (orbitConfig == null)
-                Debug.LogWarning("[Editor] OrbitCameraConfig_Default не найден по " + OrbitCameraConfigPath +
-                                  ". Запусти 'FlatOutLike/Configs/Create Default OrbitCameraConfig' сначала.");
-
-            var orbitSo = new SerializedObject(orbit);
-            var orbitConfigProp = orbitSo.FindProperty("_config");
-            if (orbitConfigProp != null) orbitConfigProp.objectReferenceValue = orbitConfig;
-            orbitSo.ApplyModifiedProperties();
-            Debug.Log("[Editor] OrbitDriverCameraBehaviour._config = " +
-                      (orbitConfig != null ? orbitConfig.name : "NULL") + ".");
 
             // ── 4. Заполняем GameLifetimeScope ──────────────────────────────────
             var scope = Object.FindAnyObjectByType<GameLifetimeScope>();
@@ -112,6 +66,11 @@ namespace FlatOutLike.Editor.Setup
                 if (ejectConfig == null)
                     Debug.LogWarning("[Editor] DriverEjectConfig_Default не найден по " + DriverEjectConfigPath +
                                       ". Запусти 'FlatOutLike/Configs/Create Default DriverEjectConfig' сначала.");
+
+                var orbitConfig = AssetDatabase.LoadAssetAtPath<OrbitCameraConfig>(OrbitCameraConfigPath);
+                if (orbitConfig == null)
+                    Debug.LogWarning("[Editor] OrbitCameraConfig_Default не найден по " + OrbitCameraConfigPath +
+                                      ". Запусти 'FlatOutLike/Configs/Create Default OrbitCameraConfig' сначала.");
 
                 var scopeSo = new SerializedObject(scope);
 

@@ -28,7 +28,7 @@ namespace FlatOutLike.Editor.Setup
     ///   • Ramp          — трамплин (куб 12x1x18, наклон -20° по X).
     ///   • EjectZone     — триггер-зона на верхушке рампы (EjectTriggerZone + kinematic Rigidbody).
     ///   • Car_Sport_09  — машина игрока.
-    ///   • Main Camera   — ChaseCarCameraBehaviour + OrbitDriverCameraBehaviour + CameraRig.
+    ///   • Main Camera   — CinemachineBrain + CM_ChaseCamera + CM_OrbitCamera + CameraRig (Cinemachine 3.x).
     ///   • Directional Light.
     ///   • DebugOverlay  — Canvas + Text + HighJumpDebugOverlayController.
     ///   • GameLifetimeScope + GameBootstrap, со всеми ссылками, кроме _derbyMatchConfig
@@ -95,8 +95,8 @@ namespace FlatOutLike.Editor.Setup
             // ── 3. Машина игрока ────────────────────────────────────────────
             var car = CreatePlayerCar();
 
-            // ── 4. Камера: chase + orbit + rig ─────────────────────────────
-            var cameraRig = CreateCameraRig(car);
+            // ── 4. Камера: chase + orbit + rig (Cinemachine) ───────────────
+            var cameraRig = CreateCameraRig();
 
             // ── 5. Directional Light ───────────────────────────────────────
             CreateDirectionalLight();
@@ -264,91 +264,42 @@ namespace FlatOutLike.Editor.Setup
             return carGo;
         }
 
-        private static CameraRig CreateCameraRig(GameObject car)
+        private static CameraRig CreateCameraRig()
         {
-            Camera mainCam = Camera.main;
-            GameObject camGo;
-
-            if (mainCam == null)
-            {
-                camGo = new GameObject("Main Camera");
-                Undo.RegisterCreatedObjectUndo(camGo, "Create Main Camera");
-                camGo.tag = "MainCamera";
-                Undo.AddComponent<Camera>(camGo);
-                Undo.AddComponent<AudioListener>(camGo);
-                Debug.Log("[Editor] Создан Main Camera GameObject.");
-            }
-            else
-            {
-                camGo = mainCam.gameObject;
-                Debug.Log("[Editor] Найдена существующая Main Camera, переиспользуем.");
-            }
-
-            camGo.transform.position = new Vector3(0f, 5f, -10f);
-            camGo.transform.rotation = Quaternion.Euler(15f, 0f, 0f);
-
-            // ── ChaseCarCameraBehaviour ─────────────────────────────────────
-            var chase = camGo.GetComponent<ChaseCarCameraBehaviour>();
-            if (chase == null)
-            {
-                chase = Undo.AddComponent<ChaseCarCameraBehaviour>(camGo);
-                Debug.Log("[Editor] Добавлен ChaseCarCameraBehaviour на Main Camera.");
-            }
+            // Camera rig мигрировал на Cinemachine 3.x — вся сборка CinemachineBrain +
+            // CM_ChaseCamera + CM_OrbitCamera + CameraRig делегирована переиспользуемым
+            // методам SetupCinemachineCameraRigEditor (замена ChaseCarCameraBehaviour/
+            // OrbitDriverCameraBehaviour на CinemachineChaseCameraBehaviour/
+            // CinemachineOrbitDriverCameraBehaviour). Target не выставляется здесь —
+            // ICameraService переключает CameraRig в рантайме (как и раньше).
+            SetupCinemachineCameraRigEditor.EnsureBrain();
+            SetupCinemachineCameraRigEditor.RemoveMissingScriptsInScene();
 
             var chaseCameraConfig = AssetDatabase.LoadAssetAtPath<ChaseCameraConfig>(ChaseCameraConfigPath);
             if (chaseCameraConfig == null)
-            {
                 Debug.LogWarning("[Editor] ChaseCameraConfig_Default не найден по " + ChaseCameraConfigPath + ". Поле _config не заполнено.");
-            }
-            else
-            {
-                var chaseSo = new SerializedObject(chase);
-                var configProp = chaseSo.FindProperty("_config");
-                if (configProp != null) configProp.objectReferenceValue = chaseCameraConfig;
-                var targetProp = chaseSo.FindProperty("_target");
-                if (targetProp != null && car != null) targetProp.objectReferenceValue = car.transform;
-                chaseSo.ApplyModifiedProperties();
-                Debug.Log("[Editor] ChaseCarCameraBehaviour._config / _target заполнены.");
-            }
-
-            // ── OrbitDriverCameraBehaviour ──────────────────────────────────
-            var orbit = camGo.GetComponent<OrbitDriverCameraBehaviour>();
-            if (orbit == null)
-            {
-                orbit = Undo.AddComponent<OrbitDriverCameraBehaviour>(camGo);
-                Debug.Log("[Editor] Добавлен OrbitDriverCameraBehaviour на Main Camera.");
-            }
+            var chase = SetupCinemachineCameraRigEditor.EnsureChaseCamera(chaseCameraConfig, priority: 10);
 
             var orbitCameraConfig = AssetDatabase.LoadAssetAtPath<OrbitCameraConfig>(OrbitCameraConfigPath);
             if (orbitCameraConfig == null)
-            {
                 Debug.LogWarning("[Editor] OrbitCameraConfig_HighJump не найден по " + OrbitCameraConfigPath + ". Поле _config не заполнено.");
+            var orbit = SetupCinemachineCameraRigEditor.EnsureOrbitCamera(orbitCameraConfig, priority: 0);
+
+            Camera mainCam = Camera.main;
+            GameObject camGo = mainCam != null ? mainCam.gameObject : GameObject.Find("Main Camera");
+            if (camGo != null)
+            {
+                camGo.transform.position = new Vector3(0f, 5f, -10f);
+                camGo.transform.rotation = Quaternion.Euler(15f, 0f, 0f);
             }
             else
             {
-                var orbitSo = new SerializedObject(orbit);
-                var orbitConfigProp = orbitSo.FindProperty("_config");
-                if (orbitConfigProp != null) orbitConfigProp.objectReferenceValue = orbitCameraConfig;
-                orbitSo.ApplyModifiedProperties();
-                Debug.Log("[Editor] OrbitDriverCameraBehaviour._config заполнен.");
+                Debug.LogWarning("[Editor] Main Camera не найдена после EnsureBrain() — позиция камеры не выставлена.");
             }
 
-            // ── CameraRig ────────────────────────────────────────────────────
-            var rig = camGo.GetComponent<CameraRig>();
-            if (rig == null)
-            {
-                rig = Undo.AddComponent<CameraRig>(camGo);
-                Debug.Log("[Editor] Добавлен CameraRig на Main Camera.");
-            }
+            var rig = SetupCinemachineCameraRigEditor.EnsureCameraRig(camGo, chase, orbit);
 
-            var rigSo = new SerializedObject(rig);
-            var chaseProp = rigSo.FindProperty("_chase");
-            if (chaseProp != null) chaseProp.objectReferenceValue = chase;
-            var orbitProp = rigSo.FindProperty("_orbit");
-            if (orbitProp != null) orbitProp.objectReferenceValue = orbit;
-            rigSo.ApplyModifiedProperties();
-            Debug.Log("[Editor] CameraRig._chase / _orbit заполнены.");
-
+            Debug.Log("[Editor] Camera rig (Cinemachine) собран: chase+orbit+CameraRig на Main Camera.");
             return rig;
         }
 

@@ -1,9 +1,9 @@
 #if UNITY_EDITOR
+using Unity.Cinemachine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using FlatOutLike.Controllers.Camera;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Installers;
@@ -67,51 +67,20 @@ namespace FlatOutLike.Editor.Setup
                 Debug.Log("[Editor] Directional Light already exists, skipping.");
             }
 
-            // ── 4. Main Camera + ChaseCarCameraBehaviour ──────────────────────
-            Camera mainCam = Camera.main;
-            GameObject camGo;
+            // ── 4. Main Camera + Cinemachine Chase Camera ─────────────────────
+            // Camera rig мигрировал на Cinemachine 3.x: CinemachineBrain на Main Camera +
+            // CM_ChaseCamera (CinemachineCamera + CinemachineChaseCameraBehaviour), собранные
+            // переиспользуемым SetupCinemachineCameraRigEditor. Эта тестовая сцена не использует
+            // CameraRig/ICameraService, поэтому Follow/LookAt выставляем прямо на CinemachineCamera.
+            SetupCinemachineCameraRigEditor.EnsureBrain();
 
-            if (mainCam == null)
-            {
-                camGo = new GameObject("Main Camera");
-                Undo.RegisterCreatedObjectUndo(camGo, "Create Main Camera");
-                camGo.tag = "MainCamera";
-                Undo.AddComponent<Camera>(camGo);
-                Undo.AddComponent<AudioListener>(camGo);
-                Debug.Log("[Editor] Created Main Camera GameObject.");
-            }
-            else
-            {
-                camGo = mainCam.gameObject;
-                Debug.Log("[Editor] Found existing Main Camera, reusing.");
-            }
-
-            // Ensure ChaseCarCameraBehaviour is on the camera GO
-            var chaseBehaviour = camGo.GetComponent<ChaseCarCameraBehaviour>();
-            if (chaseBehaviour == null)
-            {
-                chaseBehaviour = Undo.AddComponent<ChaseCarCameraBehaviour>(camGo);
-                Debug.Log("[Editor] Added ChaseCarCameraBehaviour to camera.");
-            }
-            else
-            {
-                Debug.Log("[Editor] ChaseCarCameraBehaviour already present on camera.");
-            }
-
-            // Fill _config on ChaseCarCameraBehaviour
             var cameraConfig = AssetDatabase.LoadAssetAtPath<ChaseCameraConfig>(CameraConfigPath);
             if (cameraConfig == null)
-            {
                 Debug.LogWarning("[Editor] ChaseCameraConfig_Default not found at " + CameraConfigPath +
                                  ". Run 'FlatOutLike/Configs/Create Default ChaseCameraConfig' first. Field _config will remain null.");
-            }
-            else
-            {
-                var camSo = new SerializedObject(chaseBehaviour);
-                camSo.FindProperty("_config").objectReferenceValue = cameraConfig;
-                camSo.ApplyModifiedProperties();
-                Debug.Log("[Editor] Assigned ChaseCameraConfig_Default to ChaseCarCameraBehaviour._config.");
-            }
+
+            var chaseBehaviour = SetupCinemachineCameraRigEditor.EnsureChaseCamera(cameraConfig, priority: 10);
+            var chaseCamera = chaseBehaviour.GetComponent<CinemachineCamera>();
 
             // ── 5. GameLifetimeScope ──────────────────────────────────────────
             var existingScope = Object.FindAnyObjectByType<GameLifetimeScope>();
@@ -159,23 +128,28 @@ namespace FlatOutLike.Editor.Setup
                     Debug.Log("[Editor] Instantiated car prefab '" + carPrefab.name +
                               "' at (0, 1, 0).");
 
-                    // Set _target on ChaseCarCameraBehaviour via SerializedObject
-                    var targetSo = new SerializedObject(chaseBehaviour);
-                    targetSo.FindProperty("_target").objectReferenceValue = carInstance.transform;
-                    targetSo.ApplyModifiedProperties();
-                    Debug.Log("[Editor] Assigned car transform to ChaseCarCameraBehaviour._target.");
+                    // Set Follow/LookAt directly on the CinemachineCamera (no CameraRig in this scene)
+                    if (chaseCamera != null)
+                    {
+                        Undo.RecordObject(chaseCamera, "Set Chase Camera Follow Target");
+                        chaseCamera.Follow = carInstance.transform;
+                        chaseCamera.LookAt = carInstance.transform;
+                        EditorUtility.SetDirty(chaseCamera);
+                        Debug.Log("[Editor] Assigned car transform to CinemachineCamera.Follow/LookAt.");
+                    }
                 }
                 else
                 {
                     Debug.Log("[Editor] CarController already present in scene, skipping car spawn.");
 
-                    // Still ensure _target is wired if it's missing
-                    var targetSo = new SerializedObject(chaseBehaviour);
-                    if (targetSo.FindProperty("_target").objectReferenceValue == null)
+                    // Still ensure Follow/LookAt are wired if missing
+                    if (chaseCamera != null && chaseCamera.Follow == null)
                     {
-                        targetSo.FindProperty("_target").objectReferenceValue = existingCar.transform;
-                        targetSo.ApplyModifiedProperties();
-                        Debug.Log("[Editor] Wired existing car to ChaseCarCameraBehaviour._target.");
+                        Undo.RecordObject(chaseCamera, "Set Chase Camera Follow Target");
+                        chaseCamera.Follow = existingCar.transform;
+                        chaseCamera.LookAt = existingCar.transform;
+                        EditorUtility.SetDirty(chaseCamera);
+                        Debug.Log("[Editor] Wired existing car to CinemachineCamera.Follow/LookAt.");
                     }
                 }
             }

@@ -10,7 +10,10 @@ namespace FlatOutLike.Controllers.Camera
     {
         void SetTarget(Transform target);
 
-        /// <summary>Включает/выключает LateUpdate-логику поведения (через enabled компонента).</summary>
+        /// <summary>
+        /// Делает поведение активным/неактивным. Как именно — деталь реализации:
+        /// Cinemachine-адаптеры переключают Priority виртуальной камеры (Brain блендит сам).
+        /// </summary>
         void SetBehaviourActive(bool active);
     }
 }

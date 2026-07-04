@@ -8,8 +8,8 @@ namespace FlatOutLike.Controllers.Camera
     /// </summary>
     public sealed class CameraRig : MonoBehaviour, ICameraRig
     {
-        [SerializeField] private ChaseCarCameraBehaviour _chase;
-        [SerializeField] private OrbitDriverCameraBehaviour _orbit;
+        [SerializeField] private CinemachineChaseCameraBehaviour _chase;
+        [SerializeField] private CinemachineOrbitDriverCameraBehaviour _orbit;
 
         public void ActivateChase(Transform target)
         {
