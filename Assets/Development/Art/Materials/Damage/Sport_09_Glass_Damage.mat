@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Sport_09_Glass_Damage
   m_Shader: {fileID: 4800000, guid: 99ccee4313796f04c8345fd9c2f2453f, type: 3}
-  m_Parent: {fileID: 0}
+  m_Parent: {fileID: 2100000, guid: 100535f72d52c75489d06f4aa047f878, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -29,14 +29,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DamageAmount: 0
-    - _DamageSmoothnessLoss: 0.7
-    - _DirtNoiseScale: 8
-    - _DirtStrength: 1
     - _Metallic: 0
     - _Smoothness: 0.903
     m_Colors:
     - _BaseColor: {r: 0, g: 0.45098037, b: 1, a: 0.064}
-    - _DirtColor: {r: 0.049999982, g: 0.044999972, b: 0.04, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

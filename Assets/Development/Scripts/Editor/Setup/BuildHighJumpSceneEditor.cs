@@ -115,6 +115,9 @@ namespace FlatOutLike.Editor.Setup
             // ── 8. Заполняем ссылки Composition Root ───────────────────────
             FillScopeReferences(scope, car, cameraRig);
 
+            // ── 8b. Измерительная сетка-стена с отметками высоты ───────────
+            SetupHighJumpNetEditor.Setup();
+
             // ── 9. Сохраняем сцену ──────────────────────────────────────────
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
