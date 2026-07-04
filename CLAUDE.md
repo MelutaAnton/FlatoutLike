@@ -137,6 +137,7 @@ Assets/
 
 - `OnEnable()` вызывается **до** VContainer `Construct()` — всегда проверять null перед подпиской и/или использовать флаг `_initialized`.
 - `Input.GetAxisRaw()` / `GetKeyDown()` не работают если Input Handling = "New" — у нас стоит **Both**.
+- **`GetKeyDown`, потребляемый из `FixedUpdate`, сгорает** (за render-кадр может пройти 0 физтиков) — буферизовать флагом в `Update`, сбрасывать после потребления; детали — `.claude/rules/physics-input.md` (auto-loaded для Controllers/Core/Input).
 - Инициализацию переносить в `Construct()`, а не в `Start()`.
 - `NavMeshAgent` требует baked NavMesh — автоматизировать через Editor-скрипт.
 - Mixamo-модели могут ломать Ragdoll Setup Wizard — см. skill `setup-ragdoll`.

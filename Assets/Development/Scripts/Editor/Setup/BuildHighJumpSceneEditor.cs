@@ -19,14 +19,14 @@ namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
     /// Собирает сцену Stunts_HighJump.unity (Шаг 7): разгонная полоса → рампа →
-    /// eject-зона → зона приземления, camera rig (chase + orbit) и debug-overlay
-    /// с текстом состояния полёта.
+    /// eject-зона, camera rig (chase + orbit) и debug-overlay с текстом состояния полёта.
+    /// Приземление больше не определяется триггер-зоной — DriverFlightService решает
+    /// это по успокоению ragdoll (velocity-based).
     ///
     /// Что создаётся:
     ///   • Ground_Strip  — разгонная полоса (куб 20x1x120).
     ///   • Ramp          — трамплин (куб 12x1x18, наклон -20° по X).
     ///   • EjectZone     — триггер-зона на верхушке рампы (EjectTriggerZone + kinematic Rigidbody).
-    ///   • LandingZone   — триггер-зона поля приземления (LandingZone + kinematic Rigidbody).
     ///   • Car_Sport_09  — машина игрока.
     ///   • Main Camera   — ChaseCarCameraBehaviour + OrbitDriverCameraBehaviour + CameraRig.
     ///   • Directional Light.
@@ -77,10 +77,6 @@ namespace FlatOutLike.Editor.Setup
         private static readonly Vector3 EjectZonePosition = new Vector3(0f, 6f, 96f);
         private static readonly Vector3 EjectZoneSize      = new Vector3(12f, 4f, 2f);
 
-        // LandingZone — поле приземления за рампой.
-        private static readonly Vector3 LandingZonePosition = new Vector3(0f, 3f, 150f);
-        private static readonly Vector3 LandingZoneSize      = new Vector3(60f, 6f, 80f);
-
         [MenuItem("FlatOutLike/Scenes/Build HighJump Scene")]
         public static void BuildHighJumpScene()
         {
@@ -94,7 +90,7 @@ namespace FlatOutLike.Editor.Setup
             CreateGroundStrip();
             CreateRamp();
             CreateEjectZone();
-            CreateLandingZone();
+            RemoveLegacyLandingZone();
 
             // ── 3. Машина игрока ────────────────────────────────────────────
             var car = CreatePlayerCar();
@@ -226,40 +222,20 @@ namespace FlatOutLike.Editor.Setup
             }
         }
 
-        private static void CreateLandingZone()
+        /// <summary>
+        /// Миграционный шаг: приземление теперь определяется по успокоению ragdoll
+        /// (velocity-based, DriverFlightService), триггер-зона LandingZone упразднена.
+        /// Если на сцене остался устаревший GameObject "LandingZone" — удаляем его.
+        /// Идемпотентно: если объекта нет, ничего не делаем.
+        /// </summary>
+        private static void RemoveLegacyLandingZone()
         {
             var go = GameObject.Find("LandingZone");
             if (go == null)
-            {
-                go = new GameObject("LandingZone");
-                Undo.RegisterCreatedObjectUndo(go, "Create LandingZone");
-                Debug.Log("[Editor] Создан LandingZone.");
-            }
-            else
-            {
-                Debug.Log("[Editor] LandingZone уже есть, переиспользуем.");
-            }
+                return;
 
-            go.transform.position = LandingZonePosition;
-            go.transform.rotation = Quaternion.identity;
-
-            var box = go.GetComponent<BoxCollider>();
-            if (box == null)
-                box = Undo.AddComponent<BoxCollider>(go);
-            box.isTrigger = true;
-            box.size       = LandingZoneSize;
-
-            var rb = go.GetComponent<Rigidbody>();
-            if (rb == null)
-                rb = Undo.AddComponent<Rigidbody>(go);
-            rb.isKinematic = true;
-            rb.useGravity  = false;
-
-            if (go.GetComponent<LandingZone>() == null)
-            {
-                Undo.AddComponent<LandingZone>(go);
-                Debug.Log("[Editor] Добавлен LandingZone-компонент на LandingZone.");
-            }
+            Undo.DestroyObjectImmediate(go);
+            Debug.Log("[Editor] Удалён устаревший LandingZone (приземление теперь по успокоению ragdoll).");
         }
 
         private static GameObject CreatePlayerCar()

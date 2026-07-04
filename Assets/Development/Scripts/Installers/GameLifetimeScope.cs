@@ -276,8 +276,6 @@ namespace FlatOutLike.Installers
                 // Безусловно (паттерн DestructibleObjectController выше) — если объектов нет, цикл пуст.
                 foreach (var eject in Object.FindObjectsByType<EjectTriggerZone>(FindObjectsSortMode.None))
                     container.InjectGameObject(eject.gameObject);
-                foreach (var landing in Object.FindObjectsByType<LandingZone>(FindObjectsSortMode.None))
-                    container.InjectGameObject(landing.gameObject);
                 foreach (var overlay in Object.FindObjectsByType<HighJumpDebugOverlayController>(FindObjectsSortMode.None))
                     container.InjectGameObject(overlay.gameObject);
 

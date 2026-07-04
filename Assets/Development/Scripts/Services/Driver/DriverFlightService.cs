@@ -6,10 +6,16 @@ namespace FlatOutLike.Services.Driver
 {
     /// <summary>
     /// Чистый C#: состояние одного полёта водителя. Никакого MonoBehaviour — величины
-    /// (позиция, dt, ввод) поставляет <c>DriverFlightController</c> каждый FixedUpdate.
+    /// (позиция, скорость, dt, ввод) поставляет <c>DriverFlightController</c> каждый FixedUpdate.
     /// ВНИМАНИЕ: синглтон в расчёте на ОДНОГО летящего водителя (HighJump-сцена).
     /// В Derby несколько выброшенных водителей затирают состояние друг друга —
     /// безвредно (там оно никем не читается); для мультитрекинга нужен per-driver рефакторинг.
+    /// ВАЖНО: с шага «полишинг High Jump» приземление детектируется по успокоению скорости
+    /// (settle) прямо внутри Track — NotifyLanded вызывается автоматически, без триггер-зоны
+    /// LandingZone. В Derby-сценах DriverLandedEvent от этой логики может публиковаться
+    /// без единого подписчика (HighJumpSessionService там не регистрируется, т.к.
+    /// GameLifetimeScope._highJumpRulesConfig == null для Derby) — это ожидаемо и безвредно,
+    /// EventBus.Publish без подписчиков — no-op.
     /// </summary>
     public sealed class DriverFlightService : IDriverFlightService
     {
@@ -21,11 +27,14 @@ namespace FlatOutLike.Services.Driver
         private float _peakHeight;
         private float _airTime;
         private int _boostsUsed;
+        // Сколько секунд подряд скорость держится ниже LandingSpeedThreshold (settle-таймер).
+        private float _settleTimer;
 
         public bool IsInFlight { get; private set; }
         public float PeakHeight => _peakHeight;
         public float AirTime => _airTime;
         public float BoostImpulse => _config.BoostImpulse;
+        public float BoostUpFallbackSpeed => _config.BoostUpFallbackSpeed;
 
         public DriverFlightService(DriverFlightConfig config, IFlipDetectorService flipDetector, IEventBus eventBus)
         {
@@ -40,6 +49,7 @@ namespace FlatOutLike.Services.Driver
             _peakHeight = 0f;
             _airTime = 0f;
             _boostsUsed = 0;
+            _settleTimer = 0f;
             IsInFlight = true;
 
             _flipDetector.Reset();
@@ -75,7 +85,7 @@ namespace FlatOutLike.Services.Driver
             return true;
         }
 
-        public void Track(Vector3 position, float dt)
+        public void Track(Vector3 position, Vector3 velocity, float dt)
         {
             if (!IsInFlight) return;
 
@@ -84,6 +94,28 @@ namespace FlatOutLike.Services.Driver
             float height = position.y - _startPosition.y;
             if (height > _peakHeight)
                 _peakHeight = height;
+
+            // Приземление по успокоению вместо триггер-зоны: ждём MinAirTime (защита от
+            // мгновенного триггера сразу после eject) и непрерывного затишья скорости
+            // LandingSettleDuration секунд подряд. Буст поднимает скорость выше порога
+            // и сбрасывает таймер — попытка продлевается, а не обрывается досрочно.
+            // Пик высоты продолжает обновляться выше, вне зависимости от settle-таймера.
+            if (_airTime < _config.MinAirTime)
+            {
+                _settleTimer = 0f;
+                return;
+            }
+
+            if (velocity.magnitude < _config.LandingSpeedThreshold)
+            {
+                _settleTimer += dt;
+                if (_settleTimer >= _config.LandingSettleDuration)
+                    NotifyLanded();
+            }
+            else
+            {
+                _settleTimer = 0f;
+            }
         }
 
         public void NotifyLanded()

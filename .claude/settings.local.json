@@ -57,7 +57,13 @@
       "Bash(cat Assets/Development/Scripts/Models/RewardSource.cs)",
       "Bash(cat Assets/Development/Scripts/Models/EjectReason.cs)",
       "Bash(cat Assets/Development/Scripts/Services/Meta/IMetaProgressService.cs)",
-      "Bash(cat Assets/Development/Scripts/Services/Flow/IGameFlowService.cs)"
+      "Bash(cat Assets/Development/Scripts/Services/Flow/IGameFlowService.cs)",
+      "Bash(ls *.sln)",
+      "Bash(find . -maxdepth 1 -iname \"*.sln\")",
+      "Bash(cat ProjectSettings/ProjectVersion.txt)",
+      "Bash(ls \"/c/Program Files/Unity/Hub/Editor/\")",
+      "Bash('/c/Program Files/Unity/Hub/Editor/6000.3.9f1/Editor/Unity.exe' -batchmode -nographics -quit -projectPath E:/UnityProjects/PortfolioProjects/Flatuot2_Like -executeMethod FlatOutLike.Editor.Setup.BuildHighJumpSceneEditor.BuildHighJumpScene -logFile C:/Users/Meluta/AppData/Local/Temp/claude/E--UnityProjects-PortfolioProjects-Flatuot2-Like/802b2737-8730-400d-ad87-c8976ea30fe7/scratchpad/unity_build_highjump.log)",
+      "Bash(tasklist)"
     ]
   }
 }

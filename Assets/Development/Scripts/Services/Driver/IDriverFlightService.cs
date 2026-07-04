@@ -20,6 +20,12 @@ namespace FlatOutLike.Services.Driver
         /// <summary>Импульс буста (м/с) — читается контроллером для ForceMode.VelocityChange.</summary>
         float BoostImpulse { get; }
 
+        /// <summary>
+        /// Порог скорости (м/с): ниже него буст направляется строго вверх, а не по направлению
+        /// текущей скорости — иначе на почти нулевой скорости буст летит «в никуда».
+        /// </summary>
+        float BoostUpFallbackSpeed { get; }
+
         /// <summary>Начинает полёт: сбрасывает пик/время/бусты и детектор флипов.</summary>
         void BeginFlight(Vector3 startPosition);
 
@@ -32,8 +38,13 @@ namespace FlatOutLike.Services.Driver
         /// <summary>Пытается списать один буст. Возвращает false, если лимит на полёт исчерпан.</summary>
         bool TryConsumeBoost();
 
-        /// <summary>Обновляет пик высоты и время полёта. Не в полёте — не делает ничего.</summary>
-        void Track(Vector3 position, float dt);
+        /// <summary>
+        /// Обновляет пик высоты и время полёта, а также детектирует приземление по успокоению
+        /// скорости (settle): когда после MinAirTime скорость непрерывно держится ниже
+        /// LandingSpeedThreshold в течение LandingSettleDuration секунд — вызывается NotifyLanded.
+        /// Не в полёте — не делает ничего.
+        /// </summary>
+        void Track(Vector3 position, Vector3 velocity, float dt);
 
         /// <summary>
         /// Одноразово завершает полёт и публикует <see cref="FlatOutLike.Core.Events.DriverLandedEvent"/>.

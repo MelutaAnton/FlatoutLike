@@ -115,11 +115,12 @@ namespace FlatOutLike.Tests
             public float PeakHeight => 0f;
             public float AirTime => 0f;
             public float BoostImpulse => 0f;
+            public float BoostUpFallbackSpeed => 0f;
 
             public void BeginFlight(Vector3 startPosition) { }
             public Vector3 CalculateSteerAcceleration(Vector2 look, Vector3 currentVelocity) => Vector3.zero;
             public bool TryConsumeBoost() => false;
-            public void Track(Vector3 position, float dt) { }
+            public void Track(Vector3 position, Vector3 velocity, float dt) { }
             public void NotifyLanded() { }
         }
     }

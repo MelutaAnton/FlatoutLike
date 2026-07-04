@@ -23,6 +23,8 @@ namespace FlatOutLike.Controllers.Driver
         // Одноразовый флаг: полёт начинается на первом кадре после eject.
         // Сбрасывается только пересозданием сцены — одна попытка = одна сцена.
         private bool _flightStarted;
+        // Копим нажатие буста между кадрами Update() до потребления в FixedUpdate().
+        private bool _boostQueued;
 
         private void Awake()
         {
@@ -38,6 +40,23 @@ namespace FlatOutLike.Controllers.Driver
             _initialized = true;
         }
 
+        private void Update()
+        {
+            if (!_initialized) return;
+
+            // GetKeyDown живёт ровно один render-кадр (устанавливается в KeyboardInputProvider.Tick()),
+            // а FixedUpdate может не выполниться ни разу за этот кадр (fixed timestep больше времени
+            // кадра) — нажатие терялось бы. Копим флаг здесь в Update(), потребляем и сбрасываем
+            // в FixedUpdate(), где реально применяется буст.
+            if (_driver == null || !_driver.IsEjected)
+            {
+                _boostQueued = false;
+                return;
+            }
+
+            _boostQueued |= _input.MidairBoostPressed;
+        }
+
         private void FixedUpdate()
         {
             if (!_initialized) return;
@@ -46,6 +65,11 @@ namespace FlatOutLike.Controllers.Driver
 
             Rigidbody pelvis = _driver.Pelvis;
             if (pelvis == null) return;
+
+            // Считываем и сразу сбрасываем накопленный флаг — потребление одноразовое,
+            // независимо от того, что дальше будет результат TryConsumeBoost.
+            bool boostRequested = _boostQueued;
+            _boostQueued = false;
 
             if (!_flightStarted)
             {
@@ -62,14 +86,18 @@ namespace FlatOutLike.Controllers.Driver
             Vector3 steer = _flight.CalculateSteerAcceleration(_input.Look, pelvis.linearVelocity);
             ApplyToAllBones(steer, ForceMode.Acceleration);
 
-            if (_input.MidairBoostPressed && _flight.TryConsumeBoost())
+            if (boostRequested && _flight.TryConsumeBoost())
             {
                 Vector3 velocity = pelvis.linearVelocity;
-                Vector3 direction = velocity.sqrMagnitude > 0.0001f ? velocity.normalized : Vector3.up;
+                // Строго вверх, если скорость почти нулевая (прыжок на месте или верхняя точка
+                // дуги) — иначе буст прикладывается «в никуда» при едва заметном боковом сносе.
+                Vector3 direction = velocity.magnitude < _flight.BoostUpFallbackSpeed
+                    ? Vector3.up
+                    : velocity.normalized;
                 ApplyToAllBones(direction * _flight.BoostImpulse, ForceMode.VelocityChange);
             }
 
-            _flight.Track(pelvis.position, Time.fixedDeltaTime);
+            _flight.Track(pelvis.position, pelvis.linearVelocity, Time.fixedDeltaTime);
             _flipDetector.Feed(pelvis.rotation, Time.fixedDeltaTime);
         }
 

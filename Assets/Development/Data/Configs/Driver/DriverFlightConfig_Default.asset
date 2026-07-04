@@ -12,8 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e52a6fd95011104191d5470a4580856, type: 3}
   m_Name: DriverFlightConfig_Default
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Driver.DriverFlightConfig
-  _steerInfluence: 6
+  _steerInfluence: 10
   _steerSpeedPenalty: 0.15
   _boostImpulse: 8
   _boostCount: 1
   _rotationBonusThreshold: 180
+  _landingSpeedThreshold: 1.5
+  _landingSettleDuration: 3
+  _minAirTime: 0.5
+  _boostUpFallbackSpeed: 3

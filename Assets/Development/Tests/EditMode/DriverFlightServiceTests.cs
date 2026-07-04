@@ -88,9 +88,11 @@ namespace FlatOutLike.Tests
         {
             _service.BeginFlight(new Vector3(0f, 5f, 0f));
 
-            _service.Track(new Vector3(0f, 8f, 0f), 0.1f);  // высота +3
-            _service.Track(new Vector3(0f, 12f, 0f), 0.1f); // высота +7 — новый пик
-            _service.Track(new Vector3(0f, 9f, 0f), 0.1f);  // высота +4 — пик не обновляется
+            // Скорость здесь не важна для теста высоты/пика — суммарный airTime (0.3с) меньше
+            // MinAirTime по умолчанию (0.5с), settle-логика внутри Track ещё не активна.
+            _service.Track(new Vector3(0f, 8f, 0f), Vector3.zero, 0.1f);  // высота +3
+            _service.Track(new Vector3(0f, 12f, 0f), Vector3.zero, 0.1f); // высота +7 — новый пик
+            _service.Track(new Vector3(0f, 9f, 0f), Vector3.zero, 0.1f);  // высота +4 — пик не обновляется
 
             Assert.AreEqual(7f, _service.PeakHeight, 0.001f);
         }
@@ -103,7 +105,7 @@ namespace FlatOutLike.Tests
             _bus.Subscribe<DriverLandedEvent>(landedEvents.Add);
 
             _service.BeginFlight(new Vector3(0f, 0f, 0f));
-            _service.Track(new Vector3(0f, 6f, 0f), 0.1f);
+            _service.Track(new Vector3(0f, 6f, 0f), Vector3.zero, 0.1f);
             _service.NotifyLanded();
             _service.NotifyLanded(); // повторный вызов — должен быть проигнорирован
 
@@ -112,6 +114,93 @@ namespace FlatOutLike.Tests
             Assert.IsFalse(_service.IsInFlight, "После NotifyLanded полёт должен считаться завершённым.");
 
             _bus.Unsubscribe<DriverLandedEvent>(landedEvents.Add);
+        }
+
+        // g) Settle-приземление: после MinAirTime непрерывное затишье скорости в течение
+        // LandingSettleDuration секунд подряд завершает полёт и публикует событие ровно один раз.
+        [Test]
+        public void Track_SettlesLanding_AfterMinAirTimeAndContinuousLowSpeed()
+        {
+            var landedEvents = new System.Collections.Generic.List<DriverLandedEvent>();
+            _bus.Subscribe<DriverLandedEvent>(landedEvents.Add);
+
+            _service.BeginFlight(Vector3.zero);
+
+            // airTime 0.6 > MinAirTime(0.5) — settle начинает копиться, но ещё не достиг 1с.
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.6f);
+            Assert.IsTrue(_service.IsInFlight, "Settle ещё не достиг LandingSettleDuration.");
+
+            // settle 0.6 + 0.5 = 1.1 >= LandingSettleDuration(1) — приземление.
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.5f);
+
+            Assert.IsFalse(_service.IsInFlight, "После накопления settle-таймера полёт должен завершиться.");
+            Assert.AreEqual(1, landedEvents.Count, "DriverLandedEvent должен быть опубликован ровно один раз.");
+
+            // Продолжаем звать Track после приземления — событие не должно публиковаться повторно.
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.5f);
+            Assert.AreEqual(1, landedEvents.Count, "Повторные вызовы Track после приземления не должны публиковать событие снова.");
+
+            _bus.Unsubscribe<DriverLandedEvent>(landedEvents.Add);
+        }
+
+        // h) Скорость выше LandingSpeedThreshold между низкоскоростными вызовами сбрасывает
+        // settle-таймер — суммарный прогресс не накапливается через "разрыв".
+        [Test]
+        public void Track_ResetsSettleTimer_WhenSpeedExceedsThresholdBetweenLowSpeedCalls()
+        {
+            var landedEvents = new System.Collections.Generic.List<DriverLandedEvent>();
+            _bus.Subscribe<DriverLandedEvent>(landedEvents.Add);
+
+            _service.BeginFlight(Vector3.zero);
+
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.6f);               // airTime 0.6, settle=0.6
+            _service.Track(new Vector3(0f, 1f, 0f), new Vector3(0f, 0f, 5f), 0.1f);    // скорость выше порога — settle сброшен
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.9f);               // settle=0.9 < 1 — разрыв не суммируется
+
+            Assert.IsTrue(_service.IsInFlight, "Сброс settle-таймера при скачке скорости не должен накапливаться через разрыв.");
+            Assert.AreEqual(0, landedEvents.Count);
+
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.2f); // settle=1.1 >= 1 — приземление уже после полного нового отсчёта
+
+            Assert.IsFalse(_service.IsInFlight);
+            Assert.AreEqual(1, landedEvents.Count);
+
+            _bus.Unsubscribe<DriverLandedEvent>(landedEvents.Add);
+        }
+
+        // i) До истечения MinAirTime даже нулевая скорость не приземляет — защита от
+        // мгновенного триггера сразу после eject.
+        [Test]
+        public void Track_DoesNotLand_BeforeMinAirTimeElapsed()
+        {
+            var landedEvents = new System.Collections.Generic.List<DriverLandedEvent>();
+            _bus.Subscribe<DriverLandedEvent>(landedEvents.Add);
+
+            _service.BeginFlight(Vector3.zero);
+
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.2f); // airTime 0.2 < MinAirTime(0.5)
+            _service.Track(new Vector3(0f, 1f, 0f), Vector3.zero, 0.2f); // airTime 0.4 < MinAirTime(0.5)
+
+            Assert.IsTrue(_service.IsInFlight, "До MinAirTime приземление не должно засчитываться даже при нулевой скорости.");
+            Assert.AreEqual(0, landedEvents.Count);
+
+            _bus.Unsubscribe<DriverLandedEvent>(landedEvents.Add);
+        }
+
+        // j) Пик высоты продолжает обновляться независимо от состояния settle-таймера.
+        [Test]
+        public void Track_PeakHeightContinuesUpdating_RegardlessOfSettleState()
+        {
+            _service.BeginFlight(new Vector3(0f, 0f, 0f));
+
+            // airTime > MinAirTime, settle начал копиться (0.6с из 1с), но высота всё равно растёт.
+            _service.Track(new Vector3(0f, 2f, 0f), Vector3.zero, 0.6f);
+            Assert.AreEqual(2f, _service.PeakHeight, 0.001f);
+
+            // settle 0.6+0.3=0.9 < 1 — полёт продолжается, а пик уже обновился до нового максимума.
+            _service.Track(new Vector3(0f, 5f, 0f), Vector3.zero, 0.3f);
+            Assert.AreEqual(5f, _service.PeakHeight, 0.001f);
+            Assert.IsTrue(_service.IsInFlight);
         }
     }
 }
