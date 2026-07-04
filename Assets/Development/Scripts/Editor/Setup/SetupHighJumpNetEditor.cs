@@ -13,9 +13,9 @@ namespace FlatOutLike.Editor.Setup
     /// фон вдоль +Z с отметками высоты каждые 10 метров, как в FlatOut 2.
     ///
     /// Что создаётся под корнем MeasurementNet:
-    ///   • NetPanel      — Quad 44x60, материал HighJumpNet (шейдер FlatOutLike/HighJumpNet).
-    ///   • Stripe_10..60 — тонкие горизонтальные полосы-отметки (материал HighJumpNetStripe).
-    ///   • Label_10..60  — TextMeshPro 3D-цифры высоты, мировой Y соответствует метрам.
+    ///   • NetPanel       — Quad 44x104, материал HighJumpNet (шейдер FlatOutLike/HighJumpNet).
+    ///   • Stripe_10..100 — тонкие горизонтальные полосы-отметки (материал HighJumpNetStripe).
+    ///   • Label_10..100  — TextMeshPro 3D-цифры высоты, мировой Y соответствует метрам.
     ///   • Pylon_Left / Pylon_Right — вытянутые кубы-опоры (материал HighJumpPylon).
     ///
     /// Всё — чистый декор: коллайдеры удалены, Rigidbody нет, бизнес-логики нет.
@@ -40,12 +40,12 @@ namespace FlatOutLike.Editor.Setup
         private const string PylonMaterialPath   = MaterialsFolder + "/HighJumpPylon.mat";
 
         // ── Геометрия полотна сетки ─────────────────────────────────────────────
-        private static readonly Vector3 NetPanelPosition = new Vector3(0f, 30f, 130f);
-        private static readonly Vector2 NetPanelSize      = new Vector2(44f, 60f);
-        private static readonly Vector2 NetTiling         = new Vector2(88f, 120f); // ~0.5 м на ячейку
+        private static readonly Vector3 NetPanelPosition = new Vector3(0f, 52f, 130f);
+        private static readonly Vector2 NetPanelSize      = new Vector2(44f, 104f);
+        private static readonly Vector2 NetTiling         = new Vector2(88f, 208f); // ~0.5 м на ячейку
 
         // ── Горизонтальные полосы-отметки каждые 10 м ───────────────────────────
-        private static readonly int[] StripeHeights = { 10, 20, 30, 40, 50, 60 };
+        private static readonly int[] StripeHeights = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
         private const float StripeWidth  = 44f;
         private const float StripeHeight = 0.35f;
         private const float StripeZ      = 129.9f; // чуть выдвинута к камере, чтобы не з-файтить с полотном
@@ -59,7 +59,7 @@ namespace FlatOutLike.Editor.Setup
 
         // ── Пилоны ───────────────────────────────────────────────────────────────
         private const float PylonX      = 23f;
-        private const float PylonHeight = 62f;
+        private const float PylonHeight = 106f;
         private const float PylonWidth  = 1.2f;
         private const float PylonZ      = 130f;
         private static readonly Color PylonColor = new Color(0.25f, 0.27f, 0.3f);
