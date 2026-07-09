@@ -108,6 +108,20 @@ namespace FlatOutLike.Tests
         {
             public int Coins { get; set; }
             public float BestHighJumpHeight { get; set; }
+            public string SelectedCarId { get; set; } = string.Empty;
+
+            private readonly HashSet<string> _ownedCarIds = new HashSet<string>();
+            private readonly Dictionary<UpgradeCategory, int> _upgradeLevels = new Dictionary<UpgradeCategory, int>();
+
+            public IReadOnlyCollection<string> OwnedCarIds => _ownedCarIds;
+
+            public bool OwnsCar(string carId) => _ownedCarIds.Contains(carId);
+            public void AddOwnedCar(string carId) => _ownedCarIds.Add(carId);
+
+            public int GetUpgradeLevel(UpgradeCategory category) =>
+                _upgradeLevels.TryGetValue(category, out var level) ? level : 0;
+
+            public void SetUpgradeLevel(UpgradeCategory category, int level) => _upgradeLevels[category] = level;
         }
 
         private sealed class FakeMetaProgressService : IMetaProgressService

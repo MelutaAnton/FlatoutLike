@@ -56245,6 +56245,8 @@ MonoBehaviour:
     type: 1
   _driverFlightConfig: {fileID: 0}
   _highJumpRulesConfig: {fileID: 0}
+  _carCatalogConfig: {fileID: 11400000, guid: 03abf7b0f6c0d834481f7ebfb33aac38, type: 2}
+  _upgradeCatalogConfig: {fileID: 11400000, guid: d3bbf239dd4ad4648b0cd3ea30b410ee, type: 2}
 --- !u!4 &324100677
 Transform:
   m_ObjectHideFlags: 0

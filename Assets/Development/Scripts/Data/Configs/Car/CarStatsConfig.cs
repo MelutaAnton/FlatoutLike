@@ -1,3 +1,4 @@
+using FlatOutLike.Models;
 using UnityEngine;
 
 namespace FlatOutLike.Data.Configs.Car
@@ -56,5 +57,25 @@ namespace FlatOutLike.Data.Configs.Car
         public float NitroForce => _nitroForce;
         /// <summary>Расход нитро в единицах/секунду пока кнопка нитро зажата.</summary>
         public float NitroDrainRate => _nitroDrainRate;
+
+        /// <summary>
+        /// Создаёт runtime-клон конфига с применёнными множителями апгрейдов
+        /// (<c>CarStatsService</c> вызывает это на базовых статах каждой машины).
+        /// При нейтральных множителях (все = 1.0) клонирование не выполняется —
+        /// возвращается исходный конфиг (тот же reference), чтобы не плодить лишние ассеты.
+        /// </summary>
+        public CarStatsConfig CreateModifiedClone(in CarStatsModifiers mods)
+        {
+            if (mods.ArmorMultiplier == 1f && mods.PowerMultiplier == 1f && mods.NitroMultiplier == 1f)
+                return this;
+
+            var clone = Instantiate(this);
+            clone._maxArmor *= mods.ArmorMultiplier;
+            clone._acceleration *= mods.PowerMultiplier;
+            clone._topSpeed *= mods.PowerMultiplier;
+            clone._nitroCapacity *= mods.NitroMultiplier;
+            clone._nitroForce *= mods.NitroMultiplier;
+            return clone;
+        }
     }
 }

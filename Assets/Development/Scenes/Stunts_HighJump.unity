@@ -85901,6 +85901,8 @@ MonoBehaviour:
   _pickupZones: []
   _driverFlightConfig: {fileID: 11400000, guid: ddd9abef406a95e46916d369c5a019d8, type: 2}
   _highJumpRulesConfig: {fileID: 11400000, guid: 9709910218b47e540bc6d5f97ff467ca, type: 2}
+  _carCatalogConfig: {fileID: 0}
+  _upgradeCatalogConfig: {fileID: 0}
 --- !u!4 &791582896
 Transform:
   m_ObjectHideFlags: 0

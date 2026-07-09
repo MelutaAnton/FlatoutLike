@@ -6,12 +6,14 @@ using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Core.Pool;
 using FlatOutLike.Data.Configs.Camera;
+using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Driver;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Rewards;
 using FlatOutLike.Data.Configs.Stunts;
+using FlatOutLike.Data.Configs.Upgrades;
 using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Factories.Car;
 using FlatOutLike.Factories.Destructible;
@@ -123,6 +125,20 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private HighJumpRulesConfig _highJumpRulesConfig;
 
+        // ── Шаг 8a: Meta (экономика и профиль) ───────────────────────────────────
+        /// <summary>
+        /// Каталог машин Garage. Регистрируется БЕЗУСЛОВНО (fallback-инстанс, паттерн
+        /// DriverEjectConfig) — пустой каталог переводит CarFactory в фоллбэк на
+        /// DerbyMatchConfig.PlayerCarPrefab/PlayerStats, HighJump-сцена работает без каталога.
+        /// </summary>
+        [SerializeField] private CarCatalogConfig _carCatalogConfig;
+
+        /// <summary>
+        /// Каталог апгрейдов Garage. Регистрируется БЕЗУСЛОВНО — пустой каталог даёт нулевые
+        /// бонусы (GetMaxLevel всегда 0), CarStatsService возвращает базовые статы без клона.
+        /// </summary>
+        [SerializeField] private UpgradeCatalogConfig _upgradeCatalogConfig;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -134,6 +150,19 @@ namespace FlatOutLike.Installers
             builder.Register<PlayerPrefsProfileStorage>(Lifetime.Singleton).As<IProfileStorage>();
             builder.Register<MetaProgressService>(Lifetime.Singleton).As<IMetaProgressService>();
             builder.Register<IPlayerProfile>(c => c.Resolve<IMetaProgressService>().Profile, Lifetime.Singleton);
+
+            // Экономика и апгрейды (Шаг 8a). Каталоги — БЕЗУСЛОВНО (fallback empty instance,
+            // паттерн DriverEjectConfig): пустой CarCatalogConfig переводит CarFactory в фоллбэк
+            // на DerbyMatchConfig.PlayerCarPrefab/PlayerStats, пустой UpgradeCatalogConfig даёт
+            // нулевые бонусы (GetMaxLevel всегда 0) — тест-сцены без Garage не падают.
+            builder.RegisterInstance(_carCatalogConfig != null
+                ? _carCatalogConfig
+                : ScriptableObject.CreateInstance<CarCatalogConfig>());
+            builder.RegisterInstance(_upgradeCatalogConfig != null
+                ? _upgradeCatalogConfig
+                : ScriptableObject.CreateInstance<UpgradeCatalogConfig>());
+            builder.Register<EconomyService>(Lifetime.Singleton).As<IEconomyService>();
+            builder.Register<CarStatsService>(Lifetime.Singleton).As<ICarStatsService>();
 
             // Flow
             builder.Register<GameFlowService>(Lifetime.Singleton).As<IGameFlowService>();

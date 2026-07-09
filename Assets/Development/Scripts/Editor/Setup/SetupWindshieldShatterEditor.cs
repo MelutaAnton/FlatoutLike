@@ -1,6 +1,7 @@
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Destructible;
 using FlatOutLike.Data.Configs.Destructible;
+using FlatOutLike.Editor.Tools;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,7 +12,11 @@ namespace FlatOutLike.Editor.Setup
     ///   1. Создаёт префаб осколка Debris_GlassShard (квад + материал стекла из пака машин
     ///      ПО ССЫЛКЕ, не копированием) в Development/Prefabs/Environment/.
     ///   2. Создаёт/обновляет DestructibleWindshield_Config.asset.
-    ///   3. Вешает WindshieldController на префабы машин и прописывает конфиг.
+    ///   3. Вешает WindshieldController на ВСЕ префабы машин и прописывает конфиг.
+    /// Список машин НЕ захардкожен — определяется через
+    /// <see cref="CarPrefabDiscovery.DiscoverCarPrefabPaths"/> (все .prefab в
+    /// Assets/Development/Prefabs/Vehicles/ с CarController на корне). Новые машины
+    /// подхватываются автоматически без правки этого файла.
     /// Идемпотентно: повторный запуск не дублирует объекты, поля перезаписываются.
     /// </summary>
     public static class SetupWindshieldShatterEditor
@@ -20,12 +25,6 @@ namespace FlatOutLike.Editor.Setup
         private const string ConfigPath      = "Assets/Development/Data/Configs/Destructible/DestructibleWindshield_Config.asset";
         private const string GlassMaterialPath =
             "Assets/ThirdParty/Low Poly Destructible Cars/Material/Sport_09_Glass.mat";
-
-        private static readonly string[] CarPrefabPaths =
-        {
-            "Assets/Development/Prefabs/Vehicles/Car_Sport_09.prefab",
-            "Assets/Development/Prefabs/Vehicles/Car_Enemy.prefab",
-        };
 
         // Габарит осколка (м) и лёгкая масса, чтобы осколки не пинали машины
         private const float ShardScale = 0.12f;
@@ -132,7 +131,10 @@ namespace FlatOutLike.Editor.Setup
         // ── 3. WindshieldController на префабах машин ────────────────────────
         private static void AttachControllerToCarPrefabs(DestructibleConfig config)
         {
-            foreach (var path in CarPrefabPaths)
+            var carPrefabPaths = CarPrefabDiscovery.DiscoverCarPrefabPaths();
+            Debug.Log("[Editor] Setup Windshield Shatter: обнаружено машин — " + carPrefabPaths.Length + ".");
+
+            foreach (var path in carPrefabPaths)
             {
                 if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
                 {

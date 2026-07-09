@@ -10,11 +10,10 @@ namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
     /// Добавляет CarDamageVisualController к объекту машины в открытой сцене _TestDriving
-    /// и заполняет все его SerializedField-ссылки:
+    /// и заполняет его SerializedField-ссылки:
     ///   _car            → CarController на том же корне
     ///   _statsConfig    → CarStatsConfig_Default.asset
     ///   _visualConfig   → CarDamageVisualConfig.asset
-    ///   _bodyRenderer   → первый Renderer, найденный в детях
     ///   _bodyMeshFilter → первый MeshFilter, найденный в детях (опционально)
     ///   _skinnedRenderer→ первый SkinnedMeshRenderer, найденный в детях (опционально)
     ///   _detachableParts→ все компоненты DetachablePart, найденные в детях
@@ -68,54 +67,10 @@ namespace FlatOutLike.Editor.Setup
 
             // ── 4. Загружаем конфиги ──────────────────────────────────────────
             var statsConfig = AssetDatabase.LoadAssetAtPath<CarStatsConfig>(StatsConfigPath);
-            if (statsConfig == null)
-                Debug.LogWarning("[Editor] CarStatsConfig_Default not found at " + StatsConfigPath +
-                                 ". Run 'FlatOutLike/Configs/Create Default CarStatsConfig' first. " +
-                                 "_statsConfig will be null.");
-
             var visualConfig = AssetDatabase.LoadAssetAtPath<CarDamageVisualConfig>(VisualConfigPath);
-            if (visualConfig == null)
-                Debug.LogWarning("[Editor] CarDamageVisualConfig not found at " + VisualConfigPath +
-                                 ". Run 'FlatOutLike/Configs/Create Default CarDamageVisualConfig' first. " +
-                                 "_visualConfig will be null.");
 
-            // ── 5. Находим body-рендерер и сопутствующие компоненты ───────────
-            // GetComponentInChildren ищет в глубину; первое попадание — меш корпуса машины.
-            // У WheelCollider'ов по умолчанию нет MeshRenderer'ов, поэтому это безопасно.
-            var bodyRenderer    = carGo.GetComponentInChildren<Renderer>();
-            var bodyMeshFilter  = carGo.GetComponentInChildren<MeshFilter>();
-            var skinnedRenderer = carGo.GetComponentInChildren<SkinnedMeshRenderer>();
-            var detachableParts = carGo.GetComponentsInChildren<DetachablePart>();
-
-            // ── 6. Заполняем SerializedField'ы через SerializedObject ─────────
-            var so = new SerializedObject(damageVisual);
-
-            so.FindProperty("_car").objectReferenceValue          = carController;
-            so.FindProperty("_statsConfig").objectReferenceValue  = statsConfig;
-            so.FindProperty("_visualConfig").objectReferenceValue = visualConfig;
-            so.FindProperty("_bodyRenderer").objectReferenceValue = bodyRenderer;
-
-            // Опционально: Strategy B (mesh swap)
-            if (bodyMeshFilter != null)
-                so.FindProperty("_bodyMeshFilter").objectReferenceValue = bodyMeshFilter;
-
-            // Опционально: Strategy C (blend shapes)
-            if (skinnedRenderer != null)
-                so.FindProperty("_skinnedRenderer").objectReferenceValue = skinnedRenderer;
-
-            // Отрывные детали (пустой массив ОК, если компонентов DetachablePart ещё нет)
-            var partsProp = so.FindProperty("_detachableParts");
-            partsProp.arraySize = detachableParts.Length;
-            for (int i = 0; i < detachableParts.Length; i++)
-                partsProp.GetArrayElementAtIndex(i).objectReferenceValue = detachableParts[i];
-
-            so.ApplyModifiedProperties();
-
-            Debug.Log("[Editor] CarDamageVisualController refs filled on " + carGo.name +
-                      " — statsConfig=" + (statsConfig  != null ? statsConfig.name  : "NULL") +
-                      ", visualConfig=" + (visualConfig != null ? visualConfig.name : "NULL") +
-                      ", bodyRenderer=" + (bodyRenderer != null ? bodyRenderer.name : "NULL") +
-                      ", detachableParts=" + detachableParts.Length + ".");
+            // ── 5-6. Заполняем SerializedField-ссылки (общая логика с prefab-веткой) ──
+            FillDamageVisualRefs(damageVisual, carGo, carController, statsConfig, visualConfig);
 
             // ── 7. Помечаем сцену как dirty ───────────────────────────────────
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -140,6 +95,116 @@ namespace FlatOutLike.Editor.Setup
 
             EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             Debug.Log("[Editor] Opened _TestDriving.unity.");
+        }
+
+        /// <summary>
+        /// Prefab-версия настройки (без сцены _TestDriving): добавляет/переиспользует
+        /// CarDamageVisualController прямо на GameObject из PrefabUtility.LoadPrefabContents
+        /// и заполняет ссылки. Используется другими editor-скриптами (например,
+        /// CreateDefaultCarCatalogConfigEditor), которые дособирают новые префабы машин.
+        /// Undo-группами и сохранением ассета НЕ управляет — это ответственность вызывающего.
+        /// </summary>
+        /// <param name="carGo">Корневой GameObject машины (внутри prefab-contents).</param>
+        /// <param name="carController">CarController на том же корне.</param>
+        /// <param name="statsConfigOverride">
+        /// Конфиг характеристик конкретного варианта машины (heavy/light/...).
+        /// Если null — используется CarStatsConfig_Default.
+        /// </param>
+        public static void SetupCarDamageVisualOnPrefab(
+            GameObject carGo, CarController carController, CarStatsConfig statsConfigOverride)
+        {
+            var damageVisual = carGo.GetComponent<CarDamageVisualController>();
+            if (damageVisual == null)
+            {
+                damageVisual = carGo.AddComponent<CarDamageVisualController>();
+                Debug.Log("[Editor] Added CarDamageVisualController to " + carGo.name + " (prefab contents).");
+            }
+            else
+            {
+                Debug.Log("[Editor] CarDamageVisualController already present on " +
+                          carGo.name + ", refreshing refs.");
+            }
+
+            var statsConfig = statsConfigOverride != null
+                ? statsConfigOverride
+                : AssetDatabase.LoadAssetAtPath<CarStatsConfig>(StatsConfigPath);
+            var visualConfig = AssetDatabase.LoadAssetAtPath<CarDamageVisualConfig>(VisualConfigPath);
+
+            FillDamageVisualRefs(damageVisual, carGo, carController, statsConfig, visualConfig);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// Заполняет SerializedField-ссылки CarDamageVisualController. Общая логика для
+        /// сценового (SetupCarDamageVisual) и prefab-based (SetupCarDamageVisualOnPrefab) путей.
+        /// Не присваивает null поверх существующего значения поля — если ассет/объект не
+        /// найден, поле остаётся как было, в консоль выводится предупреждение.
+        /// Поле _bodyRenderer в текущей версии CarDamageVisualController отсутствует
+        /// (рендереры собираются самим контроллером в рантайме через CollectBodyRenderers) —
+        /// FindProperty на него не вызывается, чтобы не падать при рассинхроне со старым описанием.
+        /// </summary>
+        private static void FillDamageVisualRefs(
+            CarDamageVisualController damageVisual, GameObject carGo, CarController carController,
+            CarStatsConfig statsConfig, CarDamageVisualConfig visualConfig)
+        {
+            if (statsConfig == null)
+                Debug.LogWarning("[Editor] CarStatsConfig не найден для " + carGo.name +
+                                 ". Run 'FlatOutLike/Configs/Create Default CarStatsConfig' first. " +
+                                 "_statsConfig оставлен без изменений.");
+
+            if (visualConfig == null)
+                Debug.LogWarning("[Editor] CarDamageVisualConfig не найден по " + VisualConfigPath +
+                                 " для " + carGo.name + ". Run 'FlatOutLike/Configs/Create Default " +
+                                 "CarDamageVisualConfig' first. _visualConfig оставлен без изменений.");
+
+            // GetComponentInChildren ищет в глубину; первое попадание — меш корпуса машины.
+            // У WheelCollider'ов по умолчанию нет MeshRenderer'ов, поэтому это безопасно.
+            var bodyMeshFilter  = carGo.GetComponentInChildren<MeshFilter>();
+            var skinnedRenderer = carGo.GetComponentInChildren<SkinnedMeshRenderer>();
+            var detachableParts = carGo.GetComponentsInChildren<DetachablePart>();
+
+            var so = new SerializedObject(damageVisual);
+
+            SetIfPropertyExists(so, "_car", carController);
+            if (statsConfig != null) SetIfPropertyExists(so, "_statsConfig", statsConfig);
+            if (visualConfig != null) SetIfPropertyExists(so, "_visualConfig", visualConfig);
+
+            // Опционально: Strategy B (mesh swap)
+            if (bodyMeshFilter != null)
+                SetIfPropertyExists(so, "_bodyMeshFilter", bodyMeshFilter);
+
+            // Опционально: Strategy C (blend shapes)
+            if (skinnedRenderer != null)
+                SetIfPropertyExists(so, "_skinnedRenderer", skinnedRenderer);
+
+            // Отрывные детали (пустой массив ОК, если компонентов DetachablePart ещё нет)
+            var partsProp = so.FindProperty("_detachableParts");
+            if (partsProp != null)
+            {
+                partsProp.arraySize = detachableParts.Length;
+                for (int i = 0; i < detachableParts.Length; i++)
+                    partsProp.GetArrayElementAtIndex(i).objectReferenceValue = detachableParts[i];
+            }
+
+            so.ApplyModifiedProperties();
+
+            Debug.Log("[Editor] CarDamageVisualController refs filled on " + carGo.name +
+                      " — statsConfig=" + (statsConfig  != null ? statsConfig.name  : "unchanged") +
+                      ", visualConfig=" + (visualConfig != null ? visualConfig.name : "unchanged") +
+                      ", detachableParts=" + detachableParts.Length + ".");
+        }
+
+        private static void SetIfPropertyExists(SerializedObject so, string propertyName, Object value)
+        {
+            var prop = so.FindProperty(propertyName);
+            if (prop == null)
+            {
+                Debug.LogWarning("[Editor] Поле CarDamageVisualController." + propertyName +
+                                 " не найдено — пропущено (возможно, устарело или ещё не добавлено).");
+                return;
+            }
+
+            prop.objectReferenceValue = value;
         }
     }
 }

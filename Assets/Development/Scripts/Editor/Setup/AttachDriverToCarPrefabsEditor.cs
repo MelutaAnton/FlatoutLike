@@ -3,13 +3,19 @@ using UnityEditor;
 using UnityEngine;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Driver;
+using FlatOutLike.Editor.Tools;
 
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Добавляет ragdoll-водителя (Driver_Default.prefab) в Car_Sport_09.prefab и
-    /// Car_Enemy.prefab: создаёт (или переиспользует) child "DriverSeat", вкладывает
-    /// туда prefab-instance водителя и заполняет CarController._driver.
+    /// Добавляет ragdoll-водителя (Driver_Default.prefab) во ВСЕ префабы машин проекта:
+    /// создаёт (или переиспользует) child "DriverSeat", вкладывает туда prefab-instance
+    /// водителя и заполняет CarController._driver.
+    ///
+    /// Список машин НЕ захардкожен — определяется через
+    /// <see cref="CarPrefabDiscovery.DiscoverCarPrefabPaths"/> (все .prefab в
+    /// Assets/Development/Prefabs/Vehicles/ с CarController на корне). Новые машины
+    /// подхватываются автоматически без правки этого файла.
     ///
     /// Позиция DriverSeat — заглушка (см. DriverSeatLocalPos), точную посадку нужно
     /// подогнать вручную под конкретную модель машины.
@@ -27,12 +33,6 @@ namespace FlatOutLike.Editor.Setup
 
         private const string DriverPrefabPath = "Assets/Development/Prefabs/Characters/Driver_Default.prefab";
 
-        private static readonly string[] CarPrefabPaths =
-        {
-            "Assets/Development/Prefabs/Vehicles/Car_Sport_09.prefab",
-            "Assets/Development/Prefabs/Vehicles/Car_Enemy.prefab",
-        };
-
         [MenuItem("FlatOutLike/Setup/Attach Driver To Car Prefabs")]
         public static void AttachDriverToCarPrefabs()
         {
@@ -46,8 +46,11 @@ namespace FlatOutLike.Editor.Setup
                 return;
             }
 
+            var carPrefabPaths = CarPrefabDiscovery.DiscoverCarPrefabPaths();
+            Debug.Log("[Editor] Attach Driver To Car Prefabs: обнаружено машин — " + carPrefabPaths.Length + ".");
+
             int processed = 0;
-            foreach (var carPath in CarPrefabPaths)
+            foreach (var carPath in carPrefabPaths)
             {
                 if (AttachToCarPrefab(carPath, driverPrefab))
                     processed++;

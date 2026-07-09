@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cb5dee822edb2e4f9b70b40379ef969, type: 3}
+  m_Name: CarCatalogConfig_Default
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Car.CarCatalogConfig
+  _entries:
+  - _id: car_sport_09
+    _displayName: Sport 09
+    _stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
+    _price: 0
+    _icon: {fileID: 0}
+    _prefab: {fileID: 5193657774753180251, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
+  - _id: car_bigfoot
+    _displayName: Bigfoot
+    _stats: {fileID: 11400000, guid: 77bfb3bf29066204a8d4d93a81692118, type: 2}
+    _price: 500
+    _icon: {fileID: 0}
+    _prefab: {fileID: 770271241697714305, guid: d3aaa9f3beb9133448b03d6c2720becf, type: 3}
+  - _id: car_sport_05
+    _displayName: Sport 05
+    _stats: {fileID: 11400000, guid: ae9e0538955daf040b31f3307cf161a4, type: 2}
+    _price: 1200
+    _icon: {fileID: 0}
+    _prefab: {fileID: 812652272293244391, guid: c015c94c2a326754ca676f27666d80d4, type: 3}

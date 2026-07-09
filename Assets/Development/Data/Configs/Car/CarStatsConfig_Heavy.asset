@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf7f8b2e590d0d5418cb02c8d14a506e, type: 3}
+  m_Name: CarStatsConfig_Heavy
+  m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Car.CarStatsConfig
+  _acceleration: 2800
+  _topSpeed: 22
+  _mass: 1600
+  _steerAngle: 30
+  _steerSpeedFalloff: 0.35
+  _brakeForce: 3000
+  _engineBrakeForce: 400
+  _wheelFriction: 1
+  _centerOfMassOffset: {x: 0, y: -0.8, z: 0}
+  _steerRate: 300
+  _steerReturnRate: 520
+  _handbrakeGripFactor: 0.45
+  _handbrakeBrakeForce: 800
+  _maxArmor: 180
+  _nitroCapacity: 100
+  _nitroForce: 2000
+  _nitroDrainRate: 25

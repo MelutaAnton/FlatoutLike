@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Enemies;
+using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Match;
+using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Match;
+using FlatOutLike.Services.Meta;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -18,16 +21,34 @@ namespace FlatOutLike.Factories.Car
     ///
     /// После спавна регистрирует все машины в <see cref="ICarRegistry"/> —
     /// это позволяет <c>TargetSelectionService</c> видеть всех участников матча.
+    ///
+    /// Машина игрока (Шаг 8a): если <see cref="CarCatalogConfig"/> не пуст, prefab и базовые
+    /// статы берутся из entry по <see cref="IEconomyService.SelectedCarId"/> (правило резолва
+    /// «невалидный/пустой id → первая entry» живёт ТОЛЬКО в EconomyService — здесь не дублируется).
+    /// Незаполненные поля entry и пустой каталог — фоллбэк на <see cref="DerbyMatchConfig.PlayerCarPrefab"/> /
+    /// <see cref="DerbyMatchConfig.PlayerStats"/>, как раньше. В обоих случаях статы прогоняются
+    /// через <see cref="ICarStatsService.GetEffectiveStats"/>, применяя бонусы апгрейдов.
     /// </summary>
     public sealed class CarFactory : ICarFactory
     {
         private readonly IObjectResolver _resolver;
         private readonly ICarRegistry    _registry;
+        private readonly IEconomyService _economy;
+        private readonly CarCatalogConfig _carCatalogConfig;
+        private readonly ICarStatsService _carStatsService;
 
-        public CarFactory(IObjectResolver resolver, ICarRegistry registry)
+        public CarFactory(
+            IObjectResolver resolver,
+            ICarRegistry registry,
+            IEconomyService economy,
+            CarCatalogConfig carCatalogConfig,
+            ICarStatsService carStatsService)
         {
             _resolver = resolver;
             _registry = registry;
+            _economy = economy;
+            _carCatalogConfig = carCatalogConfig;
+            _carStatsService = carStatsService;
         }
 
         /// <inheritdoc/>
@@ -52,15 +73,42 @@ namespace FlatOutLike.Factories.Car
             }
 
             // ── Спавн игрока (spawnPoints[0]) ──────────────────────────────────
+            // Базовые prefab/статы: каталог (если не пуст) → entry по SelectedCarId-логике,
+            // иначе фоллбэк на DerbyMatchConfig.PlayerCarPrefab/PlayerStats (старый путь).
+            GameObject      playerPrefab    = config.PlayerCarPrefab;
+            CarStatsConfig  playerBaseStats = config.PlayerStats;
+
+            if (_carCatalogConfig != null && _carCatalogConfig.Entries.Count > 0 &&
+                _carCatalogConfig.TryGetEntry(_economy.SelectedCarId, out var catalogEntry))
+            {
+                // Частично заполненная entry (художник не прошил prefab/stats) не должна
+                // тихо ломать матч — по каждому пустому полю откатываемся на DerbyMatchConfig.
+                if (catalogEntry.Prefab != null)
+                    playerPrefab = catalogEntry.Prefab;
+                else
+                    Debug.LogWarning($"[CarFactory] У entry '{catalogEntry.Id}' каталога не задан Prefab — фоллбэк на DerbyMatchConfig.PlayerCarPrefab.");
+
+                if (catalogEntry.Stats != null)
+                    playerBaseStats = catalogEntry.Stats;
+                else
+                    Debug.LogWarning($"[CarFactory] У entry '{catalogEntry.Id}' каталога не задан Stats — фоллбэк на DerbyMatchConfig.PlayerStats.");
+            }
+
             CarController playerController = null;
-            if (config.PlayerCarPrefab != null && spawnPoints[0] != null)
+            if (playerPrefab != null && spawnPoints[0] != null)
             {
                 var sp       = spawnPoints[0];
-                var playerGo = Object.Instantiate(config.PlayerCarPrefab, sp.position, sp.rotation);
+                var playerGo = Object.Instantiate(playerPrefab, sp.position, sp.rotation);
+
+                // Прогоняем базовые статы через апгрейды игрока (Шаг 8a) — работает и для
+                // каталожной, и для фоллбэк-машины. При активных апгрейдах это runtime-клон SO:
+                // он живёт до domain reload (один на матч, только у игрока) — осознанный trade-off,
+                // без апгрейдов возвращается исходный ассет без аллокации.
+                var effectiveStats = _carStatsService.GetEffectiveStats(playerBaseStats);
 
                 playerController = playerGo.GetComponent<CarController>();
                 if (playerController != null)
-                    playerController.Configure(0, config.PlayerStats); // carId игрока = 0
+                    playerController.Configure(0, effectiveStats); // carId игрока = 0
 
                 // InjectGameObject вызывает Construct на всех компонентах.
                 // К этому моменту Configure уже задал _carId и _config.
@@ -74,7 +122,7 @@ namespace FlatOutLike.Factories.Car
             }
             else
             {
-                Debug.LogWarning("[CarFactory] PlayerCarPrefab не задан в DerbyMatchConfig.");
+                Debug.LogWarning("[CarFactory] Prefab машины игрока не задан (ни в каталоге, ни в DerbyMatchConfig.PlayerCarPrefab).");
             }
 
             // ── Спавн врагов (spawnPoints[1..]) ────────────────────────────────
