@@ -142,7 +142,11 @@ MonoBehaviour:
   _steerWheels:
   - {fileID: 8562335386932712923}
   - {fileID: 3668597107487873556}
-  _wheelVisuals: []
+  _wheelVisuals:
+  - {fileID: 811400337093453736}
+  - {fileID: 811400337093451971}
+  - {fileID: 811400337093453660}
+  - {fileID: 811400337093451967}
   _config: {fileID: 11400000, guid: ae9e0538955daf040b31f3307cf161a4, type: 2}
   _driver: {fileID: 3008355358511901403}
 --- !u!114 &6506524323450879993
@@ -833,6 +837,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+--- !u!4 &811400337093451967 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1568313596505958224, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+  m_PrefabInstance: {fileID: 2198153157978179567}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &811400337093451971 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1568313596505958188, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+  m_PrefabInstance: {fileID: 2198153157978179567}
+  m_PrefabAsset: {fileID: 0}
 --- !u!33 &811400337093453079 stripped
 MeshFilter:
   m_CorrespondingSourceObject: {fileID: 1568313596505957112, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
@@ -841,6 +855,16 @@ MeshFilter:
 --- !u!4 &811400337093453605 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1568313596505956554, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+  m_PrefabInstance: {fileID: 2198153157978179567}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &811400337093453660 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1568313596505956531, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+  m_PrefabInstance: {fileID: 2198153157978179567}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &811400337093453736 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1568313596505956423, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
   m_PrefabInstance: {fileID: 2198153157978179567}
   m_PrefabAsset: {fileID: 0}
 --- !u!137 &811400337093454842 stripped

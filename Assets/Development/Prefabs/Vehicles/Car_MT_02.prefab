@@ -181,7 +181,11 @@ MonoBehaviour:
   _steerWheels:
   - {fileID: 8538138553000617699}
   - {fileID: 1467112875806654835}
-  _wheelVisuals: []
+  _wheelVisuals:
+  - {fileID: 923146509689517587}
+  - {fileID: 923146509689516276}
+  - {fileID: 923146509689516397}
+  - {fileID: 923146509689516171}
   _config: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
   _driver: {fileID: 6994905569145824064}
 --- !u!114 &8980433627656186319
@@ -813,9 +817,29 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
+--- !u!4 &923146509689516171 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2156673173925332839, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
+  m_PrefabInstance: {fileID: 1234450357132752876}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &923146509689516276 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2156673173925332760, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
+  m_PrefabInstance: {fileID: 1234450357132752876}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &923146509689516397 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2156673173925332609, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
+  m_PrefabInstance: {fileID: 1234450357132752876}
+  m_PrefabAsset: {fileID: 0}
 --- !u!33 &923146509689517349 stripped
 MeshFilter:
   m_CorrespondingSourceObject: {fileID: 2156673173925331657, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
+  m_PrefabInstance: {fileID: 1234450357132752876}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &923146509689517587 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2156673173925331455, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
   m_PrefabInstance: {fileID: 1234450357132752876}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &923146509689517721 stripped

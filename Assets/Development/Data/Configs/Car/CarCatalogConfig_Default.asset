@@ -13,18 +13,18 @@ MonoBehaviour:
   m_Name: CarCatalogConfig_Default
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Car.CarCatalogConfig
   _entries:
+  - _id: car_bigfoot
+    _displayName: Bigfoot
+    _stats: {fileID: 11400000, guid: 77bfb3bf29066204a8d4d93a81692118, type: 2}
+    _price: 0
+    _icon: {fileID: 0}
+    _prefab: {fileID: 4850835370837984147, guid: 5d77d80218b475d4bbce9df4f4e2c068, type: 3}
   - _id: car_sport_09
     _displayName: Sport 09
     _stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
     _price: 0
     _icon: {fileID: 0}
     _prefab: {fileID: 5193657774753180251, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
-  - _id: car_bigfoot
-    _displayName: Bigfoot
-    _stats: {fileID: 11400000, guid: 77bfb3bf29066204a8d4d93a81692118, type: 2}
-    _price: 500
-    _icon: {fileID: 0}
-    _prefab: {fileID: 770271241697714305, guid: d3aaa9f3beb9133448b03d6c2720becf, type: 3}
   - _id: car_sport_05
     _displayName: Sport 05
     _stats: {fileID: 11400000, guid: ae9e0538955daf040b31f3307cf161a4, type: 2}

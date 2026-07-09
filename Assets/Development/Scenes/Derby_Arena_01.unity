@@ -160405,8 +160405,8 @@ GameObject:
   - component: {fileID: 1582040637}
   - component: {fileID: 1582040636}
   - component: {fileID: 1582040635}
-  - component: {fileID: 1582040634}
   - component: {fileID: 1582040639}
+  - component: {fileID: 1582040634}
   m_Layer: 0
   m_Name: CM_ChaseCamera
   m_TagString: Untagged

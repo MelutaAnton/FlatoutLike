@@ -15,12 +15,12 @@ MonoBehaviour:
   _playerCarPrefab: {fileID: 5193657774753180251, guid: bff23527672f22344a8a6af0ab891ec1, type: 3}
   _playerStats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
   _enemies:
-  - carPrefab: {fileID: 5193657774753180251, guid: 09f0e70c4c13d76438e9aa8a6f1a936b, type: 3}
+  - carPrefab: {fileID: 4850835370837984147, guid: 5d77d80218b475d4bbce9df4f4e2c068, type: 3}
     profile: {fileID: 11400000, guid: fb31982b6bad63b4ea0b592eeac717ae, type: 2}
-    stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
-  - carPrefab: {fileID: 5193657774753180251, guid: 09f0e70c4c13d76438e9aa8a6f1a936b, type: 3}
+    stats: {fileID: 11400000, guid: 77bfb3bf29066204a8d4d93a81692118, type: 2}
+  - carPrefab: {fileID: 812652272293244391, guid: c015c94c2a326754ca676f27666d80d4, type: 3}
     profile: {fileID: 11400000, guid: f5fa50482b95aa04c8c20ce5e962bba6, type: 2}
-    stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
+    stats: {fileID: 11400000, guid: ae9e0538955daf040b31f3307cf161a4, type: 2}
   - carPrefab: {fileID: 5193657774753180251, guid: 09f0e70c4c13d76438e9aa8a6f1a936b, type: 3}
     profile: {fileID: 11400000, guid: 3a6f127e42825e244a50d82767f99bd5, type: 2}
     stats: {fileID: 11400000, guid: e0461d227fe20954f905af565c30efe0, type: 2}
