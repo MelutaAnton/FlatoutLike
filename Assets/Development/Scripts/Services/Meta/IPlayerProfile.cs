@@ -7,8 +7,8 @@ namespace FlatOutLike.Services.Meta
     {
         int Coins { get; set; }
 
-        /// <summary>Личный рекорд трюка «High Jump» — пиковая ВЫСОТА в метрах
-        /// (суть соревнования — высота; счёт с флипами идёт только на монеты).</summary>
+        /// <summary>Личный рекорд трюка «High Jump» — пиковая ВЫСОТА в метрах,
+        /// единственная метрика соревнования (композитный счёт удалён; монеты — от высоты).</summary>
         float BestHighJumpHeight { get; set; }
 
         /// <summary>Id выбранной машины из <c>CarCatalogConfig</c>. Пустая строка = не выбрана —
