@@ -196,6 +196,23 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
+  _damageConfig: {fileID: 0}
+  _vfxConfig: {fileID: 0}
+  _sceneCars: []
+  _derbyMatchConfig: {fileID: 0}
+  _rewardConfig: {fileID: 0}
+  _spawnPoints: []
+  _cameraRig: {fileID: 0}
+  _driverEjectConfig: {fileID: 0}
+  _orbitCameraConfig: {fileID: 0}
+  _cameraShakeConfig: {fileID: 0}
+  _cameraShaker: {fileID: 0}
+  _pickupConfig: {fileID: 0}
+  _pickupZones: []
+  _driverFlightConfig: {fileID: 0}
+  _highJumpRulesConfig: {fileID: 0}
+  _carCatalogConfig: {fileID: 0}
+  _upgradeCatalogConfig: {fileID: 0}
 --- !u!4 &747414787
 Transform:
   m_ObjectHideFlags: 0

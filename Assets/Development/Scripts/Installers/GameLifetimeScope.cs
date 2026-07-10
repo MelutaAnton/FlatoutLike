@@ -19,6 +19,7 @@ using FlatOutLike.Factories.Car;
 using FlatOutLike.Factories.Destructible;
 using FlatOutLike.Factories.Pickup;
 using FlatOutLike.Factories.Vfx;
+using FlatOutLike.Models;
 using FlatOutLike.Services.AI;
 using FlatOutLike.Services.Camera;
 using FlatOutLike.Services.Car;
@@ -31,6 +32,7 @@ using FlatOutLike.Services.Pickups;
 using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using VContainer;
 using VContainer.Unity;
 
@@ -164,8 +166,15 @@ namespace FlatOutLike.Installers
             builder.Register<EconomyService>(Lifetime.Singleton).As<IEconomyService>();
             builder.Register<CarStatsService>(Lifetime.Singleton).As<ICarStatsService>();
 
-            // Flow
-            builder.Register<GameFlowService>(Lifetime.Singleton).As<IGameFlowService>();
+            // Flow (Шаг 8b) — scope живёт per-scene; начальное состояние определяется активной
+            // сценой через GameStateSceneMap (единственный источник соответствия GameState↔сцена).
+            // GameState — не Unity/VContainer-тип, поэтому передаётся явным .WithParameter —
+            // VContainer не умеет опциональные параметры инъекции конструктора.
+            var initialState = GameStateSceneMap.InitialStateFor(SceneManager.GetActiveScene().name);
+            builder.Register<SceneLoaderService>(Lifetime.Singleton).As<ISceneLoaderService>();
+            builder.Register<GameFlowService>(Lifetime.Singleton)
+                .As<IGameFlowService>()
+                .WithParameter(initialState);
             builder.RegisterComponentInHierarchy<GameBootstrap>();
 
             // Награды (Шаг 5e) — зачисляет RewardEarnedEvent в профиль игрока.
@@ -176,13 +185,19 @@ namespace FlatOutLike.Installers
             // Car
             builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();
 
-            // Combat (Шаг 3)
-            builder.RegisterInstance(_damageConfig);
+            // Combat (Шаг 3). Фоллбэк-инстанс (паттерн DriverEjectConfig): в UI-сценах
+            // (MainMenu/Garage/Stunts_Hub) поле не прошито, а RegisterInstance(null)
+            // бросает NRE при построении контейнера — scope обязан переживать мета-сцены.
+            builder.RegisterInstance(_damageConfig != null
+                ? _damageConfig
+                : ScriptableObject.CreateInstance<DamageConfig>());
             builder.Register<DamageService>(Lifetime.Singleton).As<IDamageService>();
             builder.Register<DamageStageResolver>(Lifetime.Singleton).As<IDamageStageResolver>();
 
-            // VFX (Шаг 3)
-            builder.RegisterInstance(_vfxConfig);
+            // VFX (Шаг 3). Фоллбэк по той же причине — VfxFactory в UI-сценах лениво не резолвится.
+            builder.RegisterInstance(_vfxConfig != null
+                ? _vfxConfig
+                : ScriptableObject.CreateInstance<VfxConfig>());
             builder.Register<VfxFactory>(Lifetime.Singleton).As<IVfxFactory>();
             builder.Register<VfxService>(Lifetime.Singleton).As<IVfxService>();
 
@@ -227,6 +242,11 @@ namespace FlatOutLike.Installers
                 builder.RegisterComponent<ICameraRig>(_cameraRig);
                 builder.Register<CameraService>(Lifetime.Singleton).As<ICameraService>();
             }
+            else
+            {
+                // Ожидаемо для UI-сцен (MainMenu/Garage/Stunts_Hub) — там нет ни камеры, ни машин.
+                Debug.LogWarning("[GameLifetimeScope] _cameraRig не задан — ICameraService не регистрируется (UI-сцена или тест-сцена без камеры).");
+            }
 
             // Тряска камеры от столкновений (Impulse). Условно — оба поля заполняются
             // вместе на риге арены; тест-сцены без них просто не получают сервис.
@@ -235,6 +255,10 @@ namespace FlatOutLike.Installers
                 builder.RegisterInstance(_cameraShakeConfig);
                 builder.RegisterComponent<ICameraShaker>(_cameraShaker);
                 builder.Register<CameraShakeService>(Lifetime.Singleton).As<ICameraShakeService>();
+            }
+            else
+            {
+                Debug.LogWarning("[GameLifetimeScope] _cameraShakeConfig/_cameraShaker не заданы — ICameraShakeService не регистрируется (UI-сцена или тест-сцена без рига).");
             }
 
             // Полёт водителя (Шаг 7). DriverFlightConfig — БЕЗУСЛОВНО, тот же резон, что и

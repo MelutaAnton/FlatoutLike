@@ -20,6 +20,18 @@ namespace FlatOutLike.Core.Input
             _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
         }
 
+        /// <summary>
+        /// Явная синхронизация контекста с текущим состоянием GameFlow. Нужна при старте
+        /// per-scene scope: StateMachine входит в начальное состояние в конструкторе
+        /// GameFlowService БЕЗ публикации GameStateChangedEvent (да и роутер на тот момент
+        /// ещё не подписан), поэтому свежая сцена иначе остаётся на дефолтном контексте
+        /// провайдера, что верно только для Driving-сцен.
+        /// </summary>
+        public void SyncTo(GameState state)
+        {
+            _provider.CurrentContext = ResolveContext(state);
+        }
+
         public void Tick()
         {
             _provider.Tick();

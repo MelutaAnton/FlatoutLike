@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.StateMachine;
@@ -12,26 +13,24 @@ namespace FlatOutLike.Services.Flow
 
         public GameState Current => _sm.Current;
 
-        public GameFlowService(IEventBus eventBus)
+        public GameFlowService(IEventBus eventBus, ISceneLoaderService sceneLoader, GameState initialState)
         {
             _eventBus = eventBus;
 
-            // Placeholder states — real implementations added in steps 2+
-            var emptyState = new EmptyState();
-            var states = new Dictionary<GameState, IState>
+            // Словарь состояний строится по единственному источнику соответствия
+            // GameState ↔ сцена (GameStateSceneMap): состояния со сценой получают
+            // SceneEntryState (Enter грузит сцену через guard), остальные — тонкий
+            // PassiveState без побочных эффектов.
+            var states = new Dictionary<GameState, IState>();
+            foreach (GameState state in Enum.GetValues(typeof(GameState)))
             {
-                { GameState.MainMenu,                 emptyState },
-                { GameState.GarageMeta,               emptyState },
-                { GameState.StuntsHub,                emptyState },
-                { GameState.DerbyMatch,               new DerbyMatchState() },
-                { GameState.StuntsHighJumpDriving,    emptyState },
-                { GameState.StuntsHighJumpFlight,     emptyState },
-                { GameState.StuntsHighJumpScoring,    emptyState },
-                { GameState.MatchEnd,                 new MatchEndState() },
-                { GameState.Paused,                   emptyState }
-            };
+                var sceneKey = GameStateSceneMap.SceneFor(state);
+                states[state] = sceneKey != null
+                    ? new SceneEntryState(state, sceneKey, sceneLoader)
+                    : new PassiveState(state);
+            }
 
-            _sm = new StateMachine<GameState>(states, GameState.MainMenu);
+            _sm = new StateMachine<GameState>(states, initialState);
         }
 
         public void ChangeState(GameState next)
@@ -65,16 +64,6 @@ namespace FlatOutLike.Services.Flow
         public void Tick()
         {
             _sm.Tick();
-        }
-
-        // -------------------------------------------------------------------------
-        // Placeholder — replaced by real state classes in subsequent steps
-        // -------------------------------------------------------------------------
-        private sealed class EmptyState : IState
-        {
-            public void Enter() { }
-            public void Exit() { }
-            public void Tick() { }
         }
     }
 }

@@ -16,7 +16,7 @@ MonoBehaviour:
   - _id: car_bigfoot
     _displayName: Bigfoot
     _stats: {fileID: 11400000, guid: 77bfb3bf29066204a8d4d93a81692118, type: 2}
-    _price: 0
+    _price: 500
     _icon: {fileID: 0}
     _prefab: {fileID: 4850835370837984147, guid: 5d77d80218b475d4bbce9df4f4e2c068, type: 3}
   - _id: car_sport_09

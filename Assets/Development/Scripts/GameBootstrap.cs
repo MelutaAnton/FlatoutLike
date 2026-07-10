@@ -26,6 +26,11 @@ namespace FlatOutLike
             _router = router;
             _meta = meta;
 
+            // Свежий per-scene scope стартовое GameStateChangedEvent не публикует —
+            // выравниваем input-контекст с начальным состоянием сцены явно
+            // (иначе UI-сцены остались бы на Driving-дефолте провайдера).
+            _router.SyncTo(_flow.Current);
+
             Debug.Log($"[FlatOutLike] Bootstrap initialized. State: {_flow.Current}, Coins: {_meta.Profile.Coins}");
 
             _initialized = true;
