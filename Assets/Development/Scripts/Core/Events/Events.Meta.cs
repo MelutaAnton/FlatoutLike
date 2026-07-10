@@ -44,10 +44,14 @@ namespace FlatOutLike.Core.Events
         public readonly UpgradeCategory Category;
         public readonly int             NewLevel;
 
-        public UpgradePurchasedEvent(UpgradeCategory category, int newLevel)
+        /// <summary>Id машины, для которой куплен уровень (per-car прогресс, §8/§14.3 game-design.md).</summary>
+        public readonly string CarId;
+
+        public UpgradePurchasedEvent(UpgradeCategory category, int newLevel, string carId)
         {
             Category = category;
             NewLevel = newLevel;
+            CarId = carId;
         }
     }
 }

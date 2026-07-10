@@ -55,10 +55,13 @@ namespace FlatOutLike.Tests
 
         // ── Тесты ───────────────────────────────────────────────────────────────
 
+        private const string CarAId = "car-a";
+        private const string CarBId = "car-b";
+
         [Test]
         public void GetEffectiveStats_WithZeroLevels_ReturnsSameReference()
         {
-            var result = _service.GetEffectiveStats(_baseStats);
+            var result = _service.GetEffectiveStats(CarAId, _baseStats);
 
             Assert.AreSame(_baseStats, result,
                 "Без купленных уровней (множители 1.0) должен вернуться исходный конфиг, без клона.");
@@ -67,11 +70,11 @@ namespace FlatOutLike.Tests
         [Test]
         public void GetEffectiveStats_WithLevels_AppliesMultipliers_AndDoesNotMutateSource()
         {
-            _meta.Profile.SetUpgradeLevel(UpgradeCategory.Armor, 1);  // +10%
-            _meta.Profile.SetUpgradeLevel(UpgradeCategory.Power, 2);  // +5% + +5% = +10%
-            _meta.Profile.SetUpgradeLevel(UpgradeCategory.Nitro, 1);  // +8%
+            _meta.Profile.SetUpgradeLevel(CarAId, UpgradeCategory.Armor, 1);  // +10%
+            _meta.Profile.SetUpgradeLevel(CarAId, UpgradeCategory.Power, 2);  // +5% + +5% = +10%
+            _meta.Profile.SetUpgradeLevel(CarAId, UpgradeCategory.Nitro, 1);  // +8%
 
-            var result = _service.GetEffectiveStats(_baseStats);
+            var result = _service.GetEffectiveStats(CarAId, _baseStats);
             _createdSOs.Add(result); // клон — тоже ScriptableObject, подчищаем в TearDown
 
             Assert.AreNotSame(_baseStats, result, "С купленными уровнями должен вернуться клон.");
@@ -93,7 +96,27 @@ namespace FlatOutLike.Tests
         [Test]
         public void GetEffectiveStats_WithNullBaseStats_ReturnsNull()
         {
-            Assert.IsNull(_service.GetEffectiveStats(null));
+            Assert.IsNull(_service.GetEffectiveStats(CarAId, null));
+        }
+
+        [Test]
+        public void GetEffectiveStats_WithEmptyCarId_ReturnsSameReference()
+        {
+            // Пустой carId — статы применить некому (нет выбранной машины), фоллбэк на baseStats.
+            var result = _service.GetEffectiveStats(string.Empty, _baseStats);
+
+            Assert.AreSame(_baseStats, result);
+        }
+
+        [Test]
+        public void GetEffectiveStats_IsPerCar_LevelsOnOneCarDoNotAffectAnother()
+        {
+            _meta.Profile.SetUpgradeLevel(CarAId, UpgradeCategory.Armor, 1); // +10%
+
+            var resultB = _service.GetEffectiveStats(CarBId, _baseStats);
+
+            Assert.AreSame(_baseStats, resultB,
+                "Уровни машины A не должны влиять на статы машины B — множители остаются 1.0.");
         }
 
         // ── Хелперы ─────────────────────────────────────────────────────────────
@@ -139,17 +162,34 @@ namespace FlatOutLike.Tests
             public string SelectedCarId { get; set; } = string.Empty;
 
             private readonly HashSet<string> _ownedCarIds = new HashSet<string>();
-            private readonly Dictionary<UpgradeCategory, int> _upgradeLevels = new Dictionary<UpgradeCategory, int>();
+            private readonly Dictionary<(string, UpgradeCategory), int> _upgradeLevels = new Dictionary<(string, UpgradeCategory), int>();
 
             public IReadOnlyCollection<string> OwnedCarIds => _ownedCarIds;
 
             public bool OwnsCar(string carId) => _ownedCarIds.Contains(carId);
             public void AddOwnedCar(string carId) => _ownedCarIds.Add(carId);
 
-            public int GetUpgradeLevel(UpgradeCategory category) =>
-                _upgradeLevels.TryGetValue(category, out var level) ? level : 0;
+            public int GetUpgradeLevel(string carId, UpgradeCategory category)
+            {
+                if (string.IsNullOrEmpty(carId))
+                    return 0;
+                return _upgradeLevels.TryGetValue((carId, category), out var level) ? level : 0;
+            }
 
-            public void SetUpgradeLevel(UpgradeCategory category, int level) => _upgradeLevels[category] = level;
+            public void SetUpgradeLevel(string carId, UpgradeCategory category, int level)
+            {
+                if (string.IsNullOrEmpty(carId))
+                    return;
+                _upgradeLevels[(carId, category)] = level;
+            }
+
+            public IReadOnlyCollection<(string CarId, UpgradeCategory Category, int Level)> GetAllUpgradeLevels()
+            {
+                var result = new List<(string CarId, UpgradeCategory Category, int Level)>(_upgradeLevels.Count);
+                foreach (var kvp in _upgradeLevels)
+                    result.Add((kvp.Key.Item1, kvp.Key.Item2, kvp.Value));
+                return result;
+            }
         }
 
         private sealed class FakeMetaProgressService : IMetaProgressService

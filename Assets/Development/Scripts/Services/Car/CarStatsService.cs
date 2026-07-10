@@ -21,23 +21,27 @@ namespace FlatOutLike.Services.Car
             _upgradeCatalog = upgradeCatalog;
         }
 
-        public CarStatsConfig GetEffectiveStats(CarStatsConfig baseStats)
+        public CarStatsConfig GetEffectiveStats(string carId, CarStatsConfig baseStats)
         {
             if (baseStats == null)
                 return null;
 
+            // Пустой carId — статы применить некому (нет машины), возвращаем базу без клона.
+            if (string.IsNullOrEmpty(carId))
+                return baseStats;
+
             var mods = new CarStatsModifiers(
-                armorMultiplier: 1f + SumEffectValue(UpgradeCategory.Armor) / 100f,
-                powerMultiplier: 1f + SumEffectValue(UpgradeCategory.Power) / 100f,
-                nitroMultiplier: 1f + SumEffectValue(UpgradeCategory.Nitro) / 100f);
+                armorMultiplier: 1f + SumEffectValue(carId, UpgradeCategory.Armor) / 100f,
+                powerMultiplier: 1f + SumEffectValue(carId, UpgradeCategory.Power) / 100f,
+                nitroMultiplier: 1f + SumEffectValue(carId, UpgradeCategory.Nitro) / 100f);
 
             return baseStats.CreateModifiedClone(mods);
         }
 
-        /// <summary>Сумма effectValue всех купленных уровней (1..текущий уровень) категории.</summary>
-        private float SumEffectValue(UpgradeCategory category)
+        /// <summary>Сумма effectValue всех купленных уровней (1..текущий уровень) категории данной машины.</summary>
+        private float SumEffectValue(string carId, UpgradeCategory category)
         {
-            int currentLevel = _meta.Profile.GetUpgradeLevel(category);
+            int currentLevel = _meta.Profile.GetUpgradeLevel(carId, category);
             float sum = 0f;
 
             for (int level = 1; level <= currentLevel; level++)

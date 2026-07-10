@@ -19,6 +19,13 @@ namespace FlatOutLike.Services.Match
         CarController Player { get; }
 
         /// <summary>
+        /// Id машины игрока без выдачи MonoBehaviour наружу — для pure C# потребителей
+        /// (presenter'ы и т.п.), которым нужен только идентификатор, а не контроллер.
+        /// <c>false</c>, если игрок не зарегистрирован.
+        /// </summary>
+        bool TryGetPlayerCarId(out Models.CarId carId);
+
+        /// <summary>
         /// Регистрирует машину. Если машина уже есть в реестре — игнорирует (без дублей).
         /// </summary>
         void Register(CarController car, bool isPlayer);

@@ -31,6 +31,10 @@ using FlatOutLike.Services.Meta;
 using FlatOutLike.Services.Pickups;
 using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
+using FlatOutLike.Views.UI.Garage;
+using FlatOutLike.Views.UI.MainMenu;
+using FlatOutLike.Views.UI.Overlay;
+using FlatOutLike.Views.UI.Stunts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
@@ -141,6 +145,29 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private UpgradeCatalogConfig _upgradeCatalogConfig;
 
+        // ── Шаг 8c: UI меты (MVP) ─────────────────────────────────────────────────
+        /// <summary>
+        /// Каталог карточек Stunts Hub. Регистрируется БЕЗУСЛОВНО (fallback-инстанс, паттерн
+        /// CarCatalogConfig/UpgradeCatalogConfig) — пустой каталог просто не даёт карточек,
+        /// сцены без Stunts Hub не падают.
+        /// </summary>
+        [SerializeField] private StuntsCatalogConfig _stuntsCatalogConfig;
+
+        /// <summary>
+        /// View'ы UI-экранов меты. Каждая заполняется editor-скриптом сборки Canvas на своей
+        /// сцене; на остальных сценах поле остаётся null — соответствующий Presenter тогда не
+        /// регистрируется (условно, без warning-спама — это норма для чужих сцен, не ошибка).
+        /// </summary>
+        [SerializeField] private MainMenuView _mainMenuView;
+        [SerializeField] private GarageView _garageView;
+        [SerializeField] private StuntsHubView _stuntsHubView;
+
+        /// <summary>
+        /// Оверлей результата Derby-матча. Живёт в Derby-сцене (не в мета-сценах!) — его
+        /// регистрация не должна зависеть от каталогов Garage/Stunts.
+        /// </summary>
+        [SerializeField] private MatchEndView _matchEndView;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -181,6 +208,48 @@ namespace FlatOutLike.Installers
             // Регистрируется безусловно (не зависит от _derbyMatchConfig/_rewardConfig),
             // т.к. награды может публиковать любой источник (Derby, HighJump, миссии).
             builder.Register<RewardCrediterService>(Lifetime.Singleton);
+
+            // ── UI меты, MVP (Шаг 8c) ────────────────────────────────────────────
+            // StuntsCatalogConfig — БЕЗУСЛОВНО, паттерн CarCatalogConfig/UpgradeCatalogConfig:
+            // пустой каталог просто не даёт карточек в Stunts Hub.
+            builder.RegisterInstance(_stuntsCatalogConfig != null
+                ? _stuntsCatalogConfig
+                : ScriptableObject.CreateInstance<StuntsCatalogConfig>());
+
+            // Presenter'ы условны по наличию соответствующего View — их никто не резолвит
+            // напрямую (никакой Controller/сервис на них не завязан), поэтому build callback
+            // обязателен: без него конструктор Presenter'а не вызовется и подписки на клики/
+            // события не произойдут.
+            if (_mainMenuView != null)
+            {
+                builder.RegisterComponent(_mainMenuView);
+                builder.Register<MainMenuPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<MainMenuPresenter>());
+            }
+
+            if (_garageView != null)
+            {
+                builder.RegisterComponent(_garageView);
+                builder.Register<GaragePresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<GaragePresenter>());
+            }
+
+            if (_stuntsHubView != null)
+            {
+                builder.RegisterComponent(_stuntsHubView);
+                builder.Register<StuntsHubPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<StuntsHubPresenter>());
+            }
+
+            // MatchEndView живёт в Derby-сцене — зависит только от IEventBus/ICarRegistry/
+            // IGameFlowService (все регистрируются безусловно ниже по файлу), никаких
+            // мета-каталогов Garage/Stunts ему не нужно.
+            if (_matchEndView != null)
+            {
+                builder.RegisterComponent(_matchEndView);
+                builder.Register<MatchEndPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<MatchEndPresenter>());
+            }
 
             // Car
             builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();

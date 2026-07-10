@@ -100,11 +100,15 @@ namespace FlatOutLike.Factories.Car
                 var sp       = spawnPoints[0];
                 var playerGo = Object.Instantiate(playerPrefab, sp.position, sp.rotation);
 
-                // Прогоняем базовые статы через апгрейды игрока (Шаг 8a) — работает и для
-                // каталожной, и для фоллбэк-машины. При активных апгрейдах это runtime-клон SO:
-                // он живёт до domain reload (один на матч, только у игрока) — осознанный trade-off,
-                // без апгрейдов возвращается исходный ассет без аллокации.
-                var effectiveStats = _carStatsService.GetEffectiveStats(playerBaseStats);
+                // Прогоняем базовые статы через апгрейды ВЫБРАННОЙ машины игрока (per-car
+                // прогресс, §8/§14.3 game-design.md) — работает и для каталожной, и для
+                // фоллбэк-машины: id один и тот же (_economy.SelectedCarId — каталожный путь
+                // резолвит catalogEntry.Id из того же id). Пустой id (пустой каталог и профиль
+                // без выбора) → GetEffectiveStats вернёт baseStats без клона. При активных
+                // апгрейдах это runtime-клон SO: он живёт до domain reload (один на матч,
+                // только у игрока) — осознанный trade-off, без апгрейдов возвращается исходный
+                // ассет без аллокации.
+                var effectiveStats = _carStatsService.GetEffectiveStats(_economy.SelectedCarId, playerBaseStats);
 
                 playerController = playerGo.GetComponent<CarController>();
                 if (playerController != null)

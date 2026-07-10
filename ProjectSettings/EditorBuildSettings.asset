@@ -6,8 +6,23 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Development/Scenes/_TestDriving.unity
-    guid: ecf3c655d3571574185982a302ed9710
+    path: Assets/Development/Scenes/Boot.unity
+    guid: a5d0ed510df084d428430575b6b2b992
+  - enabled: 1
+    path: Assets/Development/Scenes/MainMenu.unity
+    guid: 98d8284f8d12c2642bbcb8bf69e9ea6a
+  - enabled: 1
+    path: Assets/Development/Scenes/Garage.unity
+    guid: 62d5a4572f8fb5642b13443f84c93a32
+  - enabled: 1
+    path: Assets/Development/Scenes/Stunts_Hub.unity
+    guid: 0278ef54a1180104db61136245c4d21d
+  - enabled: 1
+    path: Assets/Development/Scenes/Derby_Arena_01.unity
+    guid: c66b257399da8df448f6b5f2970f69c1
+  - enabled: 1
+    path: Assets/Development/Scenes/Stunts_HighJump.unity
+    guid: 96de185649b76b145a566fdc766ee885
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

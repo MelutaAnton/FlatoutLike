@@ -111,17 +111,34 @@ namespace FlatOutLike.Tests
             public string SelectedCarId { get; set; } = string.Empty;
 
             private readonly HashSet<string> _ownedCarIds = new HashSet<string>();
-            private readonly Dictionary<UpgradeCategory, int> _upgradeLevels = new Dictionary<UpgradeCategory, int>();
+            private readonly Dictionary<(string, UpgradeCategory), int> _upgradeLevels = new Dictionary<(string, UpgradeCategory), int>();
 
             public IReadOnlyCollection<string> OwnedCarIds => _ownedCarIds;
 
             public bool OwnsCar(string carId) => _ownedCarIds.Contains(carId);
             public void AddOwnedCar(string carId) => _ownedCarIds.Add(carId);
 
-            public int GetUpgradeLevel(UpgradeCategory category) =>
-                _upgradeLevels.TryGetValue(category, out var level) ? level : 0;
+            public int GetUpgradeLevel(string carId, UpgradeCategory category)
+            {
+                if (string.IsNullOrEmpty(carId))
+                    return 0;
+                return _upgradeLevels.TryGetValue((carId, category), out var level) ? level : 0;
+            }
 
-            public void SetUpgradeLevel(UpgradeCategory category, int level) => _upgradeLevels[category] = level;
+            public void SetUpgradeLevel(string carId, UpgradeCategory category, int level)
+            {
+                if (string.IsNullOrEmpty(carId))
+                    return;
+                _upgradeLevels[(carId, category)] = level;
+            }
+
+            public IReadOnlyCollection<(string CarId, UpgradeCategory Category, int Level)> GetAllUpgradeLevels()
+            {
+                var result = new List<(string CarId, UpgradeCategory Category, int Level)>(_upgradeLevels.Count);
+                foreach (var kvp in _upgradeLevels)
+                    result.Add((kvp.Key.Item1, kvp.Key.Item2, kvp.Value));
+                return result;
+            }
         }
 
         private sealed class FakeMetaProgressService : IMetaProgressService

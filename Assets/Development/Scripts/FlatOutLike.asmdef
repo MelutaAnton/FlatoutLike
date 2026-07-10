@@ -4,6 +4,7 @@
     "references": [
         "VContainer",
         "UnityEngine.UI",
+        "Unity.TextMeshPro",
         "Unity.Cinemachine"
     ],
     "includePlatforms": [],

@@ -18,6 +18,19 @@ namespace FlatOutLike.Services.Match
         public CarController Player { get; private set; }
 
         /// <inheritdoc/>
+        public bool TryGetPlayerCarId(out Models.CarId carId)
+        {
+            if (Player == null)
+            {
+                carId = default;
+                return false;
+            }
+
+            carId = Player.CarId;
+            return true;
+        }
+
+        /// <inheritdoc/>
         public void Register(CarController car, bool isPlayer)
         {
             if (car == null || _cars.Contains(car)) return;

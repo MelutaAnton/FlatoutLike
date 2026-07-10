@@ -152,7 +152,41 @@ namespace FlatOutLike.Tests
         public void SelectedCarId_WhenProfileEmpty_ReturnsFirstCatalogEntry()
         {
             Assert.AreEqual(string.Empty, _meta.Profile.SelectedCarId);
-            Assert.AreEqual(StarterCarId, _service.SelectedCarId, "Пустой SelectedCarId в профиле → первая entry каталога.");
+            Assert.AreEqual(StarterCarId, _service.SelectedCarId, "Пустой SelectedCarId в профиле → первая ВЛАДЕЕМАЯ entry (тут это же первая по каталогу, т.к. она бесплатная).");
+        }
+
+        [Test]
+        public void SelectedCarId_WhenProfileEmpty_AndFirstEntryNotOwned_ReturnsFirstOwnedEntry()
+        {
+            // premium (не куплена) → sport (куплена) → starter (бесплатная). Первая entry
+            // каталога (premium) невладеема — дефолт обязан пропустить её и вернуть sport,
+            // а не свалиться до starter или упасть на невладеемой premium (gap Шага 8a).
+            const string premiumCarId = "premium"; // цена 1000, не куплена
+            var catalog = MakeCarCatalog(
+                (premiumCarId, 1000),
+                (SportCarId, 500),
+                (StarterCarId, 0));
+            var service = new EconomyService(_bus, _meta, catalog, _upgradeCatalog);
+
+            _meta.Profile.AddOwnedCar(SportCarId);
+
+            Assert.AreEqual(string.Empty, _meta.Profile.SelectedCarId);
+            Assert.AreEqual(SportCarId, service.SelectedCarId,
+                "Первая невладеемая entry (premium) должна быть пропущена в пользу первой владеемой (sport).");
+        }
+
+        [Test]
+        public void SelectedCarId_WhenProfileEmpty_AndNoOwnedEntries_ReturnsFirstCatalogEntry()
+        {
+            // Все машины платные и ничего не куплено — фоллбэк на первую entry каталога, как раньше.
+            const string premiumCarId = "premium"; // цена 1000
+            var catalog = MakeCarCatalog(
+                (premiumCarId, 1000),
+                (SportCarId, 500));
+            var service = new EconomyService(_bus, _meta, catalog, _upgradeCatalog);
+
+            Assert.AreEqual(premiumCarId, service.SelectedCarId,
+                "Владеемых entries нет вообще — дефолт остаётся первой entry каталога.");
         }
 
         // ── Тесты: апгрейды ─────────────────────────────────────────────────────
@@ -161,7 +195,9 @@ namespace FlatOutLike.Tests
         public void TryBuyUpgrade_BeyondMaxLevel_Fails()
         {
             _meta.Profile.Coins = 10000;
-            _meta.Profile.SetUpgradeLevel(UpgradeCategory.Armor, 2); // уже максимум (2 уровня в каталоге)
+            // Уровень пишем под ТЕКУЩУЮ выбранную машину (по умолчанию — первая владеемая, starter),
+            // т.к. GetUpgradeLevel/TryBuyUpgrade теперь per-car (§8/§14.3 game-design.md).
+            _meta.Profile.SetUpgradeLevel(_service.SelectedCarId, UpgradeCategory.Armor, 2); // уже максимум (2 уровня в каталоге)
 
             Assert.IsFalse(_service.CanBuyUpgrade(UpgradeCategory.Armor));
             Assert.IsFalse(_service.TryBuyUpgrade(UpgradeCategory.Armor));
@@ -194,6 +230,52 @@ namespace FlatOutLike.Tests
 
             Assert.AreEqual(1, _currencyEvents.Count);
             Assert.AreEqual(-100, _currencyEvents[0].Delta);
+        }
+
+        [Test]
+        public void GetUpgradeLevel_IsPerCar_LevelOnOneCarNotVisibleOnAnother()
+        {
+            // Уровень Nitro, купленный под машиной A, не должен быть виден при выборе машины B
+            // (per-car прогресс, §8/§14.3 game-design.md) — ключевая регрессия перехода с глобального.
+            _meta.Profile.Coins = 1000;
+            Assert.IsTrue(_service.TryBuyCar(SportCarId));
+            Assert.IsTrue(_service.TrySelectCar(StarterCarId));
+
+            _meta.Profile.SetUpgradeLevel(StarterCarId, UpgradeCategory.Armor, 1);
+
+            Assert.AreEqual(1, _service.GetUpgradeLevel(UpgradeCategory.Armor), "На машине A (starter) уровень должен быть виден.");
+
+            Assert.IsTrue(_service.TrySelectCar(SportCarId));
+
+            Assert.AreEqual(0, _service.GetUpgradeLevel(UpgradeCategory.Armor), "На машине B (sport) уровень машины A виден быть не должен.");
+        }
+
+        [Test]
+        public void TryBuyUpgrade_WritesLevel_UnderSelectedCarId()
+        {
+            _meta.Profile.Coins = 1000;
+            Assert.IsTrue(_service.TryBuyCar(SportCarId));
+            Assert.IsTrue(_service.TrySelectCar(SportCarId));
+
+            Assert.IsTrue(_service.TryBuyUpgrade(UpgradeCategory.Armor));
+
+            Assert.AreEqual(1, _meta.Profile.GetUpgradeLevel(SportCarId, UpgradeCategory.Armor),
+                "Уровень должен быть записан именно под SelectedCarId (sport).");
+            Assert.AreEqual(0, _meta.Profile.GetUpgradeLevel(StarterCarId, UpgradeCategory.Armor),
+                "Другая машина (starter) уровня получить не должна.");
+        }
+
+        [Test]
+        public void TryBuyUpgrade_PublishesEvent_WithCurrentCarId()
+        {
+            _meta.Profile.Coins = 1000;
+            Assert.IsTrue(_service.TryBuyCar(SportCarId));
+            Assert.IsTrue(_service.TrySelectCar(SportCarId));
+
+            Assert.IsTrue(_service.TryBuyUpgrade(UpgradeCategory.Armor));
+
+            Assert.AreEqual(1, _upgradePurchasedEvents.Count);
+            Assert.AreEqual(SportCarId, _upgradePurchasedEvents[0].CarId, "UpgradePurchasedEvent должен нести CarId купленной машины.");
         }
 
         // ── Тесты: начисление наград ────────────────────────────────────────────
@@ -288,17 +370,34 @@ namespace FlatOutLike.Tests
             public string SelectedCarId { get; set; } = string.Empty;
 
             private readonly HashSet<string> _ownedCarIds = new HashSet<string>();
-            private readonly Dictionary<UpgradeCategory, int> _upgradeLevels = new Dictionary<UpgradeCategory, int>();
+            private readonly Dictionary<(string, UpgradeCategory), int> _upgradeLevels = new Dictionary<(string, UpgradeCategory), int>();
 
             public IReadOnlyCollection<string> OwnedCarIds => _ownedCarIds;
 
             public bool OwnsCar(string carId) => _ownedCarIds.Contains(carId);
             public void AddOwnedCar(string carId) => _ownedCarIds.Add(carId);
 
-            public int GetUpgradeLevel(UpgradeCategory category) =>
-                _upgradeLevels.TryGetValue(category, out var level) ? level : 0;
+            public int GetUpgradeLevel(string carId, UpgradeCategory category)
+            {
+                if (string.IsNullOrEmpty(carId))
+                    return 0;
+                return _upgradeLevels.TryGetValue((carId, category), out var level) ? level : 0;
+            }
 
-            public void SetUpgradeLevel(UpgradeCategory category, int level) => _upgradeLevels[category] = level;
+            public void SetUpgradeLevel(string carId, UpgradeCategory category, int level)
+            {
+                if (string.IsNullOrEmpty(carId))
+                    return;
+                _upgradeLevels[(carId, category)] = level;
+            }
+
+            public IReadOnlyCollection<(string CarId, UpgradeCategory Category, int Level)> GetAllUpgradeLevels()
+            {
+                var result = new List<(string CarId, UpgradeCategory Category, int Level)>(_upgradeLevels.Count);
+                foreach (var kvp in _upgradeLevels)
+                    result.Add((kvp.Key.Item1, kvp.Key.Item2, kvp.Value));
+                return result;
+            }
         }
 
         private sealed class FakeMetaProgressService : IMetaProgressService

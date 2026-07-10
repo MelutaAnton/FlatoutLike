@@ -39,8 +39,21 @@ namespace FlatOutLike.Services.Meta
                 if (!string.IsNullOrEmpty(selected) && _carCatalog.TryGetEntry(selected, out _))
                     return selected;
 
-                // Невалидный/пустой id в профиле — берём первую entry каталога.
-                return _carCatalog.Entries.Count > 0 ? _carCatalog.Entries[0].Id : string.Empty;
+                // Невалидный/пустой id в профиле — берём первую ВЛАДЕЕМУЮ entry (бесплатную
+                // или уже купленную). Раньше здесь безусловно бралась entries[0] — если она
+                // платная и не куплена, CarFactory/Garage подставляли бы машину, которой у
+                // игрока нет (gap Шага 8a, закрыт в Шаге 8c).
+                var entries = _carCatalog.Entries;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    var entry = entries[i];
+                    if (entry != null && (entry.Price == 0 || _meta.Profile.OwnsCar(entry.Id)))
+                        return entry.Id;
+                }
+
+                // Владеемых entries нет вообще (например, все машины платные и профиль пуст) —
+                // фоллбэк на первую entry каталога, как раньше.
+                return entries.Count > 0 ? entries[0].Id : string.Empty;
             }
         }
 
@@ -93,7 +106,9 @@ namespace FlatOutLike.Services.Meta
             return true;
         }
 
-        public int GetUpgradeLevel(UpgradeCategory category) => _meta.Profile.GetUpgradeLevel(category);
+        // Публичные сигнатуры GetUpgradeLevel/CanBuyUpgrade/TryBuyUpgrade не меняются — они всегда
+        // работают с ТЕКУЩЕЙ выбранной машиной (SelectedCarId), per-car хранение — деталь профиля.
+        public int GetUpgradeLevel(UpgradeCategory category) => _meta.Profile.GetUpgradeLevel(SelectedCarId, category);
 
         public bool CanBuyUpgrade(UpgradeCategory category)
         {
@@ -114,16 +129,17 @@ namespace FlatOutLike.Services.Meta
             if (!CanBuyUpgrade(category))
                 return false;
 
+            string carId = SelectedCarId;
             int currentLevel = GetUpgradeLevel(category);
             _upgradeCatalog.TryGetLevel(category, currentLevel + 1, out var nextLevel);
 
             int oldValue = Coins;
             int newValue = oldValue - nextLevel.Price;
             _meta.Profile.Coins = newValue;
-            _meta.Profile.SetUpgradeLevel(category, nextLevel.Level);
+            _meta.Profile.SetUpgradeLevel(carId, category, nextLevel.Level);
             _meta.Save();
 
-            _eventBus.Publish(new UpgradePurchasedEvent(category, nextLevel.Level));
+            _eventBus.Publish(new UpgradePurchasedEvent(category, nextLevel.Level, carId));
             _eventBus.Publish(new CurrencyChangedEvent(oldValue, newValue, -nextLevel.Price));
 
             return true;

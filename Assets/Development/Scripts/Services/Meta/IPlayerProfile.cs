@@ -22,7 +22,15 @@ namespace FlatOutLike.Services.Meta
         bool OwnsCar(string carId);
         void AddOwnedCar(string carId);
 
-        int GetUpgradeLevel(UpgradeCategory category);
-        void SetUpgradeLevel(UpgradeCategory category, int level);
+        /// <summary>Уровень апгрейда конкретной машины (per-car прогресс, §8/§14.3 game-design.md).
+        /// Пустой/null <paramref name="carId"/> → 0 (нет машины — нет прокачки).</summary>
+        int GetUpgradeLevel(string carId, UpgradeCategory category);
+
+        /// <summary>Пустой/null <paramref name="carId"/> → запись игнорируется.</summary>
+        void SetUpgradeLevel(string carId, UpgradeCategory category, int level);
+
+        /// <summary>Перечисление всех сохранённых уровней апгрейдов по всем машинам —
+        /// нужно хранилищу для сериализации (PlayerPrefs не итерируем по ключам).</summary>
+        IReadOnlyCollection<(string CarId, UpgradeCategory Category, int Level)> GetAllUpgradeLevels();
     }
 }
