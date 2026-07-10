@@ -12,7 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96cbba59fc712eb4495a36d6b7a8b05b, type: 3}
   m_Name: HighJumpRulesConfig_Default
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Stunts.HighJumpRulesConfig
-  _scorePerMeter: 10
-  _flipBonus: 50
   _heightToCoinRatio: 5
   _flightTimeoutSeconds: 20

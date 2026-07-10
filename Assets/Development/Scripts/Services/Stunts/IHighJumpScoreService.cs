@@ -3,16 +3,15 @@ using FlatOutLike.Core.Events;
 namespace FlatOutLike.Services.Stunts
 {
     /// <summary>
-    /// Считает очки за попытку «High Jump», обновляет личный рекорд игрока и публикует награду.
+    /// Фиксирует результат попытки «High Jump» (пиковая высота — единственная метрика),
+    /// обновляет личный рекорд игрока и публикует награду.
     /// </summary>
     public interface IHighJumpScoreService
     {
         /// <summary>
-        /// Считает итоговый счёт попытки, обновляет рекорд высоты
-        /// <c>IPlayerProfile.BestHighJumpHeight</c> (рекорд — по метрам, счёт — только на монеты)
-        /// и публикует <see cref="StuntsScoredEvent"/> + <see cref="RewardEarnedEvent"/>.
-        /// Возвращает посчитанный счёт.
+        /// Обновляет рекорд высоты <c>IPlayerProfile.BestHighJumpHeight</c>, начисляет монеты
+        /// от высоты и публикует <see cref="StuntsScoredEvent"/> + <see cref="RewardEarnedEvent"/>.
         /// </summary>
-        int ScoreAttempt(DriverLandedEvent landed);
+        void ScoreAttempt(DriverLandedEvent landed);
     }
 }

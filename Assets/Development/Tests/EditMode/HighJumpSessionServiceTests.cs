@@ -101,10 +101,9 @@ namespace FlatOutLike.Tests
         {
             public int ScoreAttemptCalls { get; private set; }
 
-            public int ScoreAttempt(DriverLandedEvent landed)
+            public void ScoreAttempt(DriverLandedEvent landed)
             {
                 ScoreAttemptCalls++;
-                return 0;
             }
         }
 
@@ -116,6 +115,7 @@ namespace FlatOutLike.Tests
             public float AirTime => 0f;
             public float BoostImpulse => 0f;
             public float BoostUpFallbackSpeed => 0f;
+            public bool HasBoostAvailable => false; // не используется в этих тестах
 
             public void BeginFlight(Vector3 startPosition) { }
             public Vector3 CalculateSteerAcceleration(Vector2 look, Vector3 currentVelocity) => Vector3.zero;

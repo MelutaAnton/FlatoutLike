@@ -32,6 +32,7 @@ using FlatOutLike.Services.Pickups;
 using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
 using FlatOutLike.Views.UI.Garage;
+using FlatOutLike.Views.UI.Hud;
 using FlatOutLike.Views.UI.MainMenu;
 using FlatOutLike.Views.UI.Overlay;
 using FlatOutLike.Views.UI.Stunts;
@@ -168,6 +169,19 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private MatchEndView _matchEndView;
 
+        // ── Шаг 8d: игровые HUD (Derby / Stunts HighJump) ────────────────────────
+        /// <summary>
+        /// HUD Derby-матча. Живёт в Derby-сцене, зависит только от IEventBus/IDamageService/
+        /// INitroService/ICarRegistry (все регистрируются безусловно) — паттерн MatchEndView.
+        /// </summary>
+        [SerializeField] private DerbyHudView _derbyHudView;
+
+        /// <summary>
+        /// HUD трюка «Stunts: High Jump». Живёт на сцене трамплина, зависит от IDriverFlightService/
+        /// IMetaProgressService/ICarRegistry/IGameFlowService (все регистрируются безусловно).
+        /// </summary>
+        [SerializeField] private HighJumpHudView _highJumpHudView;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -249,6 +263,25 @@ namespace FlatOutLike.Installers
                 builder.RegisterComponent(_matchEndView);
                 builder.Register<MatchEndPresenter>(Lifetime.Singleton);
                 builder.RegisterBuildCallback(c => c.Resolve<MatchEndPresenter>());
+            }
+
+            // ── Игровые HUD (Шаг 8d) ──────────────────────────────────────────────
+            // DerbyHudView живёт в Derby-сцене — тот же паттерн, что и MatchEndView: зависит
+            // только от безусловных сервисов (IEventBus/IDamageService/INitroService/ICarRegistry).
+            if (_derbyHudView != null)
+            {
+                builder.RegisterComponent(_derbyHudView);
+                builder.Register<DerbyHudPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<DerbyHudPresenter>());
+            }
+
+            // HighJumpHudView живёт на сцене трамплина — зависит от IDriverFlightService/
+            // IMetaProgressService (безусловны) и ICarRegistry/IGameFlowService (тоже безусловны).
+            if (_highJumpHudView != null)
+            {
+                builder.RegisterComponent(_highJumpHudView);
+                builder.Register<HighJumpHudPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<HighJumpHudPresenter>());
             }
 
             // Car
@@ -417,12 +450,10 @@ namespace FlatOutLike.Installers
                 foreach (var d in Object.FindObjectsByType<DestructibleObjectController>(FindObjectsSortMode.None))
                     container.InjectGameObject(d.gameObject);
 
-                // Шаг 7: инъекция триггеров и debug-оверлея трамплина, расставленных на сцене.
+                // Шаг 7: инъекция триггеров трамплина, расставленных на сцене.
                 // Безусловно (паттерн DestructibleObjectController выше) — если объектов нет, цикл пуст.
                 foreach (var eject in Object.FindObjectsByType<EjectTriggerZone>(FindObjectsSortMode.None))
                     container.InjectGameObject(eject.gameObject);
-                foreach (var overlay in Object.FindObjectsByType<HighJumpDebugOverlayController>(FindObjectsSortMode.None))
-                    container.InjectGameObject(overlay.gameObject);
 
                 // _TestDriving-путь: chase-камера на первую сцено-машину (арена привязывает камеру
                 // отдельно, в build-callback ниже, после спавна через DerbyMatchService).

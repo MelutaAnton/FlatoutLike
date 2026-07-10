@@ -57,6 +57,32 @@ namespace FlatOutLike.Tests
             Assert.IsTrue(_service.TryConsumeBoost(), "После BeginFlight лимит бустов должен обнулиться.");
         }
 
+        // c1) HasBoostAvailable отражает остаток лимита (Шаг 8d: источник HUD-индикатора буста)
+        [Test]
+        public void HasBoostAvailable_TracksRemainingBoosts()
+        {
+            _service.BeginFlight(Vector3.zero);
+
+            Assert.IsTrue(_service.HasBoostAvailable, "До расхода бустов индикатор должен быть доступен.");
+
+            _service.TryConsumeBoost();
+
+            Assert.IsFalse(_service.HasBoostAvailable, "После расхода единственного буста (BoostCount=1) индикатор должен погаснуть.");
+        }
+
+        // c2) BeginFlight сбрасывает HasBoostAvailable вместе со счётчиком
+        [Test]
+        public void HasBoostAvailable_ResetsOnBeginFlight()
+        {
+            _service.BeginFlight(Vector3.zero);
+            _service.TryConsumeBoost();
+            Assert.IsFalse(_service.HasBoostAvailable);
+
+            _service.BeginFlight(Vector3.zero);
+
+            Assert.IsTrue(_service.HasBoostAvailable, "Новый полёт должен вернуть буст.");
+        }
+
         // c) Look == 0 -> нулевая коррекция, штрафа нет
         [Test]
         public void CalculateSteerAcceleration_WithZeroLook_ReturnsZero()

@@ -8,10 +8,8 @@ namespace FlatOutLike.Editor.Configs
     /// <summary>
     /// Создаёт (или обновляет) Assets/Development/Data/Configs/Stunts/HighJumpRulesConfig_Default.asset.
     ///
-    /// Поля:
-    ///   _scorePerMeter      = 10 (очков за метр высоты прыжка)
-    ///   _flipBonus          = 50 (бонус очков за полный флип, int)
-    ///   _heightToCoinRatio  = 5  (метров высоты на 1 монету)
+    /// Поля (композитный счёт scorePerMeter/flipBonus удалён — результат трюка только высота):
+    ///   _heightToCoinRatio  = 5  (монет за метр высоты)
     ///   _flightTimeoutSeconds = 20 (максимальное время полёта до принудительного завершения, сек)
     ///
     /// Идемпотентность: если ассет уже существует — поля перезаписываются, GUID сохраняется.
@@ -52,8 +50,6 @@ namespace FlatOutLike.Editor.Configs
 
             // ── 3. Заполняем поля через SerializedObject ──────────────────────
             var so = new SerializedObject(config);
-            so.FindProperty("_scorePerMeter").floatValue         = 10f;
-            so.FindProperty("_flipBonus").intValue                = 50;
             so.FindProperty("_heightToCoinRatio").floatValue     = 5f;
             so.FindProperty("_flightTimeoutSeconds").floatValue  = 20f;
             so.ApplyModifiedProperties();
@@ -63,8 +59,7 @@ namespace FlatOutLike.Editor.Configs
             Selection.activeObject = config;
             EditorGUIUtility.PingObject(config);
 
-            Debug.Log("[Editor] HighJumpRulesConfig заполнен: _scorePerMeter=10, _flipBonus=50, " +
-                      "_heightToCoinRatio=5, _flightTimeoutSeconds=20.");
+            Debug.Log("[Editor] HighJumpRulesConfig заполнен: _heightToCoinRatio=5, _flightTimeoutSeconds=20.");
         }
 
         // ─────────────────────────────────────────────────────────────────────

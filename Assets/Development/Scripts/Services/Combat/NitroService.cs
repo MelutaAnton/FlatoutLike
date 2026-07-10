@@ -15,11 +15,14 @@ namespace FlatOutLike.Services.Combat
             = new Dictionary<CarId, (float, float)>();
 
         /// <summary>
-        /// Регистрирует машину. Бак начинается пустым, чтобы нитро нужно было подбирать.
+        /// Регистрирует машину. Бак начинается ПОЛНЫМ (решение Шага 8d по итогам плейтеста:
+        /// раньше стартовал пустым «чтобы подбирать пикапы» — теперь пикапы дозаправляют
+        /// потраченное, а не являются единственным источником нитро).
         /// </summary>
         public void RegisterCar(CarId id, float capacity)
         {
-            _tanks[id] = (0f, Math.Max(0f, capacity));
+            float cap = Math.Max(0f, capacity);
+            _tanks[id] = (cap, cap);
         }
 
         public bool TryConsume(CarId id, float amount)

@@ -56,19 +56,21 @@ namespace FlatOutLike.Core.Events
     }
 
     /// <summary>
-    /// Публикуется <c>HighJumpScoreService</c> по результатам попытки: итоговый счёт,
-    /// является ли он новым личным рекордом. Подписчики — HUD, метапрогрессия.
+    /// Публикуется <c>HighJumpScoreService</c> по результатам попытки. Результат трюка —
+    /// ВЫСОТА в метрах (решение геймдизайна: смысл соревнования исключительно в рекордной
+    /// высоте; композитный счёт с флипами удалён). Подписчики — HUD, метапрогрессия.
     /// </summary>
     public readonly struct StuntsScoredEvent
     {
         public readonly StuntType Type;
-        public readonly int       Score;
+        /// <summary>Пиковая высота попытки, метры.</summary>
+        public readonly float     Height;
         public readonly bool      IsNewRecord;
 
-        public StuntsScoredEvent(StuntType type, int score, bool isNewRecord)
+        public StuntsScoredEvent(StuntType type, float height, bool isNewRecord)
         {
             Type        = type;
-            Score       = score;
+            Height      = height;
             IsNewRecord = isNewRecord;
         }
     }

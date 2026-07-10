@@ -250,6 +250,7 @@ namespace FlatOutLike.Tests
             public void RegisterCar(CarId id, float maxArmor, float mass) { }
             public void UnregisterCar(CarId id) { }
             public float GetHp(CarId id) => _hp.TryGetValue(id.Value, out var hp) ? hp : 0f;
+            public float GetMaxArmor(CarId id) => 100f; // не используется в этих тестах
             public void Repair(CarId id, float fraction) { } // не используется в этих тестах
         }
     }

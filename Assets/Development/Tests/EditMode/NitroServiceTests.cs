@@ -27,12 +27,12 @@ namespace FlatOutLike.Tests
         // ── RegisterCar ──────────────────────────────────────────────────────────
 
         [Test]
-        public void RegisterCar_StartsWithEmptyTank()
+        public void RegisterCar_StartsWithFullTank()
         {
             _service.RegisterCar(Car1, 100f);
 
-            Assert.AreEqual(0f, _service.GetNitro01(Car1), 0.001f,
-                "Только что зарегистрированный бак должен быть пустым.");
+            Assert.AreEqual(1f, _service.GetNitro01(Car1), 0.001f,
+                "Только что зарегистрированный бак стартует полным (решение Шага 8d).");
         }
 
         // ── TryConsume ───────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ namespace FlatOutLike.Tests
         public void TryConsume_WhenNotEnough_ReturnsFalseAndLevelUnchanged()
         {
             _service.RegisterCar(Car1, 100f);
-            _service.Refill(Car1, 0.2f); // 20 единиц
+            _service.TryConsume(Car1, 80f); // бак стартует полным — сливаем до 20 единиц
 
             bool result = _service.TryConsume(Car1, 50f);
 
@@ -67,7 +67,8 @@ namespace FlatOutLike.Tests
         public void TryConsume_WhenNotEnough_NeverGoesNegative()
         {
             _service.RegisterCar(Car1, 100f);
-            // Бак пуст — пытаемся списать
+            _service.TryConsume(Car1, 100f); // опустошаем полный стартовый бак
+            // Бак пуст — пытаемся списать ещё
             _service.TryConsume(Car1, 1f);
 
             Assert.GreaterOrEqual(_service.GetNitro01(Car1), 0f,
@@ -121,7 +122,8 @@ namespace FlatOutLike.Tests
         public void GetNitro01_ReturnsCorrectFraction()
         {
             _service.RegisterCar(Car1, 200f);
-            _service.Refill(Car1, 0.5f); // 100 из 200
+            _service.TryConsume(Car1, 200f); // опустошаем полный стартовый бак
+            _service.Refill(Car1, 0.5f);     // 100 из 200
 
             Assert.AreEqual(0.5f, _service.GetNitro01(Car1), 0.001f,
                 "GetNitro01 должен возвращать долю текущего уровня к ёмкости.");

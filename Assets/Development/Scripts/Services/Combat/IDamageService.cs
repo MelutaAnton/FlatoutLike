@@ -8,6 +8,9 @@ namespace FlatOutLike.Services.Combat
         void UnregisterCar(CarId id);
         float GetHp(CarId id);
 
+        /// <summary>Максимальный запас брони машины (для нормировки HP в HUD, 0 — не зарегистрирована).</summary>
+        float GetMaxArmor(CarId id);
+
         /// <summary>
         /// Восстанавливает <paramref name="fraction"/> * MaxArmor HP (с cap по MaxArmor).
         /// Публикует <c>CarDamagedEvent</c> с отрицательным damage, чтобы

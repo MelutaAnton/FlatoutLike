@@ -34,6 +34,10 @@ namespace FlatOutLike.Controllers.Car
 
         public CarId CarId   => new CarId(_carId);
         public float MaxArmor => _config != null ? _config.MaxArmor : 0f;
+
+        /// <summary>Текущая скорость машины (м/с). Читается HUD-презентерами (Шаг 8d) через ICarRegistry.Player.</summary>
+        public float Speed => _rigidbody != null ? _rigidbody.linearVelocity.magnitude : 0f;
+
         public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
         public DriverController Driver => _driver;
 

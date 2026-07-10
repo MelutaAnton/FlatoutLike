@@ -9,16 +9,10 @@ namespace FlatOutLike.Data.Configs.Stunts
     [CreateAssetMenu(fileName = "HighJumpRulesConfig", menuName = "FlatOutLike/Stunts/HighJumpRulesConfig")]
     public sealed class HighJumpRulesConfig : ScriptableObject
     {
-        [SerializeField] private float _scorePerMeter = 10f;
-        [SerializeField] private int   _flipBonus = 50;
+        // Композитный счёт (scorePerMeter/flipBonus) удалён решением геймдизайна:
+        // результат трюка — только высота, флипы ни на что не влияют.
         [SerializeField] private float _heightToCoinRatio = 5f;
         [SerializeField] private float _flightTimeoutSeconds = 20f;
-
-        /// <summary>Очков за метр набранной высоты (PeakHeight).</summary>
-        public float ScorePerMeter => _scorePerMeter;
-
-        /// <summary>Бонусных очков за каждый засчитанный флип.</summary>
-        public int FlipBonus => _flipBonus;
 
         /// <summary>Монет за метр высоты: coins = Round(PeakHeight * HeightToCoinRatio).</summary>
         public float HeightToCoinRatio => _heightToCoinRatio;

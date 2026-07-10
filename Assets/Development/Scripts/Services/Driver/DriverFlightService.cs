@@ -31,6 +31,7 @@ namespace FlatOutLike.Services.Driver
         private float _settleTimer;
 
         public bool IsInFlight { get; private set; }
+        public bool HasBoostAvailable => _boostsUsed < _config.BoostCount;
         public float PeakHeight => _peakHeight;
         public float AirTime => _airTime;
         public float BoostImpulse => _config.BoostImpulse;

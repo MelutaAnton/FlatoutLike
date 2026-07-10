@@ -30,7 +30,7 @@ namespace FlatOutLike.Editor.Setup
     ///   • Car_Sport_09  — машина игрока.
     ///   • Main Camera   — CinemachineBrain + CM_ChaseCamera + CM_OrbitCamera + CameraRig (Cinemachine 3.x).
     ///   • Directional Light.
-    ///   • DebugOverlay  — Canvas + Text + HighJumpDebugOverlayController.
+    ///   • Снос устаревшего DebugOverlay (HUD строится отдельно: FlatOutLike/UI/Build HighJump HUD).
     ///   • GameLifetimeScope + GameBootstrap, со всеми ссылками, кроме _derbyMatchConfig
     ///     (умышленно оставлен null — сцена не Derby-путь).
     ///
@@ -101,8 +101,9 @@ namespace FlatOutLike.Editor.Setup
             // ── 5. Directional Light ───────────────────────────────────────
             CreateDirectionalLight();
 
-            // ── 6. Debug overlay (Canvas + Text + controller) ──────────────
-            CreateDebugOverlay();
+            // ── 6. Миграция: снос устаревшего debug-оверлея (Шаг 8d — вместо
+            //      него HUD, см. 'FlatOutLike/UI/Build HighJump HUD') ─────────
+            RemoveLegacyDebugOverlay();
 
             // ── 7. GameLifetimeScope + GameBootstrap ───────────────────────
             var scope = CreateGameLifetimeScope();
@@ -324,79 +325,19 @@ namespace FlatOutLike.Editor.Setup
             Debug.Log("[Editor] Создан Directional Light (intensity=1.2, Euler 55/-30/0).");
         }
 
-        private static void CreateDebugOverlay()
+        /// <summary>
+        /// Миграция Шага 8d: debug-оверлей (Canvas + Text + HighJumpDebugOverlayController)
+        /// заменён полноценным HUD'ом — сборщик сцены больше НЕ создаёт его, а удаляет
+        /// остатки из старых сцен. Сам HUD строится меню 'FlatOutLike/UI/Build HighJump HUD'.
+        /// </summary>
+        private static void RemoveLegacyDebugOverlay()
         {
             var canvasGo = GameObject.Find("DebugOverlay");
-            Canvas canvas;
-
             if (canvasGo == null)
-            {
-                canvasGo = new GameObject("DebugOverlay");
-                Undo.RegisterCreatedObjectUndo(canvasGo, "Create DebugOverlay Canvas");
-                canvas = Undo.AddComponent<Canvas>(canvasGo);
-                Undo.AddComponent<CanvasScaler>(canvasGo);
-                Undo.AddComponent<GraphicRaycaster>(canvasGo);
-                Debug.Log("[Editor] Создан DebugOverlay Canvas.");
-            }
-            else
-            {
-                canvas = canvasGo.GetComponent<Canvas>();
-                if (canvas == null)
-                    canvas = Undo.AddComponent<Canvas>(canvasGo);
-                if (canvasGo.GetComponent<CanvasScaler>() == null)
-                    Undo.AddComponent<CanvasScaler>(canvasGo);
-                if (canvasGo.GetComponent<GraphicRaycaster>() == null)
-                    Undo.AddComponent<GraphicRaycaster>(canvasGo);
-                Debug.Log("[Editor] DebugOverlay Canvas уже есть, переиспользуем.");
-            }
+                return;
 
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-
-            // ── Дочерний Text ────────────────────────────────────────────────
-            Transform textTransform = canvasGo.transform.Find("OverlayText");
-            Text text;
-
-            if (textTransform == null)
-            {
-                var textGo = new GameObject("OverlayText");
-                Undo.RegisterCreatedObjectUndo(textGo, "Create OverlayText");
-                textGo.transform.SetParent(canvasGo.transform, false);
-                text = Undo.AddComponent<Text>(textGo);
-                Debug.Log("[Editor] Создан OverlayText.");
-            }
-            else
-            {
-                text = textTransform.GetComponent<Text>();
-                if (text == null)
-                    text = Undo.AddComponent<Text>(textTransform.gameObject);
-                Debug.Log("[Editor] OverlayText уже есть, переиспользуем.");
-            }
-
-            text.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize  = 32;
-            text.color     = Color.black;
-            text.alignment = TextAnchor.UpperLeft;
-
-            var rect = text.rectTransform;
-            rect.anchorMin        = new Vector2(0f, 1f);
-            rect.anchorMax        = new Vector2(0f, 1f);
-            rect.pivot            = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(20f, -20f);
-            rect.sizeDelta         = new Vector2(500f, 200f);
-
-            // ── HighJumpDebugOverlayController на корне Canvas ─────────────────
-            var overlayController = canvasGo.GetComponent<HighJumpDebugOverlayController>();
-            if (overlayController == null)
-            {
-                overlayController = Undo.AddComponent<HighJumpDebugOverlayController>(canvasGo);
-                Debug.Log("[Editor] Добавлен HighJumpDebugOverlayController на DebugOverlay.");
-            }
-
-            var overlaySo = new SerializedObject(overlayController);
-            var textProp = overlaySo.FindProperty("_text");
-            if (textProp != null) textProp.objectReferenceValue = text;
-            overlaySo.ApplyModifiedProperties();
-            Debug.Log("[Editor] HighJumpDebugOverlayController._text = OverlayText.");
+            Undo.DestroyObjectImmediate(canvasGo);
+            Debug.Log("[Editor] Удалён устаревший DebugOverlay (заменён HighJump HUD, Шаг 8d).");
         }
 
         private static GameLifetimeScope CreateGameLifetimeScope()

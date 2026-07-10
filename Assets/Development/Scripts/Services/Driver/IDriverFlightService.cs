@@ -11,6 +11,12 @@ namespace FlatOutLike.Services.Driver
         /// <summary>Идёт ли сейчас полёт (между BeginFlight и NotifyLanded).</summary>
         bool IsInFlight { get; }
 
+        /// <summary>
+        /// Остался ли ещё хотя бы один буст в текущем полёте (для HUD-индикатора
+        /// "BOOST READY"/"BOOST USED"). Только чтение — не потребляет буст.
+        /// </summary>
+        bool HasBoostAvailable { get; }
+
         /// <summary>Максимальная высота над стартовой точкой полёта (метры).</summary>
         float PeakHeight { get; }
 

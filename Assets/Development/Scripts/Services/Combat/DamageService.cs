@@ -41,6 +41,8 @@ namespace FlatOutLike.Services.Combat
 
         public float GetHp(CarId id) => _hp.TryGetValue(id, out var hp) ? hp : 0f;
 
+        public float GetMaxArmor(CarId id) => _maxArmor.TryGetValue(id, out var max) ? max : 0f;
+
         public void Repair(CarId id, float fraction)
         {
             if (!_hp.TryGetValue(id, out var currentHp)) return;

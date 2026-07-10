@@ -7,7 +7,9 @@ using UnityEngine;
 namespace FlatOutLike.Services.Stunts
 {
     /// <summary>
-    /// Чистый C#: формула очков «High Jump» + обновление рекорда профиля + начисление монет.
+    /// Чистый C#: результат «High Jump» = пиковая ВЫСОТА (композитного счёта нет —
+    /// решение геймдизайна) + обновление рекорда профиля + начисление монет от высоты.
+    /// Флипы ни на что не влияют (FlipDetector остаётся про запас для будущих трюков).
     /// </summary>
     public sealed class HighJumpScoreService : IHighJumpScoreService
     {
@@ -22,13 +24,9 @@ namespace FlatOutLike.Services.Stunts
             _eventBus = eventBus;
         }
 
-        public int ScoreAttempt(DriverLandedEvent landed)
+        public void ScoreAttempt(DriverLandedEvent landed)
         {
-            int score = Mathf.RoundToInt(landed.PeakHeight * _rules.ScorePerMeter)
-                      + landed.FlipCount * _rules.FlipBonus;
-
-            // Рекорд — по ВЫСОТЕ (суть соревнования), а не по композитному счёту:
-            // флипы дают монеты, но не двигают личный рекорд.
+            // Рекорд и результат — по ВЫСОТЕ, единственной метрике соревнования.
             var profile = _meta.Profile;
             bool isNewRecord = landed.PeakHeight > profile.BestHighJumpHeight;
             if (isNewRecord)
@@ -39,10 +37,8 @@ namespace FlatOutLike.Services.Stunts
 
             int coins = Mathf.RoundToInt(landed.PeakHeight * _rules.HeightToCoinRatio);
 
-            _eventBus.Publish(new StuntsScoredEvent(StuntType.HighJump, score, isNewRecord));
+            _eventBus.Publish(new StuntsScoredEvent(StuntType.HighJump, landed.PeakHeight, isNewRecord));
             _eventBus.Publish(new RewardEarnedEvent(RewardSource.HighJump, coins, 0));
-
-            return score;
         }
     }
 }

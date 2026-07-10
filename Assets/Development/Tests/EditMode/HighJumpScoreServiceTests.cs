@@ -29,7 +29,7 @@ namespace FlatOutLike.Tests
         public void SetUp()
         {
             _bus = new EventBus();
-            _rules = ScriptableObject.CreateInstance<HighJumpRulesConfig>(); // ScorePerMeter=10, FlipBonus=50, HeightToCoinRatio=5
+            _rules = ScriptableObject.CreateInstance<HighJumpRulesConfig>(); // HeightToCoinRatio=5
             _meta = new FakeMetaProgressService();
             _service = new HighJumpScoreService(_rules, _meta, _bus);
 
@@ -47,18 +47,18 @@ namespace FlatOutLike.Tests
             UnityEngine.Object.DestroyImmediate(_rules);
         }
 
-        // a) Формула: score = Round(PeakHeight * ScorePerMeter) + FlipCount * FlipBonus
+        // a) Результат попытки = пиковая ВЫСОТА (композитный счёт удалён решением геймдизайна);
+        //    флипы ни на что не влияют.
         [Test]
-        public void ScoreAttempt_ComputesScore_ByFormula()
+        public void ScoreAttempt_PublishesHeightAsResult_FlipsIgnored()
         {
             var landed = new DriverLandedEvent(peakHeight: 12f, flipCount: 2, totalAirTime: 3f);
 
-            int score = _service.ScoreAttempt(landed);
+            _service.ScoreAttempt(landed);
 
-            Assert.AreEqual(220, score, "12*10 + 2*50 = 220.");
             Assert.AreEqual(1, _scoredEvents.Count);
             Assert.AreEqual(StuntType.HighJump, _scoredEvents[0].Type);
-            Assert.AreEqual(220, _scoredEvents[0].Score);
+            Assert.AreEqual(12f, _scoredEvents[0].Height, 0.001f, "Результат — высота в метрах, флипы не участвуют.");
         }
 
         // b) Новый рекорд ВЫСОТЫ обновляет профиль, сохраняет и isNewRecord == true
@@ -75,14 +75,13 @@ namespace FlatOutLike.Tests
         }
 
         // c) Меньшая высота не обновляет рекорд, isNewRecord == false —
-        //    даже если СЧЁТ выше за счёт флипов (рекорд считается по высоте, не по очкам)
+        //    сколько бы флипов ни было (высота — единственная метрика)
         [Test]
-        public void ScoreAttempt_WithLowerPeak_DoesNotUpdateRecord_EvenIfScoreHigher()
+        public void ScoreAttempt_WithLowerPeak_DoesNotUpdateRecord()
         {
-            _service.ScoreAttempt(new DriverLandedEvent(peakHeight: 12f, flipCount: 0, totalAirTime: 3f)); // 12 м — рекорд, счёт 120
+            _service.ScoreAttempt(new DriverLandedEvent(peakHeight: 12f, flipCount: 0, totalAirTime: 3f)); // 12 м — рекорд
             _scoredEvents.Clear();
 
-            // Ниже по высоте (10 м), но выше по счёту (10*10 + 5*50 = 350 > 120)
             _service.ScoreAttempt(new DriverLandedEvent(peakHeight: 10f, flipCount: 5, totalAirTime: 3f));
 
             Assert.AreEqual(12f, _meta.Profile.BestHighJumpHeight, 0.001f, "Рекорд высоты не должен уменьшиться.");
