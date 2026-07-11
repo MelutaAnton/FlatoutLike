@@ -6,17 +6,19 @@
 
 ## 1. Vision & Scope
 
-**Референс:** FlatOut 2 (Empire Interactive / Bugbear, 2006).
+**Референс кора:** FlatOut 2 (Empire Interactive / Bugbear, 2006). **Референс меты:** Crazy Office — Slap & Smash (idle-build хаб).
+
+**Жанровое позиционирование:** гибрид-кэжуал — аркадный кор (Derby, Stunts) + idle-build мета-слой (карта базы, стадийная стройка, пассивный доход).
 
 **Что берём в срез:**
 - **Derby** — играбельный матч на арене: игрок против 3–6 AI-машин, win = last alive, физические повреждения с гибридной моделью (mesh-stages + отваливающиеся части), авто-eject водителя при гибели машины.
 - **Stunts: High Jump** — играбельная мини-игра «Выброс водителя в высоту»: разгон на машине → трамплин → автоматический eject через лобовое стекло → ragdoll-полёт с управлением стиками и одноразовым midair-boost → подсчёт высоты.
-- **Stunts Hub** — экран выбора мини-игр: High Jump активна, остальные 8 (Long Jump, Fire Rings, Bowling, Field Goal, High Card, ?, ?, ?) — карточки-заглушки с пометкой "Coming soon" (Scalability Hook).
-- **Garage / Meta** — экран между матчами: валюта, выбор машины (3 шт.), апгрейды (Armor / Power / Nitro).
+- **BaseHub / Idle-Build Meta** — главный экран игры: карта базы с видом сверху. Стадийная стройка зданий за DerbyCoins; здания открывают режимы (High Jump, Garage) и генерируют пассивный доход (тап-сбор + offline-начисление с Welcome Back попапом). Заменяет классические Main Menu и Stunts Hub: каждый трюк = здание на карте, нереализованные трюки — стройплощадки-заглушки "Coming soon" (Scalability Hook).
+- **Garage / Meta** — UI-экран, открывается из здания Garage на карте: валюта, выбор машины (3 шт.), апгрейды (Armor / Power / Nitro).
 
 **Что НЕ входит в срез (Scalability Hooks):**
 - Гонки на трассе с чекпоинтами и таймером.
-- Остальные 8 Stunts-мини-игр (Long Jump, Fire Rings, Bowling, Field Goal, High Card, ?, ?, ?).
+- Реализация остальных 8 Stunts-мини-игр (Long Jump, Fire Rings, Bowling, Field Goal, High Card, +3 слота) — на карте BaseHub присутствуют как стройплощадки-заглушки, вложения недоступны.
 - Online / split-screen / leaderboards на сервере.
 - Кастомизация скинов машин и водителя.
 - Тюнинг подвески, звуковые пресеты, погода/время суток.
@@ -30,14 +32,16 @@
 ## 2. Core Gameplay Loop
 
 ```
-[Main Menu]
-   ├─→ Derby ──→ [Match: Arena] ──(win/lose)──→ Reward (coins + score) ──→ [Garage]
-   ├─→ Stunts ─→ [Stunts Hub] ──→ High Jump ──→ [Stunts: HighJump] ──→ Score ──→ Reward ──→ [Garage]
-   │                          └─→ (5 заглушек)
-   └─→ Garage ──→ Buy car / Upgrade ──→ back
+[BaseHub — карта базы, главный экран]
+   ├─ (Welcome Back: offline-доход при входе в игру)
+   ├─→ здание Derby Arena ──→ [Match: Arena] ──(win/lose)──→ Reward ──→ [BaseHub]
+   ├─→ здание High Jump Tower ──→ [Stunts: HighJump] ──→ Score ──→ Reward ──→ [BaseHub]
+   ├─→ здание Garage ──→ [Garage UI] ──→ Buy car / Upgrade ──→ [BaseHub]
+   ├─→ income-здания (Ticket Booth, Tribunes) ──→ тап-сбор монет
+   └─→ стройплощадки ──→ вложение монет ──→ этап построен ──→ unlock (трюк / доход↑)
 ```
 
-Игрок чередует Derby и Stunts, копит валюту, прокачивает машину/апгрейды, возвращается в матч.
+Петля гибрид-кэжа: играй (Derby / Stunts) → зарабатывай → вкладывай в стройку → открывай контент и пассивный доход → возвращайся играть. Idle-доход подпитывает петлю между активными сессиями (offline-начисление с капом).
 
 ---
 
@@ -157,14 +161,30 @@
 - `LandingZone` внизу — финал попытки.
 - Декоративные measurement-маркеры по высоте (визуальные риски на столбе).
 
-### Stunts Hub
-UI-сцена `Stunts_Hub`. 6 карточек:
-- 1 активная (`StuntsCardView` → загружает `Stunts_HighJump`).
-- 5 заглушек (`StuntsCardView` в disabled state с лейблом "Coming soon").
-Список карточек — `StuntsCatalogConfig` (SO), элемент: `StuntsCardEntry { StuntType type; string title; string sceneKey; bool enabled; Sprite preview; }`.
+### BaseHub (карта базы) — главный экран
+Сцена `BaseHub`, top-down/изометрическая камера (`HubCameraBehaviour`, pan/zoom). Площадки зданий и их позиции задаются `BuildingCatalogConfig` (SO) и расставляются editor-скриптом `Build Base Hub Layout` — не вручную.
+
+Состав зданий среза:
+
+| Здание (`BuildingId`) | Стартовое состояние | Роль |
+|---|---|---|
+| `DerbyArena` | Построено | Тап → запуск Derby-матча |
+| `Garage` | Построено | Тап → Garage UI (машины, апгрейды) |
+| `HighJumpTower` | Стройплощадка, 3 дешёвых этапа | Туториальная стройка; завершение открывает High Jump |
+| `TicketBooth` | Стройплощадка, 3 этапа | Income-здание: пассивный доход, каждый этап повышает rate |
+| `Tribunes` | Стройплощадка, 3 этапа (дороже) | Income-здание #2 |
+| `LongJump`, `FireRings`, `Bowling`, `FieldGoal`, `HighCard` | Заглушки "Coming soon" | Визуальные стройплощадки, вложения недоступны (Scalability Hook) |
+
+Каждая площадка — `BuildSiteController` (MonoBehaviour): свап визуальных стадий (пустырь → фундамент → каркас → готовое здание, префабы из `Assets/Development/Prefabs/Hub/<BuildingId>/`), тап-зона (Collider + kinematic Rigidbody — см. `CLAUDE.md`), для income-зданий — `CoinBubble` для сбора.
+
+**Стадийная стройка:** этап = вложение монет через `BuildingPanelView`. Все цены — в `BuildingCatalogConfig`, unlock-эффекты декларативны в SO (`BuildingId` → unlock payload), не switch по коду. По завершении финального этапа `BuildProgressService` публикует `BuildingCompletedEvent`, подписчики применяют unlock (например, `HighJumpTower` → доступен запуск `Stunts_HighJump`).
+
+**Idle-доход:** income-здания начисляют монеты по `incomePerMinute` из SO (значение на этап). Онлайн — над зданием копится «пузырь», тап собирает (`IdleIncomeCollectedEvent` → `RewardEarnedEvent`). Offline — при старте `IdleIncomeService` считает `min(offlineTime, offlineCapHours) * totalRate` через `ITimeProvider`, показывает `WelcomeBackPopup` (кнопка «x2 за рекламу» — disabled-заглушка в срезе).
+
+Маппинг трюков на сцены остаётся в `StuntsCatalogConfig` (SO) — `BuildingCatalogConfig` ссылается на `StuntType` для unlock-зданий.
 
 ### Garage
-UI-сцена `Garage`. Tabs: Cars / Upgrades.
+UI-экран `Garage`, открывается тапом по зданию Garage на карте BaseHub. Tabs: Cars / Upgrades.
 - Cars tab: 3 карточки из `CarCatalogConfig` (SO). Купленные / выбранные сохраняются в `MetaProgressService` (PlayerPrefs).
 - Upgrades tab: 3 категории × N уровней из `UpgradeCatalogConfig` (SO).
 
@@ -188,7 +208,8 @@ UI-сцена `Garage`. Tabs: Cars / Upgrades.
 
 ### Валюта
 - `DerbyCoins` — одна валюта, хранится в `MetaProgressService`.
-- Источники: убийство в Derby (per kill amount из `RewardConfig` SO), победа в Derby (bonus), очки за High Jump (по формуле `height * heightToCoinRatio + flipBonus`).
+- Источники: убийство в Derby (per kill amount из `RewardConfig` SO), победа в Derby (bonus), очки за High Jump (по формуле `height * heightToCoinRatio + flipBonus`), пассивный доход income-зданий (тап-сбор онлайн + offline-начисление с капом; rates — в `BuildingCatalogConfig`, кап — в `IdleIncomeConfig`).
+- Все источники публикуют унифицированный `RewardEarnedEvent { source, coinAmount, xpAmount }` (§15.3), `RewardSource` различает Derby / Stunts / IdleIncome.
 
 ### Машины
 **Config:** `CarCatalogConfig` (SO) — 3 entries.
@@ -207,8 +228,12 @@ UI-сцена `Garage`. Tabs: Cars / Upgrades.
 
 Применение апгрейдов: при старте матча `CarStatsService` собирает effective stats из `CarStatsConfig` + текущих уровней апгрейдов из `MetaProgressService`.
 
+### Стройка (главный sink)
+Стадийная стройка зданий BaseHub — основной поглотитель валюты (см. §6). Цены этапов — в `BuildingCatalogConfig`. Ориентир баланса: суммарная стоимость всех этапов среза ≈ 8–12 средних Derby-наград (точные значения — Open Question #9).
+
 ### Сохранение
 - PlayerPrefs только для meta-состояния (валюта, купленные машины, уровни апгрейдов, текущая выбранная машина, рекорды High Jump).
+- Состояние стройки, несобранный доход и timestamp последнего выхода — **отдельный save-блок** через `IProfileStorage` (см. §15.1), не внутри основного профиля.
 - Никаких сохранений матча — каждый Derby/Stunts стартует с чистого листа.
 
 ---
@@ -218,9 +243,8 @@ UI-сцена `Garage`. Tabs: Cars / Upgrades.
 ### Generic FSM (см. `CLAUDE.md`)
 Enum `GameState`:
 ```
-MainMenu,
+BaseHub,
 GarageMeta,
-StuntsHub,
 DerbyMatch,
 StuntsHighJumpDriving,
 StuntsHighJumpFlight,
@@ -229,24 +253,26 @@ MatchEnd,
 Paused
 ```
 
+`BaseHub` заложен в enum с шага 1 Implementation Order. До шага 11 состояние обслуживается временной сценой-заглушкой `_TempHubMenu` (кнопки Derby / High Jump / Garage); на шаге 11 заглушка заменяется картой базы — FSM и переходы не меняются.
+
 Каждое состояние — реализация `IState`, регистрируется в `GameFlowService`. Переходы публикуют `GameStateChangedEvent { GameState from; GameState to; }`.
 
 ### Ключевые переходы
 | From                       | Event                       | To                         |
 | -------------------------- | --------------------------- | -------------------------- |
-| `MainMenu`                 | UI: Derby pressed           | `DerbyMatch`               |
-| `MainMenu`                 | UI: Stunts pressed          | `StuntsHub`                |
-| `MainMenu`                 | UI: Garage pressed          | `GarageMeta`               |
+| `BaseHub`                  | Тап: здание Derby Arena     | `DerbyMatch`               |
+| `BaseHub`                  | Тап: здание High Jump Tower (построено) | `StuntsHighJumpDriving` |
+| `BaseHub`                  | Тап: здание Garage          | `GarageMeta`               |
+| `GarageMeta`               | UI: Back                    | `BaseHub`                  |
 | `DerbyMatch`               | `MatchEndedEvent`           | `MatchEnd`                 |
-| `MatchEnd`                 | UI: Continue                | `GarageMeta`               |
-| `StuntsHub`                | UI: HighJump card           | `StuntsHighJumpDriving`    |
+| `MatchEnd`                 | UI: Continue                | `BaseHub`                  |
 | `StuntsHighJumpDriving`    | `DriverEjectedEvent`        | `StuntsHighJumpFlight`     |
 | `StuntsHighJumpFlight`     | `DriverLandedEvent`         | `StuntsHighJumpScoring`    |
-| `StuntsHighJumpScoring`    | UI: Continue                | `GarageMeta`               |
+| `StuntsHighJumpScoring`    | UI: Continue                | `BaseHub`                  |
 | any gameplay state         | UI: Pause                   | `Paused` (push)            |
 | `Paused`                   | UI: Resume                  | previous (pop)             |
 
-`Paused` реализован как push-pop поверх предыдущего состояния — все остальные сервисы получают `GamePausedEvent` и приостанавливают свою работу (`Time.timeScale = 0` + явная проверка флага у тех, кому нельзя полагаться на timeScale).
+`Paused` реализован как push-pop поверх предыдущего состояния — все остальные сервисы получают `GamePausedEvent` и приостанавливают свою работу (`Time.timeScale = 0` + явная проверка флага у тех, кому нельзя полагаться на timeScale). Тем же push-pop механизмом показывается модалка Welcome Back поверх `BaseHub` при входе с накопленным offline-доходом — §15.3 предохранитель в действии.
 
 ---
 
@@ -268,14 +294,17 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - Фаза `Flight`: индикатор высоты (текущая / лучшая), статус midair-boost (charged / used), счётчик вращений.
 - Фаза `Scoring`: финальный score + кнопка Continue.
 
-### Stunts Hub
-**View:** `StuntsHubView` + динамически создаваемые `StuntsCardView` по списку из `StuntsCatalogConfig`.
+### BaseHub
+**View:** `HubHudView` — баланс DerbyCoins, индикаторы «есть доступное вложение» над площадками, Pause/Settings.
+**View:** `BuildingPanelView` — панель выбранного здания: название, текущая стадия, цена следующего этапа, кнопка «Вложить»; для income-зданий — текущий rate.
+**View:** `WelcomeBackPopupView` — offline-доход: сумма, кнопка Collect, кнопка «x2 за рекламу» (disabled-заглушка в срезе).
+**View:** `CoinBubbleView` — pooled «пузырь» накопленных монет над income-зданием (тап-сбор).
 
 ### Garage
 **View:** `GarageView` + `CarCardView` (×3) + `UpgradeRowView` (×3 категории).
 
-### Main Menu / Match End / Pause overlay
-Стандартные `MainMenuView`, `MatchEndView`, `PauseOverlayView`.
+### Match End / Pause overlay
+Стандартные `MatchEndView`, `PauseOverlayView`. Отдельного Main Menu нет — главный экран игры это BaseHub.
 
 ---
 
@@ -284,8 +313,9 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 Один корневой `MonoBehaviour` `CameraRig` + интерфейс `ICameraBehaviour`, конкретные реализации:
 - `ChaseCarCameraBehaviour` — за машиной игрока, smooth follow, look-ahead по скорости. Активно в `DerbyMatch` и `StuntsHighJumpDriving`.
 - `OrbitDriverCameraBehaviour` — свободная орбита вокруг ragdoll-водителя. Активно в `StuntsHighJumpFlight` и `StuntsHighJumpScoring`.
+- `HubCameraBehaviour` — top-down/изометрия над картой базы, pan/zoom (drag/pinch на mobile, мышь/колесо на PC). Активно в `BaseHub`.
 
-Переключение — `CameraService` по `GameStateChangedEvent`. Конфиги поведений — отдельные SO (`ChaseCameraConfig`, `OrbitCameraConfig`).
+Переключение — `CameraService` по `GameStateChangedEvent`. Конфиги поведений — отдельные SO (`ChaseCameraConfig`, `OrbitCameraConfig`, `HubCameraConfig`).
 
 ---
 
@@ -299,6 +329,8 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `Core/Events/Events.Stunts.cs` — `DriverEjectedEvent`, `DriverLandedEvent`, `StuntsScoredEvent`, `FlipDetectedEvent`
 - `Core/Events/Events.Meta.cs` — `CurrencyChangedEvent`, `CarPurchasedEvent`, `UpgradePurchasedEvent`
 - `Core/Events/Events.Flow.cs` — `GameStateChangedEvent`, `GamePausedEvent`, `GameResumedEvent`
+- `Core/Events/Events.Progression.cs` — `RewardEarnedEvent`, `BuildingStageInvestedEvent`, `BuildingCompletedEvent`, `IdleIncomeCollectedEvent`, `OfflineIncomeGrantedEvent`
+- `Core/Time/ITimeProvider.cs` + `Core/Time/SystemTimeProvider.cs` (UTC; все обращения ко времени только через провайдер)
 - `Core/Input/IInputProvider.cs`, `Core/Input/KeyboardInputProvider.cs`, `Core/Input/MobileInputProvider.cs`, `Core/Input/InputRouter.cs`, `Core/Input/InputContext.cs`
 - `Core/StateMachine/StateMachine.cs` + `IState.cs`
 
@@ -308,6 +340,8 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `Models/StuntType.cs`
 - `Models/UpgradeCategory.cs`
 - `Models/HazardType.cs`
+- `Models/BuildingId.cs`
+- `Models/RewardSource.cs`
 - `Models/Tags.cs` (`static class` с константами тегов)
 - `Models/AnimatorHashes.cs` (`static readonly int` через `Animator.StringToHash`)
 
@@ -326,6 +360,9 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `Data/Configs/Destructible/DestructibleConfig.cs`
 - `Data/Configs/Camera/ChaseCameraConfig.cs`
 - `Data/Configs/Camera/OrbitCameraConfig.cs`
+- `Data/Configs/Camera/HubCameraConfig.cs`
+- `Data/Configs/Progression/BuildingCatalogConfig.cs`
+- `Data/Configs/Progression/IdleIncomeConfig.cs`
 
 Инстансы (`.asset`) — в `Assets/Development/Data/Configs/`.
 
@@ -343,6 +380,8 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `Services/Pickups/PickupSpawnerService.cs` + `IPickupSpawnerService`
 - `Services/Meta/MetaProgressService.cs` + `IMetaProgressService` (PlayerPrefs save/load)
 - `Services/Meta/EconomyService.cs` + `IEconomyService`
+- `Services/Progression/BuildProgressService.cs` + `IBuildProgressService` (стадийная стройка, unlock-гейтинг, отдельный save-блок)
+- `Services/Progression/IdleIncomeService.cs` + `IIdleIncomeService` (онлайн-накопление, offline-расчёт через `ITimeProvider`)
 - `Services/Flow/GameFlowService.cs` + `IGameFlowService`
 - `Services/Camera/CameraService.cs` + `ICameraService`
 
@@ -360,13 +399,15 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `Controllers/Camera/CameraRig.cs`
 - `Controllers/Camera/ChaseCarCameraBehaviour.cs`
 - `Controllers/Camera/OrbitDriverCameraBehaviour.cs`
+- `Controllers/Camera/HubCameraBehaviour.cs`
+- `Controllers/Hub/BuildSiteController.cs` (свап визуальных стадий + тап-зона с kinematic Rigidbody)
+- `Controllers/Hub/CoinBubbleController.cs` (накопление/сбор монет над income-зданием)
 - `Controllers/Mobile/MobileInputCanvas.cs` (виртуальные стики и кнопки)
 
 ### Views (MVP, только UI)
-- `Views/UI/MainMenu/MainMenuView.cs`
+- `Views/UI/Hub/HubHudView.cs` + `BuildingPanelView.cs` + `WelcomeBackPopupView.cs` + `CoinBubbleView.cs` (+ `HubPresenter.cs`)
 - `Views/UI/Hud/DerbyHudView.cs` + `KillFeedItemView.cs`
 - `Views/UI/Hud/HighJumpHudView.cs`
-- `Views/UI/Stunts/StuntsHubView.cs` + `StuntsCardView.cs`
 - `Views/UI/Garage/GarageView.cs` + `CarCardView.cs` + `UpgradeRowView.cs`
 - `Views/UI/Overlay/MatchEndView.cs`
 - `Views/UI/Overlay/PauseOverlayView.cs`
@@ -407,6 +448,11 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 | `GameStateChangedEvent`     | `GameState from, GameState to`                                   | `GameFlowService`               |
 | `GamePausedEvent`           | (empty)                                                          | `GameFlowService`               |
 | `GameResumedEvent`          | (empty)                                                          | `GameFlowService`               |
+| `RewardEarnedEvent`         | `RewardSource source, int coinAmount, int xpAmount`              | `EconomyService`, `IdleIncomeService` |
+| `BuildingStageInvestedEvent`| `BuildingId id, int stage, int totalStages`                      | `BuildProgressService`          |
+| `BuildingCompletedEvent`    | `BuildingId id`                                                  | `BuildProgressService`          |
+| `IdleIncomeCollectedEvent`  | `BuildingId id, int amount`                                      | `IdleIncomeService`             |
+| `OfflineIncomeGrantedEvent` | `int amount, float offlineHours`                                 | `IdleIncomeService`             |
 
 ---
 
@@ -424,6 +470,7 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - **Балансировка экономики** — числа в `RewardConfig` и каталогах.
 - **Косметика машин/водителя** — материалы как поле в `CarCatalogConfig` (опционально).
 - **Новые hazards / разрушаемые объекты на арене** — новый prefab + `DestructibleConfig` SO.
+- **Новые income-здания и доп. этапы стройки на карте BaseHub** — entries в `BuildingCatalogConfig` + префабы стадий. Здание, открывающее **новый режим**, — это 14.3 (сам режим = новая система), но само здание на карте — контент.
 
 ### 14.2 Light code — 1 класс + конфиги + сцена/UI
 
@@ -456,7 +503,7 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 
 ## 15. Mid-core Progression Systems
 
-В вертикальный срез эти системы НЕ входят, но mid-core игры на них живут (retention D1–D30, монетизация). Раздел нужен, чтобы:
+**Idle-Build Meta (стройка + пассивный доход) перенесена В срез** — шаги 11–13 Implementation Order, дизайн в §6 BaseHub; она использует все предохранители из §15.3. Остальные системы этого раздела в срез НЕ входят, но гибрид-кэж живёт на них (retention D1–D30, монетизация). Раздел нужен, чтобы:
 1. Не сделать `MetaProgressService` богом-объектом, в который потом ничего нельзя добавить.
 2. Заранее обозначить, **где архитектурно** будут жить эти системы — чтобы CLI при имплементации среза не закрыл им путь.
 
@@ -498,6 +545,7 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - **Все источники reward'ов публикуют унифицированное событие `RewardEarnedEvent { RewardSource source, int coinAmount, int xpAmount }`** — даже если `xpAmount` пока всегда 0 (XP-системы нет). Когда появится Player Level, он просто подписывается на это событие и считает XP. Никаких правок в `DerbyMatchService` / `HighJumpScoreService`.
 - **`GameFlowService` поддерживает push-pop состояний (для Pause)** — этот же механизм потом используется для модалок Daily Missions, Battle Pass UI, Shop UI поверх любого экрана. Не делать «pause через флаг», делать через push-pop сразу.
 - **`MetaProgressService` save/load выделен в отдельный `IProfileStorage` интерфейс** с реализацией `PlayerPrefsProfileStorage`. Когда придёт время cloud save — добавляется `CloudProfileStorage`, регистрация меняется в `GameLifetimeScope`, остальной код не трогается.
+- **Все обращения ко времени — через `ITimeProvider`** (`Core/Time/`), никаких `DateTime.Now` по месту. Реализация среза — `SystemTimeProvider` (UTC). Нужно для offline-начислений, тестируемости idle-логики и будущей серверной валидации времени.
 
 ---
 
@@ -517,7 +565,7 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - [ ] При смерти игрока матч продолжается до победителя или досрочного выхода (UX-вариант: показать "you died" + кнопку "watch / leave").
 
 ### Stunts: High Jump
-- [ ] Из главного меню / Stunts Hub игрок попадает в `Stunts_HighJump`.
+- [ ] С карты BaseHub тап по построенной High Jump Tower ведёт в `Stunts_HighJump`; до завершения стройки запуск недоступен (панель показывает прогресс стройки).
 - [ ] Игрок управляет машиной, разгоняется по полосе, въезжает на трамплин.
 - [ ] На верхушке рампа срабатывает trigger-зона, происходит авто-eject: водитель отделяется от машины, ragdoll-Rigidbody получает forward+up импульс.
 - [ ] Камера переключается на orbit вокруг водителя.
@@ -532,12 +580,18 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - [ ] Игрок может купить апгрейд (Armor / Power / Nitro); следующий матч применяет апгрейд.
 - [ ] Прогресс сохраняется между сессиями (PlayerPrefs).
 
-### Stunts Hub
-- [ ] Видно 6 карточек; 1 активная, 5 disabled с лейблом.
-- [ ] Активная карточка ведёт в `Stunts_HighJump`.
+### BaseHub / Idle-Build
+- [ ] Игра стартует в BaseHub: карта базы, top-down камера, pan/zoom работают на PC и mobile.
+- [ ] Derby Arena и Garage построены изначально и ведут в свои режимы по тапу.
+- [ ] High Jump Tower строится за 3 этапа вложений; каждый этап меняет визуальную стадию площадки; завершение открывает High Jump.
+- [ ] Income-здания (Ticket Booth, Tribunes) строятся; каждый этап повышает rate (значения из `BuildingCatalogConfig`).
+- [ ] Онлайн-доход копится «пузырём» над зданием и собирается тапом; публикуется `RewardEarnedEvent` с `source = IdleIncome`.
+- [ ] Offline-доход начисляется при входе (кап из `IdleIncomeConfig`); Welcome Back попап показывается через push-pop состояние; отрицательный offline (перевод часов) клампится в 0.
+- [ ] 5 стройплощадок-заглушек трюков видны с лейблом "Coming soon", вложения недоступны.
+- [ ] Состояние стройки, несобранный доход и timestamp выхода сохраняются между сессиями (отдельный save-блок через `IProfileStorage`).
 
 ### Поток состояний и UI
-- [ ] Main Menu → любой режим → MatchEnd / Scoring → Garage → Main Menu — переходы работают без багов.
+- [ ] BaseHub → любой режим → MatchEnd / Scoring → BaseHub — переходы работают без багов.
 - [ ] Pause работает во всех геймплейных состояниях, корректно резюмит.
 - [ ] HUD показывает релевантные данные в нужной фазе.
 
@@ -571,6 +625,8 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Validation/Find Magic Strings` — поиск строковых литералов в Controllers, которые должны быть в enum/const (теги, animator-параметры).
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Spawn/Populate Derby Arena Spawn Points` — расставить 7 SpawnPoint'ов по окружности арены равномерно.
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Stunts/Build HighJump Ramp` — построить рамп с заданным углом и длиной из параметров окна, с готовой `EjectTriggerZone` на верхушке (kinematic Rigidbody уже добавлен).
+- `EDITOR_SCRIPT_NEEDED: FlatOutLike/Hub/Build Base Hub Layout` — расставить площадки зданий на сцене `BaseHub` по `BuildingCatalogConfig`: позиции, `BuildSiteController` с привязкой стадийных префабов, тап-коллайдеры с kinematic Rigidbody.
+- `EDITOR_SCRIPT_NEEDED: FlatOutLike/Configs/Create Building SO Set` — создать/обновить инстансы `BuildingCatalogConfig` и `IdleIncomeConfig` с дефолтными значениями среза (цены этапов, income rates, offlineCapHours).
 
 ---
 
@@ -586,6 +642,9 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 6. **Что происходит при смерти игрока в Derby.** Спектатор-камера до конца матча? Сразу в Garage? Перезапуск? — UX-решение.
 7. **Стратегия визуализации повреждений.** В `CarDamageVisualConfig` доступны три стратегии (A: material swap, B: mesh swap, C: blend shapes). На какой стартовать срез? Рекомендация: A на старте (0 работы в Blender), переход на C через Claude + Blender MCP после playtest, если визуал не дотянет. Решение по факту первого playable build.
 8. **Звук.** Не входит в acceptance criteria среза формально, но без него ощущения от игры будут слабые. Подключить заглушки через `IAudioService` сразу или отложить?
+9. **Баланс стройки и дохода.** Цены этапов, income rates, offlineCapHours (4? 8? 12?). Ориентир: полная стройка среза ≈ 8–12 средних Derby-наград; offline-доход за кап ≈ 1–2 Derby-награды. Стартовые значения exposed в SO, тюнинг по playtest.
+10. **Anti-cheat времени.** В срезе доверяем device clock (через `ITimeProvider`); отрицательный offline клампится в 0. Серверная валидация времени — после среза.
+11. **Быстрая кнопка PLAY поверх карты.** Гибрид-кэж практика — снизить time-to-fun кнопкой мгновенного старта Derby поверх хаба. Добавлять в срез или проверить необходимость на playtest? (Реализация тривиальна — кнопка в `HubHudView`.)
 
 ---
 
@@ -600,8 +659,11 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 5. **Derby-матч**: `DerbyMatchService`, win/lose, 3 personality, спавн 3–6 AI, hazards и pickup'ы. Цель: первый играбельный Derby.
 6. **Eject + полёт**: `EjectCommand`, `DriverController` ragdoll switch, `DriverFlightService`, `OrbitDriverCameraBehaviour`. Цель: водитель вылетает при гибели машины.
 7. **High Jump**: сцена, рамп, `EjectTriggerZone`, `LandingZone`, `HighJumpScoreService`, `FlipDetectorService`. Цель: первая Stunts-попытка.
-8. **Meta**: `MetaProgressService`, `EconomyService`, Garage UI, Stunts Hub. Цель: цикл «играй → копи → апай → играй».
+8. **Meta**: `MetaProgressService`, `EconomyService`, Garage UI, временная заглушка `_TempHubMenu` (кнопки Derby / High Jump / Garage; заменяется картой BaseHub на шаге 11 — отдельный Stunts Hub не делаем). Цель: цикл «играй → копи → апай → играй».
 9. **Mobile input**: `MobileInputProvider` + `MobileInputCanvas`. Цель: играется на телефоне.
-10. **Polish**: kill-feed, pause, баланс через playtest, ответы на Open Questions.
+10. **Polish кора**: kill-feed, pause, баланс через playtest, ответы на Open Questions кора.
+11. **BaseHub-каркас**: сцена `BaseHub`, `HubCameraBehaviour` (pan/zoom), `BuildingCatalogConfig`, `BuildSiteController`, расстановка площадок editor-скриптом `Build Base Hub Layout`, замена `_TempHubMenu` картой. Цель: карта базы — главный экран, все режимы доступны с неё.
+12. **Стадийная стройка**: `BuildProgressService`, `BuildingPanelView`, вложения монет, визуальные стадии, unlock-гейтинг (High Jump открывается стройкой башни), отдельный save-блок стройки. Цель: петля «заработал → вложил → открыл».
+13. **Idle-доход**: `ITimeProvider` в деле, `IdleIncomeService`, тап-сбор (`CoinBubble`), offline-начисление с капом, `WelcomeBackPopupView`, ребаланс `RewardConfig` под sink стройки. Цель: полная гибрид-кэж петля с пассивным доходом.
 
 После каждого шага — playable build, проверяемый по соответствующим пунктам Acceptance Criteria.

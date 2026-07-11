@@ -89,9 +89,10 @@ Assets/Development/ и Assets/ThirdParty/), чтобы понять что уж�
 Конкретно: GameLifetimeScope, GameBootstrap, IInputProvider 
 (только KeyboardInputProvider пока, MobileInputProvider — позже 
 на шаге 9), IEventBus, generic FSM, базовые enum/const 
-(GameState, Tags, AnimatorHashes, CarId, StuntType, 
-UpgradeCategory, HazardType), и пустые папки для будущих сервисов 
-включая Services/Progression/ (см. §15.3).
+(GameState с состоянием BaseHub, Tags, AnimatorHashes, CarId, 
+StuntType, UpgradeCategory, HazardType, BuildingId, RewardSource), 
+ITimeProvider + SystemTimeProvider в Core/Time/, и пустые папки 
+для будущих сервисов включая Services/Progression/ (см. §15.3).
 
 Регламент работы:
 - Сначала покажи план: список файлов которые создашь, в каком 
@@ -119,6 +120,8 @@ UpgradeCategory, HazardType), и пустые папки для будущих �
   не «pause через флаг».
 - Save/load выделен в IProfileStorage интерфейс с реализацией 
   PlayerPrefsProfileStorage.
+- Всё время — через ITimeProvider (SystemTimeProvider, UTC), 
+  никакого DateTime.Now по коду.
 
 После завершения шага 1 жди от меня результат проверки в Unity, 
 прежде чем переходить дальше.
@@ -128,12 +131,12 @@ UpgradeCategory, HazardType), и пустые папки для будущих �
 
 - Пустая сцена с `GameBootstrap` стартует без ошибок в Console.
 - Логирование показывает, что `GameLifetimeScope` инициализировался, `IEventBus` зарегистрирован.
-- `GameFlowService` стартует в `MainMenu` состоянии.
+- `GameFlowService` стартует в `BaseHub` состоянии (до шага 11 — временная сцена-заглушка `_TempHubMenu`).
 - Структура папок `Assets/Development/Scripts/` соответствует CLAUDE.md.
 
 ---
 
-## Сессии 2-10 — Шаблон промпта для остальных шагов
+## Сессии 2-13 — Шаблон промпта для остальных шагов
 
 После того, как шаг N проверен и работает, переходишь к шагу N+1 по этому шаблону. Имена и детали шагов смотри в Implementation Order (§19 `game-design.md`).
 
@@ -209,22 +212,45 @@ Implementation Order (§19 game-design.md): «<название шага>».
 **Шаг 8 (Meta):**
 - `IProfileStorage` интерфейс уже создан на шаге 1 (§15.3 предохранитель). Сейчас реализуется `PlayerPrefsProfileStorage`.
 - `EconomyService` публикует `RewardEarnedEvent` с XP-полем (даже если XP пока = 0) — §15.3 предохранитель.
-- Garage / Stunts Hub — MVP: отдельные View, Presenter, читают из `IPlayerProfile`.
+- Garage — MVP: View + Presenter, читают из `IPlayerProfile`.
+- Вместо Stunts Hub — временная заглушка `_TempHubMenu` с кнопками Derby / High Jump / Garage (заменяется картой BaseHub на шаге 11; отдельный Stunts Hub UI не делаем).
 
 **Шаг 9 (Mobile input):**
 - `MobileInputProvider` реализует тот же `IInputProvider`, что и `KeyboardInputProvider`.
 - Выбор провайдера в `GameLifetimeScope` через `Application.platform` или флаг.
 - `MobileInputCanvas` — отдельная сцена/префаб с виртуальными стиками; используем UI-ассеты из `Assets/ThirdParty/<UI pack>/`.
 
-**Шаг 10 (Polish):**
-- На этом этапе уже не «делаем фичу», а закрываем acceptance criteria из §16 game-design.
+**Шаг 10 (Polish кора):**
+- На этом этапе уже не «делаем фичу», а закрываем acceptance criteria кора из §16 game-design.
 - Kill-feed, pause, баланс — через правки SO, не кода (если архитектура сделана правильно — а аудиты по ходу это контролировали).
+
+**Шаг 11 (BaseHub-каркас):**
+- Сцена `BaseHub` собирается editor-скриптом `Build Base Hub Layout` по `BuildingCatalogConfig`, не вручную.
+- `HubCameraBehaviour` реализует `ICameraBehaviour`; pan/zoom параметры — только из `HubCameraConfig` SO.
+- Тап-зоны зданий — Collider + **kinematic Rigidbody** (правило CLAUDE.md).
+- `GameState.BaseHub` уже в enum с шага 1 — меняется только сцена (заглушка `_TempHubMenu` → карта), FSM и переходы не трогаем.
+- Заглушки трюков (LongJump, FireRings, Bowling, FieldGoal, HighCard) — те же `BuildSiteController` в disabled-режиме через флаг `enabled=false` в конфиге, не отдельный класс.
+
+**Шаг 12 (Стадийная стройка):**
+- `BuildProgressService` — pure C#, в `Services/Progression/` (§15.1). Save — **отдельный блок** через `IProfileStorage`, не внутри профиля `MetaProgressService`.
+- Все цены этапов — в `BuildingCatalogConfig`; unlock-эффекты декларативно в SO (`BuildingId` → unlock payload), никаких switch по BuildingId в коде сервиса.
+- Разблокировка через подписку на `BuildingCompletedEvent` — никаких прямых вызовов из `BuildProgressService` в `GameFlowService`.
+- Визуальные стадии — свап дочерних префабов в `BuildSiteController`; префабы стадий из `Assets/Development/Prefabs/Hub/<BuildingId>/`.
+- High Jump с этого шага гейтится стройкой башни (до шага 12 был доступен свободно через заглушку — это ок).
+
+**Шаг 13 (Idle-доход):**
+- Всё время — через `ITimeProvider` (UTC), созданный на шаге 1. `DateTime.Now` по коду = нарушение для аудита.
+- Offline-расчёт: `min(elapsed, offlineCapHours)`, отрицательный elapsed (перевод часов назад) клампить в 0.
+- Доход публикуется через `RewardEarnedEvent { source = IdleIncome }` — §15.3 предохранитель в действии, `EconomyService` не переписывается.
+- `WelcomeBackPopup` — через push-pop состояний `GameFlowService` (тот же механизм, что Pause), не отдельный флаг/канвас поверх.
+- Кнопка «x2 за рекламу» — disabled-заглушка, никакой SDK-интеграции в срезе.
+- В этом же шаге ребаланс `RewardConfig` под sink стройки (Open Question #9) — правки только в SO.
 
 ---
 
 ## Архитектурный аудит — каждые 3-4 шага
 
-После шагов 3, 6 и 9 (или когда чувствуешь, что накопилось — больше двух «странных» решений CLI подряд) запусти явный аудит.
+После шагов 3, 6, 9 и 12 (или когда чувствуешь, что накопилось — больше двух «странных» решений CLI подряд) запусти явный аудит.
 
 ### Промпт аудита
 
@@ -245,6 +271,7 @@ Implementation Order (§19 game-design.md): «<название шага>».
 - Magic numbers в Controllers — должны быть в SO.
 - Объекты из пула без InjectGameObject + явного Launch().
 - Триггер-зоны без kinematic Rigidbody.
+- Прямые DateTime.Now / DateTime.UtcNow вместо ITimeProvider.
 
 Покажи отчёт с конкретными файлами и строками. Не исправляй 
 автоматически — я выберу, что фиксить.
