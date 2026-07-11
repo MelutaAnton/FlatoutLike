@@ -1,6 +1,7 @@
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Camera;
 using FlatOutLike.Controllers.Destructible;
+using FlatOutLike.Controllers.Mobile;
 using FlatOutLike.Controllers.Stunts;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
@@ -182,11 +183,46 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private HighJumpHudView _highJumpHudView;
 
+        // ── Шаг 9: мобильный ввод ─────────────────────────────────────────────────
+        /// <summary>
+        /// Форсирует мобильный input-провайдер даже в редакторе/на десктопе — для теста
+        /// мобильного HUD без сборки на устройство. В билде на телефон достаточно
+        /// Application.isMobilePlatform, флаг можно оставить false.
+        /// </summary>
+        [SerializeField] private bool _forceMobileInput;
+
+        /// <summary>
+        /// Canvas мобильного управления (стики + кнопки). Заполняется editor-скриптом на
+        /// мобильных сценах; регистрируется только в mobile-ветке выбора IInputProvider.
+        /// </summary>
+        [SerializeField] private MobileInputCanvas _mobileInputCanvas;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
             builder.Register<EventBus>(Lifetime.Singleton).As<IEventBus>();
-            builder.Register<KeyboardInputProvider>(Lifetime.Singleton).As<IInputProvider>();
+
+            // Выбор input-провайдера (Шаг 9): мобильный HUD пушит ввод вручную, поэтому
+            // MobileInputProvider регистрируется дополнительно AsSelf() — MobileInputCanvas
+            // инжектит его напрямую (не через IInputProvider), чтобы вызывать Set*/Queue*.
+            bool useMobileInput = _forceMobileInput || Application.isMobilePlatform;
+            if (useMobileInput)
+            {
+                builder.Register<MobileInputProvider>(Lifetime.Singleton).AsSelf().As<IInputProvider>();
+
+                if (_mobileInputCanvas != null)
+                    builder.RegisterComponent(_mobileInputCanvas);
+            }
+            else
+            {
+                builder.Register<KeyboardInputProvider>(Lifetime.Singleton).As<IInputProvider>();
+
+                // На десктопе прошитый мобильный канвас не регистрируется (Construct не вызовется),
+                // но GameObject остался бы видимым поверх игры — гасим явно.
+                if (_mobileInputCanvas != null)
+                    _mobileInputCanvas.gameObject.SetActive(false);
+            }
+
             builder.Register<InputRouter>(Lifetime.Singleton);
 
             // Meta

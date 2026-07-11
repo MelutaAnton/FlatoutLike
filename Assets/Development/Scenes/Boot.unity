@@ -213,6 +213,15 @@ MonoBehaviour:
   _highJumpRulesConfig: {fileID: 0}
   _carCatalogConfig: {fileID: 0}
   _upgradeCatalogConfig: {fileID: 0}
+  _stuntsCatalogConfig: {fileID: 0}
+  _mainMenuView: {fileID: 0}
+  _garageView: {fileID: 0}
+  _stuntsHubView: {fileID: 0}
+  _matchEndView: {fileID: 0}
+  _derbyHudView: {fileID: 0}
+  _highJumpHudView: {fileID: 0}
+  _forceMobileInput: 0
+  _mobileInputCanvas: {fileID: 0}
 --- !u!4 &747414787
 Transform:
   m_ObjectHideFlags: 0
