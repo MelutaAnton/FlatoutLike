@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using FlatOutLike.Controllers.Car;
+using FlatOutLike.Models;
 
 namespace FlatOutLike.Services.Match
 {
@@ -10,6 +11,10 @@ namespace FlatOutLike.Services.Match
     public sealed class CarRegistry : ICarRegistry
     {
         private readonly List<CarController> _cars = new List<CarController>();
+
+        // Kill-feed (Шаг 10b): отображаемые имена машин по id. Чистится синхронно
+        // с _cars — см. Unregister/Clear.
+        private readonly Dictionary<CarId, string> _names = new Dictionary<CarId, string>();
 
         /// <inheritdoc/>
         public IReadOnlyList<CarController> Cars => _cars;
@@ -46,14 +51,22 @@ namespace FlatOutLike.Services.Match
             if (car == null) return;
 
             _cars.Remove(car);
+            _names.Remove(car.CarId);
             if (Player == car)
                 Player = null;
         }
 
         /// <inheritdoc/>
+        public void RegisterName(CarId id, string displayName) => _names[id] = displayName;
+
+        /// <inheritdoc/>
+        public bool TryGetName(CarId id, out string displayName) => _names.TryGetValue(id, out displayName);
+
+        /// <inheritdoc/>
         public void Clear()
         {
             _cars.Clear();
+            _names.Clear();
             Player = null;
         }
     }

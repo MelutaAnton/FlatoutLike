@@ -15,9 +15,9 @@ using Object = UnityEngine.Object;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Шаг 8c/8d: прошивает GameLifetimeScope активной сцены ссылками на UI-View'ы
+    /// Шаг 8c/8d/10: прошивает GameLifetimeScope активной сцены ссылками на UI-View'ы
     /// (_mainMenuView / _garageView / _stuntsHubView / _matchEndView / _derbyHudView /
-    /// _highJumpHudView) и на StuntsCatalogConfig_Default (_stuntsCatalogConfig). Единственное место, где
+    /// _highJumpHudView / _pauseOverlayView) и на StuntsCatalogConfig_Default (_stuntsCatalogConfig). Единственное место, где
     /// прошиваются эти поля — каждый Build*UIEditor вызывает соответствующий метод
     /// сразу после создания своего View; отдельный пункт меню — для ручной перепрошивки.
     ///
@@ -56,6 +56,9 @@ namespace FlatOutLike.Editor.Setup
             var highJumpHudView = Object.FindAnyObjectByType<HighJumpHudView>();
             if (highJumpHudView != null) BindHighJumpHudView(highJumpHudView);
 
+            var pauseOverlayView = Object.FindAnyObjectByType<PauseOverlayView>(FindObjectsInactive.Include);
+            if (pauseOverlayView != null) BindPauseOverlayView(pauseOverlayView);
+
             BindStuntsCatalogConfig();
 
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -69,6 +72,7 @@ namespace FlatOutLike.Editor.Setup
         public static void BindMatchEndView(MatchEndView view)   => BindField("_matchEndView", view);
         public static void BindDerbyHudView(DerbyHudView view)         => BindField("_derbyHudView", view);
         public static void BindHighJumpHudView(HighJumpHudView view)   => BindField("_highJumpHudView", view);
+        public static void BindPauseOverlayView(PauseOverlayView view) => BindField("_pauseOverlayView", view);
 
         public static void BindStuntsCatalogConfig()
         {

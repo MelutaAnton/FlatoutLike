@@ -197,6 +197,14 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private MobileInputCanvas _mobileInputCanvas;
 
+        // ── Шаг 10a: Pause ────────────────────────────────────────────────────────
+        /// <summary>
+        /// Оверлей паузы. Живёт в геймплейных сценах (Derby/HighJump), зависит только от
+        /// IEventBus/IGameFlowService (безусловны) — паттерн MatchEndView. На сценах без него
+        /// (мета-UI) поле остаётся null, Presenter не регистрируется.
+        /// </summary>
+        [SerializeField] private PauseOverlayView _pauseOverlayView;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -253,6 +261,19 @@ namespace FlatOutLike.Installers
                 .As<IGameFlowService>()
                 .WithParameter(initialState);
             builder.RegisterComponentInHierarchy<GameBootstrap>();
+
+            // Пауза (Шаг 10a). Регистрируется БЕЗУСЛОВНО — GameBootstrap инжектит IPauseService
+            // на каждой сцене (паттерн InputRouter). Eager — иначе конструктор (страховка
+            // Time.timeScale=1f + подписки) не выполнится до первого Tick.
+            builder.Register<PauseService>(Lifetime.Singleton).As<IPauseService>();
+            builder.RegisterBuildCallback(c => c.Resolve<IPauseService>());
+
+            if (_pauseOverlayView != null)
+            {
+                builder.RegisterComponent(_pauseOverlayView);
+                builder.Register<PauseOverlayPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<PauseOverlayPresenter>());
+            }
 
             // Награды (Шаг 5e) — зачисляет RewardEarnedEvent в профиль игрока.
             // Регистрируется безусловно (не зависит от _derbyMatchConfig/_rewardConfig),

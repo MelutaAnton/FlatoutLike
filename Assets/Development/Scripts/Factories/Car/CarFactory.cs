@@ -78,6 +78,10 @@ namespace FlatOutLike.Factories.Car
             GameObject      playerPrefab    = config.PlayerCarPrefab;
             CarStatsConfig  playerBaseStats = config.PlayerStats;
 
+            // Kill-feed (Шаг 10b): имя игрока для ленты. Дефолт — "PLAYER", переопределяется
+            // ниже из каталога, если у entry заполнен DisplayName.
+            string playerDisplayName = "PLAYER";
+
             if (_carCatalogConfig != null && _carCatalogConfig.Entries.Count > 0 &&
                 _carCatalogConfig.TryGetEntry(_economy.SelectedCarId, out var catalogEntry))
             {
@@ -92,6 +96,9 @@ namespace FlatOutLike.Factories.Car
                     playerBaseStats = catalogEntry.Stats;
                 else
                     Debug.LogWarning($"[CarFactory] У entry '{catalogEntry.Id}' каталога не задан Stats — фоллбэк на DerbyMatchConfig.PlayerStats.");
+
+                if (!string.IsNullOrEmpty(catalogEntry.DisplayName))
+                    playerDisplayName = catalogEntry.DisplayName;
             }
 
             CarController playerController = null;
@@ -122,6 +129,7 @@ namespace FlatOutLike.Factories.Car
                 {
                     allCars.Add(playerController);
                     _registry.Register(playerController, isPlayer: true);
+                    _registry.RegisterName(playerController.CarId, playerDisplayName);
                 }
             }
             else
@@ -148,6 +156,11 @@ namespace FlatOutLike.Factories.Car
             }
 
             int spawnCount = Mathf.Min(enemyCount, availableSlots);
+
+            // Счётчик употреблений имени профиля — уникализация для kill-feed: несколько
+            // врагов на одном EnemyPersonalityConfig иначе неразличимы ("Aggressor ▸ Aggressor").
+            var nameCounts = new System.Collections.Generic.Dictionary<string, int>();
+
             for (int i = 0; i < spawnCount; i++)
             {
                 var entry = enemies[i];
@@ -189,6 +202,20 @@ namespace FlatOutLike.Factories.Car
                 {
                     allCars.Add(carController);
                     _registry.Register(carController, isPlayer: false);
+
+                    // Kill-feed (Шаг 10b): EnemyPersonalityConfig не имеет поля displayName —
+                    // используем имя ассета профиля; повторные употребления получают суффикс-номер
+                    // ("Aggressor", "Aggressor 2", ...). Профиль не обязателен: тогда
+                    // ICarRegistry.TryGetName вернёт false, presenter подставит фоллбэк "CAR <id>".
+                    if (entry.profile != null)
+                    {
+                        string baseName = entry.profile.name;
+                        nameCounts.TryGetValue(baseName, out int used);
+                        nameCounts[baseName] = used + 1;
+
+                        _registry.RegisterName(carController.CarId,
+                            used == 0 ? baseName : $"{baseName} {used + 1}");
+                    }
                 }
             }
 

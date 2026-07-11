@@ -113,5 +113,45 @@ namespace FlatOutLike.Tests
             // Защитный случай (не должен происходить в рантайме) — не должен уйти в минус.
             Assert.AreEqual(0, DerbyHudPresenter.CountAlive(totalRegistered: 1, destroyedCount: 5));
         }
+
+        // ── FormatKillFeedEntry (Шаг 10b) ─────────────────────────────────────────
+
+        [Test]
+        public void FormatKillFeedEntry_KillerDifferentFromVictim_ReturnsKillerArrowVictim()
+        {
+            string text = DerbyHudPresenter.FormatKillFeedEntry(Enemy, Player, "ENEMY", "PLAYER");
+
+            Assert.AreEqual("ENEMY ▸ PLAYER", text);
+        }
+
+        [Test]
+        public void FormatKillFeedEntry_KillerEqualsVictim_Suicide_ReturnsWreckedOnly()
+        {
+            string text = DerbyHudPresenter.FormatKillFeedEntry(Player, Player, "PLAYER", "PLAYER");
+
+            Assert.AreEqual("PLAYER WRECKED", text);
+        }
+
+        [Test]
+        public void FormatKillFeedEntry_NoKiller_ReturnsWreckedOnly()
+        {
+            string text = DerbyHudPresenter.FormatKillFeedEntry(CarId.None, Player, "CAR -1", "PLAYER");
+
+            Assert.AreEqual("PLAYER WRECKED", text);
+        }
+
+        // ── ShouldShowWreckedPanel (Шаг 10c) ──────────────────────────────────────
+
+        [Test]
+        public void ShouldShowWreckedPanel_TargetIsPlayer_ReturnsTrue()
+        {
+            Assert.IsTrue(DerbyHudPresenter.ShouldShowWreckedPanel(Player, Player));
+        }
+
+        [Test]
+        public void ShouldShowWreckedPanel_TargetIsEnemy_ReturnsFalse()
+        {
+            Assert.IsFalse(DerbyHudPresenter.ShouldShowWreckedPanel(Enemy, Player));
+        }
     }
 }

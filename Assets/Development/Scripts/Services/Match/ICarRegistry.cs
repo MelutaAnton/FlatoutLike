@@ -34,6 +34,18 @@ namespace FlatOutLike.Services.Match
         void Unregister(CarController car);
 
         /// <summary>
+        /// Регистрирует отображаемое имя машины для kill-feed (Шаг 10b) — единственный источник
+        /// имён участников матча. Повторный вызов с тем же id перезаписывает имя.
+        /// </summary>
+        void RegisterName(Models.CarId id, string displayName);
+
+        /// <summary>
+        /// Отображаемое имя машины, если оно было зарегистрировано. <c>false</c>, если для id
+        /// имени нет — вызывающая сторона (presenter) сама решает фоллбэк (например, "CAR &lt;id&gt;").
+        /// </summary>
+        bool TryGetName(Models.CarId id, out string displayName);
+
+        /// <summary>
         /// Очищает весь реестр и сбрасывает ссылку на игрока.
         /// Вызывается перед повторным спавном, чтобы не было дублей.
         /// </summary>

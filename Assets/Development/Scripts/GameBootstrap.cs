@@ -12,6 +12,7 @@ namespace FlatOutLike
         private IInputProvider _input;
         private InputRouter _router;
         private IMetaProgressService _meta;
+        private IPauseService _pause;
         private bool _initialized;
 
         [Inject]
@@ -19,12 +20,14 @@ namespace FlatOutLike
             IGameFlowService flow,
             IInputProvider input,
             InputRouter router,
-            IMetaProgressService meta)
+            IMetaProgressService meta,
+            IPauseService pause)
         {
             _flow = flow;
             _input = input;
             _router = router;
             _meta = meta;
+            _pause = pause;
 
             // Свежий per-scene scope стартовое GameStateChangedEvent не публикует —
             // выравниваем input-контекст с начальным состоянием сцены явно
@@ -42,6 +45,7 @@ namespace FlatOutLike
                 return;
 
             _router.Tick();
+            _pause.Tick(); // после router.Tick() — латч PausePressed уже актуален; до flow.Tick()
             _flow.Tick();
         }
     }
