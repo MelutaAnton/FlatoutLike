@@ -225,14 +225,19 @@ Implementation Order (§19 game-design.md): «<название шага>».
 - Kill-feed, pause, баланс — через правки SO, не кода (если архитектура сделана правильно — а аудиты по ходу это контролировали).
 
 **Шаг 11 (BaseHub-каркас):**
-- Сцена `BaseHub` собирается editor-скриптом `Build Base Hub Layout` по `BuildingCatalogConfig`, не вручную.
-- `HubCameraBehaviour` реализует `ICameraBehaviour`; pan/zoom параметры — только из `HubCameraConfig` SO.
-- Тап-зоны зданий — Collider + **kinematic Rigidbody** (правило CLAUDE.md).
+- Сцена `BaseHub` собирается editor-скриптом `Build Base Hub Layout` по `BuildingCatalogConfig` (площадки, зоны, spawn point персонажа), не вручную.
+- `HubCharacterController` — MonoBehaviour с Unity API only (`CharacterController.Move`, Animator); движение читает из `IInputProvider.Move` — тот же интерфейс, что машина (KeyboardInputProvider WASD и MobileInputProvider-стик с шага 9 уже работают). Параметры — только из `HubCharacterConfig` SO.
+- Персонаж — префаб водителя (Mixamo Humanoid) с локомоушн-аниматором Idle/Run; НЕ трогать `DriverController` (ragdoll-логика), это отдельный контроллер.
+- В `InputRouter` добавляется контекст `Hub` (Move, Pause) — активен в `GameState.BaseHub`.
+- `HubCameraBehaviour` реализует `ICameraBehaviour`, follow за персонажем; параметры — из `HubCameraConfig` SO.
+- Все зоны (вложение, сбор, запуск) — Trigger-Collider + **kinematic Rigidbody** (правило CLAUDE.md).
+- `LaunchZoneController`: вход → радиальный таймер (~1 сек, значение в SO) → переход состояния; выход из зоны сбрасывает таймер. Никакого мгновенного запуска.
 - `GameState.BaseHub` уже в enum с шага 1 — меняется только сцена (заглушка `_TempHubMenu` → карта), FSM и переходы не трогаем.
 - Заглушки трюков (LongJump, FireRings, Bowling, FieldGoal, HighCard) — те же `BuildSiteController` в disabled-режиме через флаг `enabled=false` в конфиге, не отдельный класс.
 
 **Шаг 12 (Стадийная стройка):**
 - `BuildProgressService` — pure C#, в `Services/Progression/` (§15.1). Save — **отдельный блок** через `IProfileStorage`, не внутри профиля `MetaProgressService`.
+- Вложение — ПОТОКОВОЕ: игрок стоит в зоне площадки, монеты списываются пачками по `InvestStreamRate` из `HubCharacterConfig`. Никаких кнопок «Вложить». Прогресс — `BuildingInvestProgressEvent` → world-space ценник `BuildingPanelView`.
 - Все цены этапов — в `BuildingCatalogConfig`; unlock-эффекты декларативно в SO (`BuildingId` → unlock payload), никаких switch по BuildingId в коде сервиса.
 - Разблокировка через подписку на `BuildingCompletedEvent` — никаких прямых вызовов из `BuildProgressService` в `GameFlowService`.
 - Визуальные стадии — свап дочерних префабов в `BuildSiteController`; префабы стадий из `Assets/Development/Prefabs/Hub/<BuildingId>/`.
@@ -241,6 +246,8 @@ Implementation Order (§19 game-design.md): «<название шага>».
 **Шаг 13 (Idle-доход):**
 - Всё время — через `ITimeProvider` (UTC), созданный на шаге 1. `DateTime.Now` по коду = нарушение для аудита.
 - Offline-расчёт: `min(elapsed, offlineCapHours)`, отрицательный elapsed (перевод часов назад) клампить в 0.
+- `CoinStackController` — чистая ВИЗУАЛИЗАЦИЯ баланса `IPlayerProfile` (кап отображаемых монет из SO), не отдельный ресурс и не второй source of truth.
+- Сбор дохода — проходом персонажа через зону сбора (`CoinBubbleController`), не тапом.
 - Доход публикуется через `RewardEarnedEvent { source = IdleIncome }` — §15.3 предохранитель в действии, `EconomyService` не переписывается.
 - `WelcomeBackPopup` — через push-pop состояний `GameFlowService` (тот же механизм, что Pause), не отдельный флаг/канвас поверх.
 - Кнопка «x2 за рекламу» — disabled-заглушка, никакой SDK-интеграции в срезе.

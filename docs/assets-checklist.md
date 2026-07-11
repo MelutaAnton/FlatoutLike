@@ -59,6 +59,21 @@
 
 ---
 
+## 4a. 3D — персонаж хаба и монеты (КРИТИЧНО для arcade idle)
+
+Персонаж и стопка монет — то, на что игрок смотрит в хабе постоянно.
+
+- [ ] **Персонаж** — переиспользуется модель водителя (Mixamo, уже в проекте). Отдельная модель НЕ нужна.
+- [ ] **Mixamo-анимации** (free) докачать в `Assets/Development/Art/Animations/`:
+  - [ ] `Hub_Idle.fbx` (расслабленный idle, не боевой)
+  - [ ] `Hub_Run.fbx` (бег; вариант с руками у груди — имитация переноски — смотрится лучше со стопкой)
+  - [ ] (опц.) `Hub_Victory.fbx` — реакция на завершение стройки здания
+- [ ] **3D-монета** для стопки и пузырей: цилиндр-примитив с материалом gold в палитре проекта, ИЛИ монета из **Kenney Casino/Coin ассетов** (CC0). Один меш, low-poly (12-16 сегментов) — стопка из 20-30 штук не должна стоить дорого.
+- [ ] Префаб `Coin.prefab` в `Assets/Development/Prefabs/Hub/` — используется `CoinStackController` (стопка) и `CoinBubbleController` (пузырь у income-здания). Спавн через пул (`VfxFactory`/отдельная фабрика — решит CLI по CLAUDE.md).
+- [ ] Радиальный таймер-круг запуска (`LaunchConfirmView`) — filled-circle спрайт из **Mega GUI Pack 2** (уже куплен) или процедурный `Image.fillAmount`.
+
+---
+
 ## 5. VFX
 
 База — **JMO Cartoon FX Remaster Free** (бесплатно) + уже купленный **Real Fire & Smoke**.
@@ -89,6 +104,7 @@
 
 - [ ] SFX (источники: **Kenney Audio** CC0 / **Sonniss GDC Bundle** / **Pixabay**) в `Assets/Development/Audio/SFX/`:
   - [ ] `SFX_CoinCollect.ogg`, `SFX_CoinPile.ogg`
+  - [ ] `SFX_CoinStream_Loop.ogg` — поток монет при вложении стоя в зоне (loop, стартует/стопается с потоком)
   - [ ] `SFX_BuildInvest.ogg` (молоток/стройка)
   - [ ] `SFX_BuildStageComplete.ogg`
   - [ ] `SFX_BuildingComplete_Fanfare.ogg`
@@ -109,6 +125,8 @@
 
 ## 9. Чек-лист «готов к шагу 11»
 
+- [ ] Mixamo-анимации Hub_Idle / Hub_Run скачаны, Humanoid-риг проверен на модели водителя.
+- [ ] `Coin.prefab` (low-poly монета) собран.
 - [ ] Construction-пак (Synty или Kenney) импортирован, URP-конверсия сделана.
 - [ ] Префабы 4 стадий собраны минимум для `HighJumpTower`, `TicketBooth`, `Tribunes`.
 - [ ] Готовые здания `DerbyArena`, `Garage` собраны из имеющихся паков (или ProBuilder-болванки).
