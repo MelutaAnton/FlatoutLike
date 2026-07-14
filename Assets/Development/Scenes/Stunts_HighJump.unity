@@ -87376,7 +87376,7 @@ MonoBehaviour:
   _matchEndView: {fileID: 0}
   _derbyHudView: {fileID: 0}
   _highJumpHudView: {fileID: 132971393}
-  _forceMobileInput: 1
+  _forceMobileInput: 0
   _mobileInputCanvas: {fileID: 9150318162647215938}
   _pauseOverlayView: {fileID: 2014237090}
 --- !u!4 &791582896
