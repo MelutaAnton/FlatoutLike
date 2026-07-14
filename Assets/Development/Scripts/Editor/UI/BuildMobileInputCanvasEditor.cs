@@ -68,6 +68,15 @@ namespace FlatOutLike.Editor.UI
         private static readonly Color StickBgTint = new Color(1f, 1f, 1f, 0.55f);
         private static readonly Color StickHandleTint = new Color(1f, 1f, 1f, 0.9f);
 
+        // Палитра стилизации hold-кнопок — семантика функций, не декоративный выбор.
+        private static readonly Color GasColor       = new Color(0.18f, 0.62f, 0.28f, 0.85f); // зелёный «газ»
+        private static readonly Color BrakeColor     = new Color(0.78f, 0.22f, 0.18f, 0.85f); // красный «тормоз»
+        private static readonly Color HandbrakeColor = new Color(0.87f, 0.62f, 0.12f, 0.85f); // янтарный «ручник»
+        private static readonly Color NitroColor     = new Color(0.12f, 0.55f, 0.80f, 0.85f); // сине-голубой «ускорение»
+        private static readonly Color BoostColor     = NitroColor; // Boost — та же семантика ускорения, что и Nitro.
+        private static readonly Color EjectColor     = new Color(0.58f, 0.28f, 0.72f, 0.85f); // фиолетовый «особое действие» — осознанно не красный, чтобы не путать с тормозом.
+        private static readonly Color PauseColor     = ButtonTint; // паузу по семантике функции не перекрашиваем.
+
         private const string PrefabPath = "Assets/Development/Prefabs/UI/MobileInputCanvas.prefab";
 
         [MenuItem("FlatOutLike/UI/Build Mobile Input Canvas")]
@@ -149,6 +158,18 @@ namespace FlatOutLike.Editor.UI
             var pauseBtn = CreateHoldButton(root, "PauseButton", PauseSprite,
                 new Vector2(1f, 1f), new Vector2(-60f, -60f), 100f);
 
+            // ── Стилизация hold-кнопок: transition ColorTint + перекраска Image ─
+            // Перекрывает нейтральный ButtonTint, который CreateHoldButton выше поставил
+            // всем Image — делается ПОСЛЕ создания всех кнопок и ДО сохранения префаба,
+            // чтобы пересборка канваса не теряла стиль.
+            StyleHoldButton(gasBtn.gameObject, GasColor);
+            StyleHoldButton(brakeBtn.gameObject, BrakeColor);
+            StyleHoldButton(handbrakeBtn.gameObject, HandbrakeColor);
+            StyleHoldButton(nitroBtn.gameObject, NitroColor);
+            StyleHoldButton(ejectBtn.gameObject, EjectColor);
+            StyleHoldButton(boostBtn.gameObject, BoostColor);
+            StyleHoldButton(pauseBtn.gameObject, PauseColor);
+
             // ── Компонент MobileInputCanvas + прошивка полей ────────────────────
             var mic = canvasGo.GetComponent<MobileInputCanvas>();
             if (mic == null) mic = Undo.AddComponent<MobileInputCanvas>(canvasGo);
@@ -206,6 +227,95 @@ namespace FlatOutLike.Editor.UI
             prop.objectReferenceValue = mic;
             so.ApplyModifiedProperties();
             Debug.Log("[Editor] GameLifetimeScope._mobileInputCanvas прошит.");
+        }
+
+        [MenuItem("FlatOutLike/UI/Style Mobile Input Buttons")]
+        public static void StyleMobileInputButtons()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
+            {
+                Debug.LogWarning("[Editor] " + PrefabPath + " не найден. Сначала запусти " +
+                                  "'FlatOutLike/UI/Build Mobile Input Canvas'.");
+                return;
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                StyleByName(root, "GasButton", GasColor);
+                StyleByName(root, "BrakeButton", BrakeColor);
+                StyleByName(root, "HandbrakeButton", HandbrakeColor);
+                StyleByName(root, "NitroButton", NitroColor);
+                StyleByName(root, "EjectButton", EjectColor);
+                StyleByName(root, "BoostButton", BoostColor);
+                StyleByName(root, "PauseButton", PauseColor);
+
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log("[Editor] Style Mobile Input Buttons: префаб сохранён — " + PrefabPath + ".");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void StyleByName(GameObject root, string childName, Color color)
+        {
+            var t = FindChildByName(root.transform, childName);
+            if (t == null)
+            {
+                Debug.LogWarning("[Editor] Style Mobile Input Buttons: '" + childName +
+                                  "' не найден среди потомков " + root.name + ".");
+                return;
+            }
+
+            StyleHoldButton(t.gameObject, color);
+        }
+
+        private static Transform FindChildByName(Transform root, string name)
+        {
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                if (t != root && t.name == name)
+                    return t;
+            return null;
+        }
+
+        /// <summary>
+        /// Настраивает hold-кнопку: цвет Image + Button.transition = ColorTint с
+        /// targetGraphic на этот же Image (без targetGraphic tint не применяется).
+        /// Мигрирует и уже добавленные вручную Button (пользователь мог настроить их
+        /// по-разному), и создаёт недостающие — миграционная идемпотентность.
+        /// </summary>
+        private static void StyleHoldButton(GameObject btnGo, Color iconColor)
+        {
+            var image = btnGo.GetComponent<Image>();
+            if (image == null)
+            {
+                Debug.LogWarning("[Editor] StyleHoldButton: на '" + btnGo.name + "' нет Image — пропускаем.");
+                return;
+            }
+            image.color = iconColor;
+
+            var btn = btnGo.GetComponent<Button>();
+            if (btn == null) btn = btnGo.AddComponent<Button>();
+
+            btn.transition = Selectable.Transition.ColorTint;
+            btn.targetGraphic = image;
+
+            var colors = btn.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = Color.white;
+            colors.pressedColor = new Color(0.62f, 0.62f, 0.62f, 1f);
+            colors.selectedColor = Color.white; // = normal, иначе после тапа кнопка залипает в selected-цвете.
+            colors.disabledColor = new Color(1f, 1f, 1f, 0.4f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            btn.colors = colors;
+
+            // Automatic-навигация на тач-HUD даёт неявные переходы фокуса/залипание selected.
+            btn.navigation = new Navigation { mode = Navigation.Mode.None };
+
+            Debug.Log("[Editor] Styled " + btnGo.name);
         }
 
         // ── Хелперы сборки ────────────────────────────────────────────────────
