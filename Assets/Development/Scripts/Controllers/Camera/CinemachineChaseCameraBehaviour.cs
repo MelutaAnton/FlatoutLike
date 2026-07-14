@@ -15,6 +15,7 @@ namespace FlatOutLike.Controllers.Camera
     {
         [SerializeField] private CinemachineCamera _camera;
         [SerializeField] private ChaseCameraConfig _config;
+        [SerializeField] private DeoccluderConfig _deoccluderConfig;
 
         private CinemachineFollow _follow;
         private CinemachineRotationComposer _composer;
@@ -33,6 +34,10 @@ namespace FlatOutLike.Controllers.Camera
             _composer = _camera.GetComponent<CinemachineRotationComposer>();
 
             ApplyConfig();
+
+            // Антиклиппинг применяется отдельно от ApplyConfig: он не должен гейтиться
+            // ранним return при отсутствующем ChaseCameraConfig — настройки независимы.
+            DeoccluderApplier.Apply(_camera.GetComponent<CinemachineDeoccluder>(), _deoccluderConfig);
         }
 
         private void ApplyConfig()

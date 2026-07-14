@@ -145277,8 +145277,9 @@ GameObject:
   - component: {fileID: 1446831371}
   - component: {fileID: 1446831370}
   - component: {fileID: 1446831369}
-  - component: {fileID: 1446831368}
   - component: {fileID: 1446831373}
+  - component: {fileID: 1446831368}
+  - component: {fileID: 1446831374}
   m_Layer: 0
   m_Name: CM_OrbitCamera
   m_TagString: Untagged
@@ -145300,6 +145301,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Camera.CinemachineOrbitDriverCameraBehaviour
   _camera: {fileID: 1446831371}
   _config: {fileID: 11400000, guid: 1065ba30060a1d14488a748461023df6, type: 2}
+  _deoccluderConfig: {fileID: 11400000, guid: 7f3dd641df328cb44bfa48893726d41d, type: 2}
 --- !u!114 &1446831369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145474,6 +145476,45 @@ MonoBehaviour:
     FrequencyGain: 1
     Duration: 1
     m_NoiseOffsets: {x: 0, y: 0, z: 0}
+--- !u!114 &1446831374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446831367}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbe43d662878a7c43bcd44d43c9e2094, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineDeoccluder
+  CollideAgainst:
+    serializedVersion: 2
+    m_Bits: 1537
+  IgnoreTag: 
+  TransparentLayers:
+    serializedVersion: 2
+    m_Bits: 2304
+  MinimumDistanceFromTarget: 1
+  AvoidObstacles:
+    Enabled: 1
+    DistanceLimit: 0
+    MinimumOcclusionTime: 0
+    CameraRadius: 0.5
+    UseFollowTarget:
+      Enabled: 0
+      YOffset: 0
+    Strategy: 0
+    MaximumEffort: 4
+    SmoothingTime: 0
+    Damping: 0.4
+    DampingWhenOccluded: 0.2
+  ShotQualityEvaluation:
+    Enabled: 0
+    OptimalDistance: 10
+    NearLimit: 5
+    FarLimit: 30
+    MaxQualityBoost: 0.2
 --- !u!1 &1450226447
 GameObject:
   m_ObjectHideFlags: 0
@@ -163200,6 +163241,7 @@ GameObject:
   - component: {fileID: 1582040635}
   - component: {fileID: 1582040639}
   - component: {fileID: 1582040634}
+  - component: {fileID: 1582040640}
   m_Layer: 0
   m_Name: CM_ChaseCamera
   m_TagString: Untagged
@@ -163221,6 +163263,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Camera.CinemachineChaseCameraBehaviour
   _camera: {fileID: 1582040637}
   _config: {fileID: 11400000, guid: 05c393071b6f4da47a6c0d75647e6676, type: 2}
+  _deoccluderConfig: {fileID: 11400000, guid: 7f3dd641df328cb44bfa48893726d41d, type: 2}
 --- !u!114 &1582040635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163351,6 +163394,45 @@ MonoBehaviour:
     FrequencyGain: 1
     Duration: 1
     m_NoiseOffsets: {x: 0, y: 0, z: 0}
+--- !u!114 &1582040640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1582040633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbe43d662878a7c43bcd44d43c9e2094, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineDeoccluder
+  CollideAgainst:
+    serializedVersion: 2
+    m_Bits: 1537
+  IgnoreTag: 
+  TransparentLayers:
+    serializedVersion: 2
+    m_Bits: 2304
+  MinimumDistanceFromTarget: 1
+  AvoidObstacles:
+    Enabled: 1
+    DistanceLimit: 0
+    MinimumOcclusionTime: 0
+    CameraRadius: 0.5
+    UseFollowTarget:
+      Enabled: 0
+      YOffset: 0
+    Strategy: 0
+    MaximumEffort: 4
+    SmoothingTime: 0
+    Damping: 0.4
+    DampingWhenOccluded: 0.2
+  ShotQualityEvaluation:
+    Enabled: 0
+    OptimalDistance: 10
+    NearLimit: 5
+    FarLimit: 30
+    MaxQualityBoost: 0.2
 --- !u!1 &1583103966
 GameObject:
   m_ObjectHideFlags: 0

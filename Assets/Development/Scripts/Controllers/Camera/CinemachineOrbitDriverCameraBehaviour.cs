@@ -14,6 +14,7 @@ namespace FlatOutLike.Controllers.Camera
     {
         [SerializeField] private CinemachineCamera _camera;
         [SerializeField] private OrbitCameraConfig _config;
+        [SerializeField] private DeoccluderConfig _deoccluderConfig;
 
         private CinemachineOrbitalFollow _orbital;
 
@@ -29,6 +30,10 @@ namespace FlatOutLike.Controllers.Camera
             // лежит на том же GameObject, что и CinemachineCamera.
             _orbital = _camera.GetComponent<CinemachineOrbitalFollow>();
             ApplyConfig();
+
+            // Антиклиппинг применяется отдельно от ApplyConfig: он не должен гейтиться
+            // ранним return при отсутствующих OrbitCameraConfig/_orbital — настройки независимы.
+            DeoccluderApplier.Apply(_camera.GetComponent<CinemachineDeoccluder>(), _deoccluderConfig);
 
             // По умолчанию неактивна (Priority=0): активацию делает CameraRig через
             // SetBehaviourActive, чтобы chase и orbit не боролись за приоритет до переключения.

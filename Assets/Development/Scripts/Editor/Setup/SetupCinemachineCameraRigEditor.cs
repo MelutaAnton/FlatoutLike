@@ -41,6 +41,7 @@ namespace FlatOutLike.Editor.Setup
         private const string ChaseCameraConfigPath        = "Assets/Development/Data/Configs/Camera/ChaseCameraConfig_Default.asset";
         private const string OrbitCameraConfigDefaultPath = "Assets/Development/Data/Configs/Camera/OrbitCameraConfig_Default.asset";
         private const string OrbitCameraConfigHighJumpPath = "Assets/Development/Data/Configs/Camera/OrbitCameraConfig_HighJump.asset";
+        private const string DeoccluderConfigPath = "Assets/Development/Data/Configs/Camera/DeoccluderConfig_Default.asset";
 
         private const int ChasePriority = 10;
         private const int OrbitPriority = 0;
@@ -100,6 +101,10 @@ namespace FlatOutLike.Editor.Setup
 
             // ── 6. Impulse-тряска: listener на chase/orbit vcam + source+shaker на Main Camera ──
             EnsureImpulse(chase.gameObject, orbit.gameObject);
+
+            // Deoccluder не вызывается здесь отдельным шагом: он ставится внутри
+            // EnsureChaseCamera/EnsureOrbitCamera, чтобы билд-скрипты сцен
+            // (BuildHighJumpSceneEditor и др.), зовущие Ensure* напрямую, тоже его получали.
 
             // ── 7. Сохраняем сцену ───────────────────────────────────────────
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -247,7 +252,13 @@ namespace FlatOutLike.Editor.Setup
                 Debug.LogWarning("[Editor] Поле CinemachineChaseCameraBehaviour._config не найдено. " +
                                   "Возможно, рантайм-адаптер ещё не скомпилировался.");
 
+            FillDeoccluderConfigRef(so, "CinemachineChaseCameraBehaviour");
+
             so.ApplyModifiedProperties();
+
+            // Deoccluder — часть рига chase-камеры: ставим здесь, а не в Setup(), чтобы
+            // любой билд-скрипт сцены, зовущий EnsureChaseCamera напрямую, тоже его получил.
+            EnsureDeoccluder(go);
 
             Debug.Log("[Editor] " + ChaseCameraObjectName + " настроен (Priority=" + priority + ").");
             return behaviour;
@@ -306,7 +317,12 @@ namespace FlatOutLike.Editor.Setup
                 Debug.LogWarning("[Editor] Поле CinemachineOrbitDriverCameraBehaviour._config не найдено. " +
                                   "Возможно, рантайм-адаптер ещё не скомпилировался.");
 
+            FillDeoccluderConfigRef(so, "CinemachineOrbitDriverCameraBehaviour");
+
             so.ApplyModifiedProperties();
+
+            // Deoccluder — часть рига orbit-камеры (см. комментарий в EnsureChaseCamera).
+            EnsureDeoccluder(go);
 
             Debug.Log("[Editor] " + OrbitCameraObjectName + " настроен (Priority=" + priority + ").");
             return behaviour;
@@ -435,6 +451,118 @@ namespace FlatOutLike.Editor.Setup
             {
                 Debug.Log("[Editor] CinemachineImpulseListener уже присутствует на '" + vcamGo.name + "'.");
             }
+        }
+
+        /// <summary>
+        /// Прошивает behaviour._deoccluderConfig ссылкой на DeoccluderConfig_Default, если поле
+        /// уже существует на рантайм-адаптере (компилятор мог ещё не подхватить новое поле —
+        /// параллельно работает code-writer). Ассет не найден или поле отсутствует — warning,
+        /// существующее значение поля НЕ затирается null'ом (см. правило editor-files.md).
+        /// </summary>
+        private static void FillDeoccluderConfigRef(SerializedObject so, string behaviourTypeName)
+        {
+            var prop = so.FindProperty("_deoccluderConfig");
+            if (prop == null)
+            {
+                Debug.LogWarning("[Editor] Поле " + behaviourTypeName + "._deoccluderConfig не найдено. " +
+                                  "Возможно, рантайм-адаптер ещё не скомпилировался.");
+                return;
+            }
+
+            var deoccluderConfig = AssetDatabase.LoadAssetAtPath<DeoccluderConfig>(DeoccluderConfigPath);
+            if (deoccluderConfig == null)
+            {
+                Debug.LogWarning("[Editor] DeoccluderConfig_Default не найден по " + DeoccluderConfigPath +
+                                  ". Запусти 'FlatOutLike/Configs/Create Default DeoccluderConfig' сначала. " +
+                                  behaviourTypeName + "._deoccluderConfig не изменён.");
+                return;
+            }
+
+            prop.objectReferenceValue = deoccluderConfig;
+            Debug.Log("[Editor] " + behaviourTypeName + "._deoccluderConfig = " + deoccluderConfig.name + ".");
+        }
+
+        /// <summary>
+        /// Идемпотентно гарантирует CinemachineDeoccluder на vcam-объекте: компонент рейкастит
+        /// от камеры к LookAt-цели и выталкивает камеру перед препятствием, если луч перекрыт.
+        /// Без него камера проваливается внутрь геометрии на резких ракурсах — характерный
+        /// баг на рампе Stunts_HighJump (камера залетает внутрь ската) и на стенах Derby-арены.
+        ///
+        /// CollideAgainst = Default | Wall | Hazard: рампа HighJump лежит на слое Default,
+        /// стены/препятствия Derby — на Wall, разрушаемые объекты — на Hazard. TransparentLayers
+        /// = Vehicle | Pickup — машины и подборы не должны блокировать обзор камеры (иначе
+        /// деоклюдер начнёт выталкивать камеру от собственной машины игрока или от пикапа).
+        /// Слои, которых нет в TagManager (Physics Layers ещё не созданы), пропускаются —
+        /// GetMask ругается на несуществующее имя, поэтому маска собирается только из
+        /// подтверждённых слоёв.
+        /// </summary>
+        public static void EnsureDeoccluder(GameObject vcamGo)
+        {
+            if (vcamGo == null) return;
+
+            var deoccluder = vcamGo.GetComponent<CinemachineDeoccluder>();
+            if (deoccluder == null)
+            {
+                deoccluder = Undo.AddComponent<CinemachineDeoccluder>(vcamGo);
+                Debug.Log("[Editor] Добавлен CinemachineDeoccluder на '" + vcamGo.name + "'.");
+            }
+            else
+            {
+                Debug.Log("[Editor] CinemachineDeoccluder уже присутствует на '" + vcamGo.name + "', перенастраиваем.");
+            }
+
+            Undo.RecordObject(deoccluder, "Configure Deoccluder");
+
+            // CollideAgainst: Default всегда есть, Wall/Hazard — только если Physics Layers уже созданы.
+            var collideLayerNames = new System.Collections.Generic.List<string> { "Default" };
+            if (LayerMask.NameToLayer(Layers.Wall) >= 0)
+                collideLayerNames.Add(Layers.Wall);
+            else
+                Debug.LogWarning("[Editor] Слой '" + Layers.Wall + "' не найден — CollideAgainst без него. " +
+                                  "Запусти 'FlatOutLike/Setup/Create Physics Layers' и перезапусти этот шаг.");
+            if (LayerMask.NameToLayer(Layers.Hazard) >= 0)
+                collideLayerNames.Add(Layers.Hazard);
+            else
+                Debug.LogWarning("[Editor] Слой '" + Layers.Hazard + "' не найден — CollideAgainst без него. " +
+                                  "Запусти 'FlatOutLike/Setup/Create Physics Layers' и перезапусти этот шаг.");
+            deoccluder.CollideAgainst = LayerMask.GetMask(collideLayerNames.ToArray());
+
+            // TransparentLayers: машины и пикапы не должны толкать камеру.
+            var transparentLayerNames = new System.Collections.Generic.List<string>();
+            if (LayerMask.NameToLayer(Layers.Vehicle) >= 0)
+                transparentLayerNames.Add(Layers.Vehicle);
+            else
+                Debug.LogWarning("[Editor] Слой '" + Layers.Vehicle + "' не найден — TransparentLayers без него.");
+            if (LayerMask.NameToLayer(Layers.Pickup) >= 0)
+                transparentLayerNames.Add(Layers.Pickup);
+            else
+                Debug.LogWarning("[Editor] Слой '" + Layers.Pickup + "' не найден — TransparentLayers без него.");
+            // GetMask от пустого массива возвращает 0 — отдельная ветка не нужна.
+            deoccluder.TransparentLayers = LayerMask.GetMask(transparentLayerNames.ToArray());
+
+            deoccluder.MinimumDistanceFromTarget = 1f;
+
+            // AvoidObstacles — публичное поле-структура: меняем через копию, задавая ВСЕ поля
+            // явно (внутренний Default недоступен, полагаться на Reset нельзя).
+            var avoid = deoccluder.AvoidObstacles;
+            avoid.Enabled = true;
+            avoid.DistanceLimit = 0f;
+            avoid.MinimumOcclusionTime = 0f;
+            avoid.CameraRadius = 0.5f;
+            avoid.Strategy = CinemachineDeoccluder.ObstacleAvoidance.ResolutionStrategy.PullCameraForward;
+            avoid.MaximumEffort = 4;
+            avoid.SmoothingTime = 0f;
+            avoid.Damping = 0.4f;
+            avoid.DampingWhenOccluded = 0.2f;
+            // Разрешение оверлапа считаем от LookAt-цели (машины), не от Follow — явно выключено.
+            avoid.UseFollowTarget.Enabled = false;
+            deoccluder.AvoidObstacles = avoid;
+
+            EditorUtility.SetDirty(deoccluder);
+
+            Debug.Log("[Editor] CinemachineDeoccluder на '" + vcamGo.name + "' настроен " +
+                      "(CollideAgainst=[" + string.Join(",", collideLayerNames) + "], " +
+                      "TransparentLayers=[" + string.Join(",", transparentLayerNames) + "]).");
         }
     }
 }
