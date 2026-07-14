@@ -84,6 +84,7 @@ GameObject:
   - component: {fileID: 8629254875788333162}
   - component: {fileID: 208260671690972172}
   - component: {fileID: 8980433627656186319}
+  - component: {fileID: 3473781464897049348}
   - component: {fileID: 2984649924048156453}
   m_Layer: 8
   m_Name: Car_MT_02
@@ -206,6 +207,26 @@ MonoBehaviour:
   _bodyMeshFilter: {fileID: 923146509689517349}
   _skinnedRenderer: {fileID: 923146509689518649}
   _detachableParts: []
+--- !u!114 &3473781464897049348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4850835370837984147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa3fb22eb0ccb2e4fa909f11fce10b62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Enemies.EnemyCarController
+  _car: {fileID: 208260671690972172}
+  _target: {fileID: 0}
+  _statsConfig: {fileID: 11400000, guid: 77bfb3bf29066204a8d4d93a81692118, type: 2}
+  _profile: {fileID: 11400000, guid: 3a6f127e42825e244a50d82767f99bd5, type: 2}
+  _sensorConfig: {fileID: 11400000, guid: 21487e3ba3beca44e89497a6de1fef54, type: 2}
+  _rigidbody: {fileID: 1143595415828969931}
+  _diagEnabled: 0
+  _diagInterval: 0.25
 --- !u!114 &2984649924048156453
 MonoBehaviour:
   m_ObjectHideFlags: 0

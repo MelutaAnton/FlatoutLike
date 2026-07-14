@@ -107,6 +107,15 @@ namespace FlatOutLike.Factories.Car
                 var sp       = spawnPoints[0];
                 var playerGo = Object.Instantiate(playerPrefab, sp.position, sp.rotation);
 
+                // Префаб описывает «какая машина», роль решает фабрика: каталожная машина
+                // может использоваться и врагом, поэтому на префабе допустим EnemyCarController —
+                // у игрока он сносится. Именно DestroyImmediate и именно ДО InjectGameObject:
+                // обычный Destroy откладывается до конца кадра, и VContainer успел бы вызвать
+                // Construct на AI-компоненте (подписки/регистрации мёртвого контроллера).
+                var playerEnemyAi = playerGo.GetComponent<EnemyCarController>();
+                if (playerEnemyAi != null)
+                    Object.DestroyImmediate(playerEnemyAi);
+
                 // Прогоняем базовые статы через апгрейды ВЫБРАННОЙ машины игрока (per-car
                 // прогресс, §8/§14.3 game-design.md) — работает и для каталожной, и для
                 // фоллбэк-машины: id один и тот же (_economy.SelectedCarId — каталожный путь
