@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Camera.DeoccluderConfig
   _collideAgainst:
     serializedVersion: 2
-    m_Bits: 1537
+    m_Bits: 5633
   _transparentLayers:
     serializedVersion: 2
     m_Bits: 2304
