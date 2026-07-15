@@ -9,8 +9,15 @@ using FlatOutLike.Controllers.Car;
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
-    /// Регистрирует физические слои (Vehicle/Wall/Hazard/Pickup) в TagManager
+    /// Регистрирует физические слои (Vehicle/Wall/Hazard/Pickup/Floor) в TagManager
     /// и назначает их объектам активной сцены.
+    ///
+    /// Слой Floor регистрируется в TagManager, но НЕ назначается объектам сцены —
+    /// пол переносится и размечается вручную (специфический нейминг объектов пола
+    /// зависит от сцены). Матрица коллизий не трогается: Floor по умолчанию
+    /// сталкивается со всеми слоями — это нужное поведение (машины/ragdoll/пикапы
+    /// физически стоят на полу). Слой Floor используется отдельно в DamageConfig
+    /// как маска исключения урона (см. CreateDefaultDamageConfigEditor).
     ///
     /// ПОРЯДОК ЗАПУСКА:
     ///   1. FlatOutLike/Setup/Create Physics Layers  ← этот скрипт
@@ -57,6 +64,7 @@ namespace FlatOutLike.Editor.Setup
             anyChanges |= EnsureLayer(layersProp, Layers.Wall);
             anyChanges |= EnsureLayer(layersProp, Layers.Hazard);
             anyChanges |= EnsureLayer(layersProp, Layers.Pickup);
+            anyChanges |= EnsureLayer(layersProp, Layers.Floor);
 
             if (anyChanges)
             {

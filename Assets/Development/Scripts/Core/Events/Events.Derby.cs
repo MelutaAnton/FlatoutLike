@@ -10,12 +10,20 @@ namespace FlatOutLike.Core.Events
         public readonly float ImpactSpeed;
         public readonly Vector3 Point;
 
-        public CarCollisionEvent(CarId attacker, CarId victim, float impactSpeed, Vector3 point)
+        // Индекс физического слоя объекта, о который ударилась машина-жертва
+        // (c.gameObject.layer из CarController.OnCollisionEnter). Нужен DamageService,
+        // чтобы отфильтровать удары об окружение на слоях из DamageConfig.DamageIgnoreLayers
+        // (например пол арены). 0 (Default) — источник слоя не уточнён; не влияет на 7
+        // существующих вызовов конструктора в тестах, у которых параметр не указан.
+        public readonly int OtherLayer;
+
+        public CarCollisionEvent(CarId attacker, CarId victim, float impactSpeed, Vector3 point, int otherLayer = 0)
         {
             Attacker = attacker;
             Victim = victim;
             ImpactSpeed = impactSpeed;
             Point = point;
+            OtherLayer = otherLayer;
         }
     }
 

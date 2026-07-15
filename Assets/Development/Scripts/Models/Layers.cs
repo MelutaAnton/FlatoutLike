@@ -10,5 +10,6 @@ namespace FlatOutLike.Models
         public const string Wall    = "Wall";
         public const string Hazard  = "Hazard";
         public const string Pickup  = "Pickup";
+        public const string Floor   = "Floor";
     }
 }

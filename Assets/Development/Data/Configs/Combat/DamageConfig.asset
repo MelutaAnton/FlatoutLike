@@ -15,3 +15,6 @@ MonoBehaviour:
   _damageScale: 1
   _minImpactSpeed: 3
   _wallMassRatio: 1
+  _damageIgnoreLayers:
+    serializedVersion: 2
+    m_Bits: 4096

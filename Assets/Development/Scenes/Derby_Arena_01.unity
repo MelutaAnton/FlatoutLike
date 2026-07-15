@@ -12252,7 +12252,7 @@ GameObject:
   - component: {fileID: 98263964}
   - component: {fileID: 98263963}
   - component: {fileID: 98263965}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_004
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -56471,7 +56471,7 @@ MonoBehaviour:
   _matchEndView: {fileID: 2102752059}
   _derbyHudView: {fileID: 1855647554}
   _highJumpHudView: {fileID: 0}
-  _forceMobileInput: 1
+  _forceMobileInput: 0
   _mobileInputCanvas: {fileID: 3990547671299809231}
   _pauseOverlayView: {fileID: 796100495}
 --- !u!4 &324100677
@@ -65009,6 +65009,119 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3664030340025763080, guid: 717d076fb847e9e42bd26e57d12762b0, type: 3}
   m_PrefabInstance: {fileID: 535345942}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &540324289
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 540324290}
+  - component: {fileID: 540324293}
+  - component: {fileID: 540324292}
+  - component: {fileID: 540324291}
+  m_Layer: 12
+  m_Name: base_circle_inflatable_007 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &540324290
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540324289}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.000000021855694, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 10.1, z: 16.2}
+  m_LocalScale: {x: 0.5366481, y: 0.5366481, z: 0.5366481}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1902195591}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &540324291
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540324289}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -7183139900609881423, guid: f02fa6d62e3098c43b2a98c9a6f2d4ed, type: 3}
+--- !u!23 &540324292
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540324289}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: c04da3fe466afa14ca4efc2c565b0eb3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &540324293
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 540324289}
+  m_Mesh: {fileID: -7183139900609881423, guid: f02fa6d62e3098c43b2a98c9a6f2d4ed, type: 3}
 --- !u!1 &540849491
 GameObject:
   m_ObjectHideFlags: 0
@@ -75873,7 +75986,7 @@ GameObject:
   - component: {fileID: 592530611}
   - component: {fileID: 592530610}
   - component: {fileID: 592530612}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_003
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -79913,7 +80026,7 @@ GameObject:
   - component: {fileID: 801563744}
   - component: {fileID: 801563743}
   - component: {fileID: 801563745}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -122016,7 +122129,7 @@ GameObject:
   - component: {fileID: 1154663417}
   - component: {fileID: 1154663416}
   - component: {fileID: 1154663418}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_006
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -138135,7 +138248,7 @@ GameObject:
   - component: {fileID: 1405199088}
   - component: {fileID: 1405199087}
   - component: {fileID: 1405199089}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_005
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -173841,7 +173954,7 @@ GameObject:
   - component: {fileID: 1639587078}
   - component: {fileID: 1639587077}
   - component: {fileID: 1639587076}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: base_circle_inflatable_006
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -218728,7 +218841,7 @@ GameObject:
   - component: {fileID: 1901002335}
   - component: {fileID: 1901002334}
   - component: {fileID: 1901002336}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_002
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -218978,6 +219091,7 @@ Transform:
   - {fileID: 2029469089}
   - {fileID: 1639587075}
   - {fileID: 2064989941}
+  - {fileID: 540324290}
   - {fileID: 2020486695}
   - {fileID: 30609646}
   m_Father: {fileID: 600920513}
@@ -226951,13 +227065,13 @@ GameObject:
   - component: {fileID: 2020486698}
   - component: {fileID: 2020486697}
   - component: {fileID: 2020486696}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: podium_007
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2020486695
 Transform:
   m_ObjectHideFlags: 0
@@ -226967,8 +227081,8 @@ Transform:
   m_GameObject: {fileID: 2020486694}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000021855694, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.5574112, z: 0.00000010508549}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: -7.3, z: -0}
+  m_LocalScale: {x: 1.4261563, y: 1.4261563, z: 1.4261563}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1902195591}
@@ -227411,7 +227525,7 @@ GameObject:
   - component: {fileID: 2029469092}
   - component: {fileID: 2029469091}
   - component: {fileID: 2029469090}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: base_circle_inflatable_005
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -228464,7 +228578,7 @@ GameObject:
   - component: {fileID: 2064989944}
   - component: {fileID: 2064989943}
   - component: {fileID: 2064989942}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: base_circle_inflatable_007
   m_TagString: Untagged
   m_Icon: {fileID: 0}

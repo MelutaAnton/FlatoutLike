@@ -44355,7 +44355,7 @@ GameObject:
   - component: {fileID: 426518086}
   - component: {fileID: 426518085}
   - component: {fileID: 426518084}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: base_circle_inflatable_006
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -63845,7 +63845,7 @@ GameObject:
   - component: {fileID: 614049937}
   - component: {fileID: 614049936}
   - component: {fileID: 614049935}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Ground_Strip
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86534,7 +86534,7 @@ GameObject:
   - component: {fileID: 751079850}
   - component: {fileID: 751079849}
   - component: {fileID: 751079848}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: stadium_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88505,7 +88505,7 @@ GameObject:
   - component: {fileID: 833919055}
   - component: {fileID: 833919054}
   - component: {fileID: 833919053}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: base_circle_inflatable_007
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -165159,7 +165159,7 @@ GameObject:
   - component: {fileID: 1397935583}
   - component: {fileID: 1397935582}
   - component: {fileID: 1397935581}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: base_circle_inflatable_005
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -246,7 +246,7 @@ namespace FlatOutLike.Controllers.Car
             CarId attacker = otherCar != null ? otherCar.CarId : CarId.None;
             Vector3 point = c.contactCount > 0 ? c.GetContact(0).point : transform.position;
 
-            _eventBus.Publish(new CarCollisionEvent(attacker, CarId, impactSpeed, point));
+            _eventBus.Publish(new CarCollisionEvent(attacker, CarId, impactSpeed, point, c.gameObject.layer));
         }
 
         /// <summary>

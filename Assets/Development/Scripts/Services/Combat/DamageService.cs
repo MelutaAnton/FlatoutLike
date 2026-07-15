@@ -65,6 +65,13 @@ namespace FlatOutLike.Services.Combat
         {
             if (evt.Attacker == evt.Victim) return; // защита от self-collision (defence in depth)
 
+            // Удар об окружение (нет атакующей машины) по слою из DamageIgnoreLayers — не урон.
+            // Машины друг о друга бьют всегда, даже если чья-то машина окажется на слое из маски:
+            // фильтр применяется только когда Attacker отсутствует.
+            bool isEnvironmentHit = evt.Attacker == CarId.None;
+            bool layerIgnored = (_config.DamageIgnoreLayers.value & (1 << evt.OtherLayer)) != 0;
+            if (isEnvironmentHit && layerIgnored) return;
+
             var victim = evt.Victim;
 
             if (!_hp.TryGetValue(victim, out var currentHp)) return;
