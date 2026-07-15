@@ -17,16 +17,16 @@ namespace FlatOutLike.Editor.Tools
     /// Обрабатывает два места:
     ///  1) Все Canvas активной сцены — только объекты, НЕ являющиеся частью prefab-инстанса
     ///     (иначе получаем per-instance override вместо правки самого префаба).
-    ///  2) Префаб Assets/Development/Prefabs/UI/MobileInputCanvas.prefab напрямую через
-    ///     PrefabUtility.LoadPrefabContents (образец — BuildMobileInputCanvasEditor.StyleMobileInputButtons).
+    ///  2) ВСЕ префабы под Assets/Development/Prefabs/UI/ напрямую через
+    ///     PrefabUtility.LoadPrefabContents (образец — BuildMobileInputCanvasEditor.StyleMobileInputButtons),
+    ///     по одному разу на каждый найденный там .prefab (MobileInputCanvas, PauseOverlayCanvas и т.д.).
     ///
     /// Идемпотентность: значение флага меняется только если реально отличается —
     /// повторный запуск даёт 0 изменений и попадает в лог как "changed: 0".
     /// </summary>
     public static class OptimizeUiGraphicFlagsEditor
     {
-        private const string MobileInputCanvasPrefabPath =
-            "Assets/Development/Prefabs/UI/MobileInputCanvas.prefab";
+        private const string UiPrefabsFolder = "Assets/Development/Prefabs/UI";
 
         [MenuItem("FlatOutLike/Tools/Optimize UI Raycast And Maskable Flags")]
         public static void OptimizeUiGraphicFlags()
@@ -43,14 +43,14 @@ namespace FlatOutLike.Editor.Tools
             Undo.CollapseUndoOperations(undoGroup);
 
             var prefabStats = new Stats();
-            ProcessMobileInputCanvasPrefab(prefabStats);
+            int prefabCount = ProcessUiPrefabs(prefabStats);
 
             Debug.Log("[Editor] Optimize UI Raycast And Maskable Flags — сцена '" +
                       SceneManager.GetActiveScene().name + "': raycastTarget выключено " +
                       sceneStats.RaycastDisabled + ", включено " + sceneStats.RaycastEnabled +
                       "; maskable выключено " + sceneStats.MaskableDisabled +
                       ", включено " + sceneStats.MaskableEnabled +
-                      ". Префаб MobileInputCanvas: raycastTarget выключено " +
+                      ". Префабы UI (" + prefabCount + "): raycastTarget выключено " +
                       prefabStats.RaycastDisabled + ", включено " + prefabStats.RaycastEnabled +
                       "; maskable выключено " + prefabStats.MaskableDisabled +
                       ", включено " + prefabStats.MaskableEnabled + ".");
@@ -73,9 +73,10 @@ namespace FlatOutLike.Editor.Tools
                 foreach (var graphic in graphics)
                 {
                     // per-instance override не плодим — правится через сам префаб.
-                    // ВНИМАНИЕ: сейчас prefab-проходом покрыт только MobileInputCanvas;
-                    // если другой UI станет prefab-инстансом, он молча выпадет из обработки —
-                    // добавить его префаб в ProcessMobileInputCanvasPrefab-аналог.
+                    // ВНИМАНИЕ: prefab-проходом (ProcessUiPrefabs) покрыты все префабы под
+                    // Assets/Development/Prefabs/UI/; prefab-инстансы UI из ДРУГИХ папок
+                    // молча выпадут из обработки — перенести такой префаб под Prefabs/UI/
+                    // или расширить UiPrefabsFolder.
                     if (PrefabUtility.IsPartOfPrefabInstance(graphic.gameObject))
                         continue;
 
@@ -87,16 +88,35 @@ namespace FlatOutLike.Editor.Tools
             return anyChanged;
         }
 
-        private static void ProcessMobileInputCanvasPrefab(Stats stats)
+        /// <summary>
+        /// Перебирает ВСЕ префабы под <see cref="UiPrefabsFolder"/> и применяет к каждому
+        /// те же эвристики raycastTarget/maskable. Возвращает количество обработанных
+        /// префабов (для сводки в логе).
+        /// </summary>
+        private static int ProcessUiPrefabs(Stats stats)
         {
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(MobileInputCanvasPrefabPath) == null)
+            var guids = AssetDatabase.FindAssets("t:Prefab", new[] { UiPrefabsFolder });
+            int processed = 0;
+
+            foreach (var guid in guids)
             {
-                Debug.LogWarning("[Editor] " + MobileInputCanvasPrefabPath +
-                                  " не найден — пропускаем обработку префаба.");
-                return;
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
+                    continue;
+
+                ProcessUiPrefab(path, stats);
+                processed++;
             }
 
-            var root = PrefabUtility.LoadPrefabContents(MobileInputCanvasPrefabPath);
+            if (processed == 0)
+                Debug.LogWarning("[Editor] В " + UiPrefabsFolder + " не найдено ни одного префаба.");
+
+            return processed;
+        }
+
+        private static void ProcessUiPrefab(string prefabPath, Stats stats)
+        {
+            var root = PrefabUtility.LoadPrefabContents(prefabPath);
             try
             {
                 bool changed = false;
@@ -109,9 +129,14 @@ namespace FlatOutLike.Editor.Tools
 
                 if (changed)
                 {
-                    PrefabUtility.SaveAsPrefabAsset(root, MobileInputCanvasPrefabPath);
+                    PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                     Debug.Log("[Editor] Optimize UI Raycast And Maskable Flags: префаб сохранён — " +
-                              MobileInputCanvasPrefabPath + ".");
+                              prefabPath + ".");
+                }
+                else
+                {
+                    Debug.Log("[Editor] Optimize UI Raycast And Maskable Flags: без изменений — " +
+                              prefabPath + ".");
                 }
             }
             finally

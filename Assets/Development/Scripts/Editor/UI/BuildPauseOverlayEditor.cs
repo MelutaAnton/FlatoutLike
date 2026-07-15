@@ -12,19 +12,36 @@ using Object = UnityEngine.Object;
 namespace FlatOutLike.Editor.UI
 {
     /// <summary>
-    /// Шаг 10 (Polish): наполняет ТЕКУЩУЮ игровую сцену (Derby_Arena_01, Stunts_HighJump)
-    /// оверлеем паузы — своим Canvas'ом "PauseOverlayCanvas" ПОВЕРХ HUD и мобильного ввода
-    /// (тот держит sortingOrder=50 — см. BuildMobileInputCanvasEditor, здесь 60, чтобы пауза
-    /// перехватывала тапы даже поверх мобильных элементов управления).
+    /// Шаг 10 (Polish) + миграция на префаб: наполняет ТЕКУЩУЮ игровую сцену
+    /// (Derby_Arena_01, Stunts_HighJump) оверлеем паузы — Canvas'ом "PauseOverlayCanvas"
+    /// ПОВЕРХ HUD и мобильного ввода (тот держит sortingOrder=50 — см.
+    /// BuildMobileInputCanvasEditor, здесь 60, чтобы пауза перехватывала тапы даже поверх
+    /// мобильных элементов управления).
     ///
-    /// Canvas создаётся отдельным GameObject'ом (не через UIBuildHelpers.EnsureCanvasAndEventSystem —
-    /// тот ищет ЛЮБОЙ Canvas на сцене и вернул бы уже существующий HUD-канвас с sortingOrder=0,
-    /// нам нужен собственный canvas с управляемым sortingOrder, как у MobileInputCanvas).
+    /// Повторяющийся канвас — единый префаб <see cref="PrefabPath"/> с connected-инстансами
+    /// в сценах (образец флоу сохранения — BuildMobileInputCanvasEditor, MobileInputCanvas).
+    ///
+    /// Миграционная идемпотентность (скрипт уже прогонялся ДО перехода на префаб — в сценах
+    /// живут НЕ-префабные копии PauseOverlayCanvas):
+    ///  - Ассета ещё нет → собираем канвас как раньше (переиспользуя сценную копию, если она
+    ///    есть, иначе с нуля) и ВПЕРВЫЕ сохраняем как префаб через
+    ///    SaveAsPrefabAssetAndConnect — сценный объект становится connected-инстансом.
+    ///  - Ассет уже есть, а в сцене — connected-инстанс этого же префаба → ничего не
+    ///    пересобираем, только перепрошиваем ссылки.
+    ///  - Ассет уже есть, а в сцене — старая НЕ-префабная копия (или копия другого префаба) →
+    ///    копия сносится, на её месте создаётся connected-инстанс. Вёрстка не теряется: префаб
+    ///    был сохранён из идентичной копии, которую этот же скрипт когда-то построил в первой
+    ///    прогнанной сцене — все PauseOverlayCanvas в проекте строились одним кодом.
+    ///  - Ассет уже есть, сценного объекта нет → просто инстанцируем префаб.
     ///
     /// PauseOverlayView вешается на корень Canvas'а, Panel стартует НЕАКТИВНОЙ — включает
-    /// рантайм при паузе. Прошивка _panel/_resumeButton/_leaveButton — здесь же, ссылка на сам
-    /// View в GameLifetimeScope._pauseOverlayView — через BindMetaUIRefsEditor (единая точка
-    /// прошивки, см. Шаг 8c/8d).
+    /// рантайм при паузе. Прошивка _panel/_resumeButton/_leaveButton — на этапе сборки (только
+    /// когда префаба ещё нет); ссылка на сам View в GameLifetimeScope._pauseOverlayView — через
+    /// BindMetaUIRefsEditor (единая точка прошивки, см. Шаг 8c/8d) — выполняется в КАЖДОМ кейсе.
+    ///
+    /// Порядок использования при миграции: прогнать меню сначала в Derby_Arena_01 (там
+    /// сценная копия станет префабом + connected-инстансом), затем в Stunts_HighJump (тамошняя
+    /// копия будет снесена и заменена инстансом того же префаба).
     ///
     /// Запускать на ОТКРЫТОЙ игровой сцене, ПОСЛЕ:
     ///   FlatOutLike/Tools/Generate TMP Font Assets
@@ -38,15 +55,78 @@ namespace FlatOutLike.Editor.UI
         /// <summary>ПОВЕРХ мобильного ввода (тот держит 50, см. BuildMobileInputCanvasEditor).</summary>
         private const int SortingOrder = 60;
 
+        private const string PrefabPath = "Assets/Development/Prefabs/UI/PauseOverlayCanvas.prefab";
+
         [MenuItem("FlatOutLike/UI/Build Pause Overlay")]
         public static void BuildPauseOverlay()
         {
-            Undo.SetCurrentGroupName("Build Pause Overlay (Step 10)");
+            Undo.SetCurrentGroupName("Build Pause Overlay (Step 10 + Prefab Migration)");
             int undoGroup = Undo.GetCurrentGroup();
 
-            // Идемпотентность — ищем ИМЕННО компонент PauseOverlayView, не по имени GameObject.
+            // Идемпотентность — ищем ИМЕННО компонент PauseOverlayView, не по имени
+            // GameObject (панель на сцене может быть неактивна вместе со всем канвасом).
             var existingView = Object.FindAnyObjectByType<PauseOverlayView>(FindObjectsInactive.Include);
-            GameObject canvasGo = existingView != null ? existingView.gameObject : null;
+            GameObject sceneGo = existingView != null ? existingView.gameObject : null;
+
+            var prefabAsset = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+
+            GameObject canvasGo;
+            PauseOverlayView view;
+
+            if (prefabAsset != null && sceneGo != null && PrefabUtility.IsPartOfPrefabInstance(sceneGo)
+                && PrefabUtility.GetCorrespondingObjectFromSource(sceneGo) == prefabAsset)
+            {
+                // Уже мигрировано — переиспользуем connected-инстанс без пересборки.
+                canvasGo = sceneGo;
+                view = existingView;
+                Debug.Log("[Editor] PauseOverlayCanvas уже мигрирован на префаб, переиспользуем инстанс.");
+            }
+            else if (prefabAsset != null && sceneGo != null)
+            {
+                // Старая НЕ-префабная копия (или инстанс другого объекта) — сносим и
+                // ставим на её место connected-инстанс актуального префаба.
+                Undo.DestroyObjectImmediate(sceneGo);
+                Debug.Log("[Editor] Миграция: локальная копия PauseOverlayCanvas заменена инстансом префаба.");
+
+                canvasGo = (GameObject)PrefabUtility.InstantiatePrefab(prefabAsset);
+                Undo.RegisterCreatedObjectUndo(canvasGo, "Instantiate PauseOverlayCanvas");
+                view = canvasGo.GetComponent<PauseOverlayView>();
+            }
+            else if (prefabAsset != null)
+            {
+                // Сценного объекта нет вовсе — просто инстанцируем префаб.
+                canvasGo = (GameObject)PrefabUtility.InstantiatePrefab(prefabAsset);
+                Undo.RegisterCreatedObjectUndo(canvasGo, "Instantiate PauseOverlayCanvas");
+                view = canvasGo.GetComponent<PauseOverlayView>();
+                Debug.Log("[Editor] PauseOverlayCanvas инстанцирован из префаба " + PrefabPath + ".");
+            }
+            else
+            {
+                // Префаба ещё нет — собираем канвас (как раньше), переиспользуя сценную
+                // копию, если она уже есть, и сохраняем результат как первый префаб-ассет.
+                canvasGo = BuildCanvasFromScratch(sceneGo);
+                view = canvasGo.GetComponent<PauseOverlayView>();
+
+                EnsureFolder("Assets/Development/Prefabs", "UI");
+                PrefabUtility.SaveAsPrefabAssetAndConnect(canvasGo, PrefabPath, InteractionMode.AutomatedAction);
+                Debug.Log("[Editor] Префаб создан: " + PrefabPath + ".");
+            }
+
+            // Прошивка GameLifetimeScope._pauseOverlayView — единая точка, во ВСЕХ кейсах.
+            BindMetaUIRefsEditor.BindPauseOverlayView(view);
+
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            Undo.CollapseUndoOperations(undoGroup);
+            Debug.Log("[Editor] Pause Overlay готов на " + SceneManager.GetActiveScene().name + ".");
+        }
+
+        /// <summary>
+        /// Собирает канвас паузы с нуля (или доукомплектовывает переданную существующую
+        /// копию) — вызывается только пока префаб-ассет ещё не создан.
+        /// </summary>
+        private static GameObject BuildCanvasFromScratch(GameObject existingGo)
+        {
+            GameObject canvasGo = existingGo;
 
             if (canvasGo == null)
             {
@@ -142,11 +222,7 @@ namespace FlatOutLike.Editor.UI
             SetRef(so, "_leaveButton", leaveBtn);
             so.ApplyModifiedProperties();
 
-            BindMetaUIRefsEditor.BindPauseOverlayView(view);
-
-            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-            Undo.CollapseUndoOperations(undoGroup);
-            Debug.Log("[Editor] Pause Overlay собран на " + SceneManager.GetActiveScene().name + ".");
+            return canvasGo;
         }
 
         /// <summary>Создаёт EventSystem, если на сцене его ещё нет (например, скрипт запущен
@@ -161,6 +237,13 @@ namespace FlatOutLike.Editor.UI
             Undo.AddComponent<EventSystem>(esGo);
             Undo.AddComponent<StandaloneInputModule>(esGo);
             Debug.Log("[Editor] Создан EventSystem.");
+        }
+
+        private static void EnsureFolder(string parent, string folderName)
+        {
+            string full = parent + "/" + folderName;
+            if (!AssetDatabase.IsValidFolder(full))
+                AssetDatabase.CreateFolder(parent, folderName);
         }
 
         private static void SetRef(SerializedObject so, string propName, Object value)

@@ -108,6 +108,15 @@ namespace FlatOutLike.Editor.Setup
 
         private static void BindField(string fieldName, Object value)
         {
+            // Правило editor-files.md: null в поле скоупа не присваиваем — повторный прогон
+            // с ненайденным объектом не должен ломать рабочую проводку сцены.
+            if (value == null)
+            {
+                Debug.LogWarning("[Editor] " + fieldName + ": значение для прошивки null — " +
+                                  "существующая ссылка GameLifetimeScope не тронута.");
+                return;
+            }
+
             var scope = Object.FindAnyObjectByType<GameLifetimeScope>();
             if (scope == null)
             {
