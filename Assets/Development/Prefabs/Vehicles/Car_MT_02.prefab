@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1859662621662124479
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3560889433923494229}
+  m_Layer: 0
+  m_Name: NitroTrail_R
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &3560889433923494229
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1859662621662124479}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0.095, y: 0.9, z: -2.867}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1829063748499489146}
+  m_Father: {fileID: 7915427721141906752}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2161602796108442075
 GameObject:
   m_ObjectHideFlags: 0
@@ -71,6 +103,38 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!1 &3625503384618232927
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4081666368073567446}
+  m_Layer: 0
+  m_Name: NitroTrail_L
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &4081666368073567446
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3625503384618232927}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0.088, y: 0.89, z: -2.865}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1896666348863770708}
+  m_Father: {fileID: 7915427721141906752}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4850835370837984147
 GameObject:
   m_ObjectHideFlags: 0
@@ -85,6 +149,7 @@ GameObject:
   - component: {fileID: 8980433627656186319}
   - component: {fileID: 3473781464897049348}
   - component: {fileID: 2984649924048156453}
+  - component: {fileID: 3065871603743410537}
   m_Layer: 8
   m_Name: Car_MT_02
   m_TagString: Untagged
@@ -111,6 +176,7 @@ Transform:
   - {fileID: 7550476148760341118}
   - {fileID: 4172067009094716993}
   - {fileID: 8095577676665077159}
+  - {fileID: 7915427721141906752}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &1143595415828969931
@@ -218,6 +284,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Car.WindshieldController
   _debrisConfig: {fileID: 11400000, guid: 96274fd607752a9429b227005a684301, type: 2}
+--- !u!114 &3065871603743410537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4850835370837984147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53b89a8a0696ba14bb59dd7624ad5781, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Car.NitroTrailsController
+  _car: {fileID: 208260671690972172}
+  _trailEmitters:
+  - {fileID: 3625503384618232927}
+  - {fileID: 1859662621662124479}
 --- !u!1 &4867557572451375610
 GameObject:
   m_ObjectHideFlags: 0
@@ -390,6 +472,39 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3216609068973991576}
+  m_Father: {fileID: 7065561599682025}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6969661437967929674
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7915427721141906752}
+  m_Layer: 0
+  m_Name: NitroTrails
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7915427721141906752
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6969661437967929674}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4081666368073567446}
+  - {fileID: 3560889433923494229}
   m_Father: {fileID: 7065561599682025}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7288313854891195551
@@ -910,6 +1025,130 @@ Transform:
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2156673173925334485, guid: 8dfde96c67bb9544fbbf7caa7f8963d8, type: 3}
   m_PrefabInstance: {fileID: 1234450357132752876}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1829063748499546842
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3560889433923494229}
+    m_Modifications:
+    - target: {fileID: 180286, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_Name
+      value: FireTrailALT
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+--- !u!4 &1829063748499489146 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+  m_PrefabInstance: {fileID: 1829063748499546842}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1896666348863435764
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4081666368073567446}
+    m_Modifications:
+    - target: {fileID: 180286, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_Name
+      value: FireTrailALT
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+--- !u!4 &1896666348863770708 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+  m_PrefabInstance: {fileID: 1896666348863435764}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &9217783114730521774
 PrefabInstance:

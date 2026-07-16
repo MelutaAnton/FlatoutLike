@@ -31,6 +31,7 @@ namespace FlatOutLike.Controllers.Car
         private bool _wrecked;
         private float _currentSteerAngle;
         private bool _handbrakeActive;
+        private bool _nitroActive; // текущее опубликованное состояние нитро — событие шлётся только при смене
 
         public CarId CarId   => new CarId(_carId);
         public float MaxArmor => _config != null ? _config.MaxArmor : 0f;
@@ -50,6 +51,11 @@ namespace FlatOutLike.Controllers.Car
         {
             _carId  = carId;
             _config = stats;
+
+            // Страховка на случай переиспользования объекта (пул/респавн) без прохождения
+            // врека: не тащим «активное нитро» прошлой жизни — иначе трейлы мигнут при спавне.
+            // Без публикации события: Configure вызывается до InjectGameObject, шины ещё нет.
+            _nitroActive = false;
         }
 
         /// <summary>
@@ -184,11 +190,26 @@ namespace FlatOutLike.Controllers.Car
         /// <summary>
         /// Применяет импульс нитро если кнопка зажата и бак не пуст.
         /// Расход делегируется в <see cref="INitroService"/> — логика вне контроллера.
+        /// При смене состояния публикует <see cref="NitroStateChangedEvent"/> — на него подписаны
+        /// NitroTrailsController (визуальные трейлы) и NitroCameraEffectController (FOV/блюр игрока).
         /// </summary>
         private void ApplyNitro()
         {
-            if (_input.Nitro && _nitro.TryConsume(CarId, _config.NitroDrainRate * Time.fixedDeltaTime))
+            bool active = _input.Nitro && _nitro.TryConsume(CarId, _config.NitroDrainRate * Time.fixedDeltaTime);
+            if (active)
                 _rigidbody.AddForce(transform.forward * _config.NitroForce);
+
+            SetNitroActive(active);
+        }
+
+        /// <summary>
+        /// Публикует событие только при реальной смене состояния (не каждый физтик).
+        /// </summary>
+        private void SetNitroActive(bool active)
+        {
+            if (active == _nitroActive) return;
+            _nitroActive = active;
+            _eventBus.Publish(new NitroStateChangedEvent(CarId, _nitroActive));
         }
 
         private void ApplyMotor(float torque)
@@ -261,6 +282,10 @@ namespace FlatOutLike.Controllers.Car
             if (_wrecked) return; // повторное событие по той же машине — eject уже отработал
 
             _wrecked = true;
+
+            // FixedUpdate/ApplyNitro больше не выполнится после врека — если нитро было активно,
+            // состояние зависнет навсегда (трейлы/FOV-кик не выключатся). Сбрасываем принудительно.
+            SetNitroActive(false);
 
             // transform = корень машины: водитель игнорирует столкновения с её коллайдерами
             // при вылете «через лобовое» (иначе включение ragdoll-коллайдеров в салоне взрывает физику).

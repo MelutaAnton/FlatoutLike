@@ -86,4 +86,22 @@ namespace FlatOutLike.Core.Events
             Duration    = duration;
         }
     }
+
+    /// <summary>
+    /// Публикуется <c>CarController</c> при смене состояния нитро (нажата/отпущена, либо
+    /// принудительно сброшена при вреке машины). Подписчики: <c>NitroTrailsController</c>
+    /// (визуальные трейлы у любой машины), <c>NitroCameraEffectController</c>
+    /// (FOV-кик + радиальный блюр — только для машины игрока).
+    /// </summary>
+    public readonly struct NitroStateChangedEvent
+    {
+        public readonly CarId CarId;
+        public readonly bool  IsActive;
+
+        public NitroStateChangedEvent(CarId carId, bool isActive)
+        {
+            CarId    = carId;
+            IsActive = isActive;
+        }
+    }
 }

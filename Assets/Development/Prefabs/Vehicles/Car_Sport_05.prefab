@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &32660840621792070
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7683994996966139908}
+  m_Layer: 0
+  m_Name: NitroTrail_L
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &7683994996966139908
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 32660840621792070}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0.37668014, y: -0.06570983, z: -1.962}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2064840849989276108}
+  m_Father: {fileID: 2003903662960102889}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &745342043922351225
 GameObject:
   m_ObjectHideFlags: 0
@@ -46,6 +78,7 @@ GameObject:
   - component: {fileID: 6506524323450879993}
   - component: {fileID: 6080317370885967295}
   - component: {fileID: 7199252776228634338}
+  - component: {fileID: 8128772209965421823}
   m_Layer: 8
   m_Name: Car_Sport_05
   m_TagString: Untagged
@@ -72,6 +105,7 @@ Transform:
   - {fileID: 7135419440399559651}
   - {fileID: 7419034167072865668}
   - {fileID: 330444669056019252}
+  - {fileID: 2003903662960102889}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &5458166735916174847
@@ -179,6 +213,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Car.WindshieldController
   _debrisConfig: {fileID: 11400000, guid: 96274fd607752a9429b227005a684301, type: 2}
+--- !u!114 &8128772209965421823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 812652272293244391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53b89a8a0696ba14bb59dd7624ad5781, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Car.NitroTrailsController
+  _car: {fileID: 7929343450096671504}
+  _trailEmitters:
+  - {fileID: 32660840621792070}
+  - {fileID: 6528369468274705551}
 --- !u!1 &2881161357639775826
 GameObject:
   m_ObjectHideFlags: 0
@@ -250,6 +300,39 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!1 &3260862548665378795
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2003903662960102889}
+  m_Layer: 0
+  m_Name: NitroTrails
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2003903662960102889
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3260862548665378795}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7683994996966139908}
+  - {fileID: 4400301863308482325}
+  m_Father: {fileID: 7938946718790095924}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3539622575972817058
 GameObject:
   m_ObjectHideFlags: 0
@@ -463,6 +546,100 @@ WheelCollider:
   m_LayerOverridePriority: 0
   m_Enabled: 1
   m_ProvidesContacts: 0
+--- !u!1 &6528369468274705551
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4400301863308482325}
+  m_Layer: 0
+  m_Name: NitroTrail_R
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &4400301863308482325
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6528369468274705551}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0.37668014, y: -0.06570983, z: -1.962}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5798854561809874760}
+  m_Father: {fileID: 2003903662960102889}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2064840849989366380
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7683994996966139908}
+    m_Modifications:
+    - target: {fileID: 180286, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_Name
+      value: FireTrailALT
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+--- !u!4 &2064840849989276108 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+  m_PrefabInstance: {fileID: 2064840849989366380}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2198153157978179567
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1063,4 +1240,66 @@ MonoBehaviour:
 Transform:
   m_CorrespondingSourceObject: {fileID: 6003179557159821878, guid: 83a24cc8b142f3f43a764c913959579f, type: 3}
   m_PrefabInstance: {fileID: 3981483509292420405}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5798854561809816808
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4400301863308482325}
+    m_Modifications:
+    - target: {fileID: 180286, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_Name
+      value: FireTrailALT
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+--- !u!4 &5798854561809874760 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 484256, guid: b1087cb1799b6ed4eb5ab5dd584daaa9, type: 3}
+  m_PrefabInstance: {fileID: 5798854561809816808}
   m_PrefabAsset: {fileID: 0}

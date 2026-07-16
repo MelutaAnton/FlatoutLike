@@ -56454,6 +56454,7 @@ MonoBehaviour:
   _orbitCameraConfig: {fileID: 11400000, guid: 1065ba30060a1d14488a748461023df6, type: 2}
   _cameraShakeConfig: {fileID: 11400000, guid: f70f5f362a6bbf245a5354eafabe876f, type: 2}
   _cameraShaker: {fileID: 1046931809}
+  _nitroCameraEffectController: {fileID: 1582040641}
   _pickupConfig: {fileID: 11400000, guid: 5a1aafd6daee7aa4f9c67d3a21e84ec4, type: 2}
   _pickupZones:
   - point: {fileID: 1336742087}
@@ -162796,6 +162797,7 @@ GameObject:
   - component: {fileID: 1582040639}
   - component: {fileID: 1582040634}
   - component: {fileID: 1582040640}
+  - component: {fileID: 1582040641}
   m_Layer: 0
   m_Name: CM_ChaseCamera
   m_TagString: Untagged
@@ -162987,6 +162989,23 @@ MonoBehaviour:
     NearLimit: 5
     FarLimit: 30
     MaxQualityBoost: 0.2
+--- !u!114 &1582040641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1582040633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66293c9ce58519d44a900ffa8b808482, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Camera.NitroCameraEffectController
+  _chaseCamera: {fileID: 1582040637}
+  _config: {fileID: 11400000, guid: 51f70be9f83308a4d9a94bb015a826f9, type: 2}
+  _blurFeatures:
+  - {fileID: 7523015115085679154, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  - {fileID: 6397019861571926193, guid: 65bc7dbf4170f435aa868c779acfb082, type: 2}
 --- !u!1 &1583103966
 GameObject:
   m_ObjectHideFlags: 0

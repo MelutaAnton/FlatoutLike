@@ -106,6 +106,12 @@ namespace FlatOutLike.Installers
         [SerializeField] private CameraShakeConfig _cameraShakeConfig;
         [SerializeField] private CinemachineCameraShaker _cameraShaker;
 
+        /// <summary>
+        /// FOV-кик + радиальный блюр chase-камеры на нитро игрока. Условная регистрация
+        /// (паттерн _cameraShaker) — в тест-сценах без камеры оставить null.
+        /// </summary>
+        [SerializeField] private NitroCameraEffectController _nitroCameraEffectController;
+
         // ── Шаг 5c: Pickup-система ─────────────────────────────────────────────
         /// <summary>
         /// Конфиг пикапов: типы, prefab'ы пула, размеры пула, тайминги.
@@ -418,6 +424,17 @@ namespace FlatOutLike.Installers
             else
             {
                 Debug.LogWarning("[GameLifetimeScope] _cameraShakeConfig/_cameraShaker не заданы — ICameraShakeService не регистрируется (UI-сцена или тест-сцена без рига).");
+            }
+
+            // NitroCameraEffectController — MonoBehaviour, ему нужна инъекция (IEventBus, ICarRegistry),
+            // поэтому RegisterComponent, а не RegisterInstance. Условно — в тест-сценах без камеры null.
+            if (_nitroCameraEffectController != null)
+            {
+                builder.RegisterComponent(_nitroCameraEffectController);
+            }
+            else
+            {
+                Debug.LogWarning("[GameLifetimeScope] _nitroCameraEffectController не задан — эффект нитро-камеры не регистрируется (UI-сцена или тест-сцена без камеры).");
             }
 
             // Полёт водителя (Шаг 7). DriverFlightConfig — БЕЗУСЛОВНО, тот же резон, что и
