@@ -2226,6 +2226,7 @@ MonoBehaviour:
   _orbitCameraConfig: {fileID: 0}
   _cameraShakeConfig: {fileID: 0}
   _cameraShaker: {fileID: 0}
+  _nitroCameraEffectController: {fileID: 0}
   _pickupConfig: {fileID: 0}
   _pickupZones: []
   _driverFlightConfig: {fileID: 0}
@@ -2239,7 +2240,7 @@ MonoBehaviour:
   _matchEndView: {fileID: 0}
   _derbyHudView: {fileID: 0}
   _highJumpHudView: {fileID: 0}
-  _forceMobileInput: 0
+  _inputConfig: {fileID: 11400000, guid: 349bb7356c490044bbf8d242e0630cb6, type: 2}
   _mobileInputCanvas: {fileID: 0}
   _pauseOverlayView: {fileID: 0}
 --- !u!4 &895833945

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace FlatOutLike.Controllers.Mobile
 {
@@ -12,19 +13,39 @@ namespace FlatOutLike.Controllers.Mobile
     /// </summary>
     public sealed class HoldButtonView : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
+        [SerializeField] private Button _button;
+
+        // Button.interactable сам по себе НЕ блокирует IPointerDown/Up — это независимые
+        // обработчики, поэтому нужен свой флаг вдобавок к визуальному отключению кнопки.
+        private bool _interactable = true;
+
         public bool IsHeld { get; private set; }
 
         public event Action OnPressed;
 
         public void OnPointerDown(PointerEventData eventData)
         {
+            if (!_interactable) return;
+
             IsHeld = true;
             OnPressed?.Invoke();
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
+            if (!_interactable) return;
+
             IsHeld = false;
+        }
+
+        /// <summary>Включает/выключает кнопку (например, буст без зарядов). При выключении сбрасывает удержание.</summary>
+        public void SetInteractable(bool value)
+        {
+            _interactable = value;
+            if (_button != null) _button.interactable = value;
+
+            if (!value)
+                IsHeld = false; // тот же сброс, что и в OnDisable — палец мог удерживать кнопку в момент выключения
         }
 
         private void OnDisable()

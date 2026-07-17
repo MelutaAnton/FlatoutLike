@@ -10,6 +10,7 @@ using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Driver;
+using FlatOutLike.Data.Configs.Input;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
 using FlatOutLike.Data.Configs.Rewards;
@@ -191,11 +192,10 @@ namespace FlatOutLike.Installers
 
         // ── Шаг 9: мобильный ввод ─────────────────────────────────────────────────
         /// <summary>
-        /// Форсирует мобильный input-провайдер даже в редакторе/на десктопе — для теста
-        /// мобильного HUD без сборки на устройство. В билде на телефон достаточно
-        /// Application.isMobilePlatform, флаг можно оставить false.
+        /// Общий ассет схемы управления (один на весь проект). Прошивается editor-меню
+        /// "Wire Input Config (All Scenes)". См. <see cref="InputConfig"/>.
         /// </summary>
-        [SerializeField] private bool _forceMobileInput;
+        [SerializeField] private InputConfig _inputConfig;
 
         /// <summary>
         /// Canvas мобильного управления (стики + кнопки). Заполняется editor-скриптом на
@@ -219,7 +219,7 @@ namespace FlatOutLike.Installers
             // Выбор input-провайдера (Шаг 9): мобильный HUD пушит ввод вручную, поэтому
             // MobileInputProvider регистрируется дополнительно AsSelf() — MobileInputCanvas
             // инжектит его напрямую (не через IInputProvider), чтобы вызывать Set*/Queue*.
-            bool useMobileInput = _forceMobileInput || Application.isMobilePlatform;
+            bool useMobileInput = (_inputConfig != null && _inputConfig.ForceMobileInput) || Application.isMobilePlatform;
             if (useMobileInput)
             {
                 builder.Register<MobileInputProvider>(Lifetime.Singleton).AsSelf().As<IInputProvider>();

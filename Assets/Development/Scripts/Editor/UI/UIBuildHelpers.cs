@@ -241,7 +241,7 @@ namespace FlatOutLike.Editor.UI
         /// </summary>
         public static Canvas EnsureCanvasAndEventSystem()
         {
-            var existingCanvas = Object.FindAnyObjectByType<Canvas>();
+            var existingCanvas = FindSceneUiCanvas();
             GameObject canvasGo = existingCanvas != null ? existingCanvas.gameObject : null;
             Canvas canvas;
 
@@ -286,6 +286,35 @@ namespace FlatOutLike.Editor.UI
                 Undo.AddComponent<StandaloneInputModule>(esGo);
 
             return canvas;
+        }
+
+        /// <summary>
+        /// Детерминированный выбор сценного UI-канваса. FindAnyObjectByType&lt;Canvas&gt; здесь
+        /// НЕЛЬЗЯ: порядок недетерминирован, и с появлением служебных префаб-канвасов
+        /// (MobileInputCanvas, PauseOverlayCanvas) он возвращал их — Build*-скрипты
+        /// встраивали HUD ВНУТРЬ префаб-инстанса мобильного управления (инцидент 2026-07-17:
+        /// дубль HighJumpHud внутри выключенного MobileInputCanvas). Правила выбора:
+        /// только корневые канвасы, НЕ являющиеся частью prefab-инстанса; приоритет — имя
+        /// "UICanvas"; иначе первый подходящий; нет ни одного — null (вызывающий создаст).
+        /// </summary>
+        private static Canvas FindSceneUiCanvas()
+        {
+            var canvases = Object.FindObjectsByType<Canvas>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            Canvas fallback = null;
+            foreach (var c in canvases)
+            {
+                if (c.transform.parent != null) continue;
+                if (PrefabUtility.IsPartOfPrefabInstance(c.gameObject)) continue;
+
+                if (c.gameObject.name == "UICanvas")
+                    return c;
+
+                if (fallback == null) fallback = c;
+            }
+
+            return fallback;
         }
     }
 }

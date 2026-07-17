@@ -1,4 +1,5 @@
 using FlatOutLike.Core.Input;
+using FlatOutLike.Services.Driver;
 using UnityEngine;
 using VContainer;
 
@@ -26,6 +27,7 @@ namespace FlatOutLike.Controllers.Mobile
         [SerializeField] private HoldButtonView _pauseButton;
 
         private MobileInputProvider _provider;
+        private IDriverFlightService _flight;
         private bool _initialized;
 
         // Кэш последнего применённого контекста — SetActive дёргаем только при смене,
@@ -33,10 +35,16 @@ namespace FlatOutLike.Controllers.Mobile
         private InputContext _lastAppliedContext;
         private bool _hasAppliedContext;
 
+        // Кэш последнего применённого состояния доступности буста — SetInteractable
+        // дёргаем только при смене значения, а не каждый Update().
+        private bool _lastAppliedBoostAvailable;
+        private bool _hasAppliedBoostAvailable;
+
         [Inject]
-        public void Construct(MobileInputProvider provider)
+        public void Construct(MobileInputProvider provider, IDriverFlightService flight)
         {
             _provider = provider;
+            _flight = flight;
 
             // Триггер-кнопки (одноразовые действия) подписываются на Queue*() провайдера.
             // Null-проверки явные — с Unity-объектами `?.`/`??` запрещены (CLAUDE.md, fake-null).
@@ -59,6 +67,7 @@ namespace FlatOutLike.Controllers.Mobile
             if (_nitroButton != null) _provider.SetNitro(_nitroButton.IsHeld);
 
             ApplyContextVisibility(_provider.CurrentContext);
+            ApplyBoostAvailability(_flight.HasBoostAvailable);
         }
 
         private void OnDestroy()
@@ -97,6 +106,20 @@ namespace FlatOutLike.Controllers.Mobile
 
             _lastAppliedContext = context;
             _hasAppliedContext = true;
+        }
+
+        /// <summary>
+        /// Синхронизирует интерактивность кнопки буста с наличием зарядов: тап тратит буст
+        /// (HasBoostAvailable=false) — кнопка гаснет; новый полёт сбрасывает заряды — оживает.
+        /// </summary>
+        private void ApplyBoostAvailability(bool available)
+        {
+            if (_hasAppliedBoostAvailable && available == _lastAppliedBoostAvailable) return;
+
+            if (_boostButton != null) _boostButton.SetInteractable(available);
+
+            _lastAppliedBoostAvailable = available;
+            _hasAppliedBoostAvailable = true;
         }
     }
 }

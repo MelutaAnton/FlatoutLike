@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using FlatOutLike.Editor.Setup;
 using FlatOutLike.Views.UI.Hud;
+using FlatOutLike.Views.UI.Common;
 using Object = UnityEngine.Object;
 
 namespace FlatOutLike.Editor.UI
@@ -43,6 +44,10 @@ namespace FlatOutLike.Editor.UI
             var canvas = UIBuildHelpers.EnsureCanvasAndEventSystem();
             var root = canvas.transform;
 
+            // Миграция инцидента 2026-07-17: старая версия EnsureCanvasAndEventSystem могла
+            // вернуть префаб-канвас (MobileInputCanvas) — HUD-дубль собирался внутри него.
+            RemoveForeignHighJumpHuds(root);
+
             var hudRt = UIBuildHelpers.FindOrCreateChild(root, "HighJumpHud");
             UIBuildHelpers.Stretch(hudRt);
 
@@ -79,6 +84,27 @@ namespace FlatOutLike.Editor.UI
         }
 
         /// <summary>
+        /// Удаляет HighJumpHud-дубли, лежащие НЕ под целевым канвасом (например, собранные
+        /// внутри префаб-инстанса MobileInputCanvas старой версией выбора канваса).
+        /// Прошивка scope._highJumpHudView восстанавливается ниже штатным BindHighJumpHudView.
+        /// </summary>
+        private static void RemoveForeignHighJumpHuds(Transform correctRoot)
+        {
+            var views = Object.FindObjectsByType<HighJumpHudView>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            foreach (var view in views)
+            {
+                if (view.transform.parent == correctRoot) continue;
+
+                Debug.Log("[Editor] Удалён HighJumpHud-дубль вне целевого канваса: '" +
+                          view.gameObject.name + "' (родитель: " +
+                          (view.transform.parent != null ? view.transform.parent.name : "корень сцены") + ").");
+                Undo.DestroyObjectImmediate(view.gameObject);
+            }
+        }
+
+        /// <summary>
         /// Миграция: старый debug-оверлей больше не нужен — удаляем весь его GameObject
         /// (Canvas + Text + HighJumpDebugOverlayController), идемпотентно по имени/компоненту.
         /// </summary>
@@ -106,10 +132,26 @@ namespace FlatOutLike.Editor.UI
             UIBuildHelpers.Anchor((RectTransform)speedLabel.transform, new Vector2(0f, 0.4f), new Vector2(1f, 1f),
                 new Vector2(0.5f, 1f), Vector2.zero, Vector2.zero);
 
-            var hintLabel = UIBuildHelpers.CreateLabel(groupRt, "HintLabel", "HOLD W",
-                UIBuildHelpers.BodyFontPath, 28f, new Color(1f, 1f, 1f, 0.7f));
+            // Текст хинта правится дизайнером прямо в сцене — при повторном прогоне не
+            // затираем его дефолтным "HOLD W", а переиспользуем существующий.
+            string hintText = "HOLD W";
+            var existingHint = groupRt.Find("HintLabel");
+            if (existingHint != null)
+            {
+                var existingTmp = existingHint.GetComponent<TMPro.TextMeshProUGUI>();
+                if (existingTmp != null && !string.IsNullOrEmpty(existingTmp.text))
+                    hintText = existingTmp.text;
+            }
+
+            var hintLabel = UIBuildHelpers.CreateLabel(groupRt, "HintLabel", hintText,
+                UIBuildHelpers.BodyFontPath, 30f, new Color(1f, 1f, 1f, 0.7f));
             UIBuildHelpers.Anchor((RectTransform)hintLabel.transform, new Vector2(0f, 0f), new Vector2(1f, 0.4f),
                 new Vector2(0.5f, 0f), Vector2.zero, Vector2.zero);
+
+            // Пульс подсказки "HOLD W" — привлекает внимание игрока в начале заезда.
+            // CreateLabel идемпотентен по имени (FindOrCreateChild), поэтому этот блок
+            // дособирает компонент и на HUD, собранном старой версией скрипта.
+            EnsurePulsingLabel(hintLabel);
 
             return groupRt.gameObject;
         }
@@ -193,6 +235,32 @@ namespace FlatOutLike.Editor.UI
             EnsurePreferredSize(continueButton.gameObject, 420f, 110f);
 
             return panelRt.gameObject;
+        }
+
+        /// <summary>
+        /// Дособирает PulsingLabelView на GameObject лейбла и прошивает его собственную
+        /// ссылку _label. Идемпотентно: и при первом прогоне, и при миграции старого HUD.
+        /// </summary>
+        private static void EnsurePulsingLabel(TMPro.TMP_Text label)
+        {
+            var go = label.gameObject;
+            var pulsing = go.GetComponent<PulsingLabelView>();
+            if (pulsing == null) pulsing = Undo.AddComponent<PulsingLabelView>(go);
+
+            var so = new SerializedObject(pulsing);
+            var prop = so.FindProperty("_label");
+            if (prop == null)
+            {
+                Debug.LogWarning("[Editor] Поле PulsingLabelView._label не найдено (рантайм ещё не скомпилирован?).");
+                return;
+            }
+
+            if (prop.objectReferenceValue != (Object)label)
+            {
+                prop.objectReferenceValue = label;
+                so.ApplyModifiedProperties();
+                Debug.Log("[Editor] PulsingLabelView добавлен на HintLabel и прошит.");
+            }
         }
 
         private static void EnsurePreferredHeight(GameObject go, float height)

@@ -133,6 +133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 1321701312045702304}
 --- !u!1 &476240802005396507
 GameObject:
   m_ObjectHideFlags: 0
@@ -341,6 +342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 2764423832454875044}
 --- !u!1 &2394890802286757131
 GameObject:
   m_ObjectHideFlags: 0
@@ -694,6 +696,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 6920022160782549134}
 --- !u!1 &5157718011294260318
 GameObject:
   m_ObjectHideFlags: 0
@@ -827,6 +830,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 8161709384417168041}
 --- !u!1 &5452347708966748609
 GameObject:
   m_ObjectHideFlags: 0
@@ -960,6 +964,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 7686995763057198216}
 --- !u!1 &6121172061004842993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1332,6 +1337,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 9001832919389635699}
 --- !u!1 &7894041155935274083
 GameObject:
   m_ObjectHideFlags: 0
@@ -1541,3 +1547,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17dbd7d1e43336a4f82c74e97834adad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Mobile.HoldButtonView
+  _button: {fileID: 3447783245942110985}

@@ -315,6 +315,25 @@ namespace FlatOutLike.Editor.UI
             // Automatic-навигация на тач-HUD даёт неявные переходы фокуса/залипание selected.
             btn.navigation = new Navigation { mode = Navigation.Mode.None };
 
+            // Прошивка HoldButtonView._button — тап должен визуально считываться через
+            // Button.transition, настроенный выше. Единообразно для ВСЕХ hold-кнопок,
+            // вызывается и из билд-флоу, и из миграции 'Style Mobile Input Buttons'.
+            var holdButtonView = btnGo.GetComponent<HoldButtonView>();
+            if (holdButtonView != null)
+            {
+                var hbvSo = new SerializedObject(holdButtonView);
+                var buttonProp = hbvSo.FindProperty("_button");
+                if (buttonProp == null)
+                {
+                    Debug.LogWarning("[Editor] Поле HoldButtonView._button не найдено (рантайм ещё не скомпилирован?).");
+                }
+                else if (buttonProp.objectReferenceValue != (Object)btn)
+                {
+                    buttonProp.objectReferenceValue = btn;
+                    hbvSo.ApplyModifiedProperties();
+                }
+            }
+
             Debug.Log("[Editor] Styled " + btnGo.name);
         }
 

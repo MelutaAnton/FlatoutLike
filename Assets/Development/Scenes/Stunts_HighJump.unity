@@ -17764,10 +17764,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1625004001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 450, y: -176.3318}
-  m_SizeDelta: {x: 900, y: 169.2166}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0.0000076293945}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &144862371
 MonoBehaviour:
@@ -37395,10 +37395,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1625004001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 450, y: -29.861752}
-  m_SizeDelta: {x: 900, y: 59.723503}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &354851956
 MonoBehaviour:
@@ -44032,10 +44032,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1625004001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 450, y: -456.3318}
-  m_SizeDelta: {x: 900, y: 43.797237}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &423177081
 MonoBehaviour:
@@ -87175,7 +87175,7 @@ MonoBehaviour:
   _matchEndView: {fileID: 0}
   _derbyHudView: {fileID: 0}
   _highJumpHudView: {fileID: 132971393}
-  _forceMobileInput: 1
+  _inputConfig: {fileID: 11400000, guid: 349bb7356c490044bbf8d242e0630cb6, type: 2}
   _mobileInputCanvas: {fileID: 9150318162647215938}
   _pauseOverlayView: {fileID: 163754324}
 --- !u!4 &791582896
@@ -182247,8 +182247,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 37.96
-  m_fontSizeBase: 37.96
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -226199,6 +226199,7 @@ GameObject:
   - component: {fileID: 1942194967}
   - component: {fileID: 1942194969}
   - component: {fileID: 1942194968}
+  - component: {fileID: 1942194970}
   m_Layer: 0
   m_Name: HintLabel
   m_TagString: Untagged
@@ -226272,8 +226273,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 31.3
-  m_fontSizeBase: 31.3
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -226325,6 +226326,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1942194966}
   m_CullTransparentMesh: 1
+--- !u!114 &1942194970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942194966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd3f9e4f57d43b34eb14b8c94f88aef5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Views.UI.Common.PulsingLabelView
+  _label: {fileID: 1942194968}
+  _minFontSize: 30
+  _maxFontSize: 34
+  _cycleDuration: 1.2
 --- !u!1 &1947379132
 GameObject:
   m_ObjectHideFlags: 0
@@ -231768,10 +231785,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1625004001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 450, y: -535.1152}
-  m_SizeDelta: {x: 900, y: 49.769585}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0.000030517578}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1981078459
 MonoBehaviour:
@@ -249746,6 +249763,10 @@ PrefabInstance:
     - target: {fileID: 3965561222018073852, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
       propertyPath: m_Name
       value: MobileInputCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 7958207103405655652, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 8646954516040515504, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
       propertyPath: m_Pivot.x
