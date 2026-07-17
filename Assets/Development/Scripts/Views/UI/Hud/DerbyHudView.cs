@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,6 +27,15 @@ namespace FlatOutLike.Views.UI.Hud
         [SerializeField] private GameObject _wreckedPanel;
         [SerializeField] private Button _wreckedWatchButton;
         [SerializeField] private Button _wreckedLeaveButton;
+
+        /// <summary>
+        /// Пауза между гибелью игрока и показом Wrecked-панели: даём досмотреть вылет
+        /// водителя через лобовое, не заслоняя его окном. Инициализатор поля покрывает
+        /// и уже собранные сцены (отсутствующее в YAML поле берёт дефолт из кода).
+        /// </summary>
+        [SerializeField] private float _wreckedShowDelaySeconds = 4f;
+
+        private Coroutine _wreckedShowRoutine;
 
         /// <summary>Длительность показа одной записи kill-feed.</summary>
         private const float KillFeedEntryLifetimeSeconds = 4f;
@@ -70,15 +80,37 @@ namespace FlatOutLike.Views.UI.Hud
             item.Show(text, KillFeedEntryLifetimeSeconds);
         }
 
-        /// <summary>Показывает экран смерти игрока (Wrecked) с кнопками Watch/Leave.</summary>
+        /// <summary>
+        /// Показывает экран смерти игрока (Wrecked) с кнопками Watch/Leave — с задержкой
+        /// <see cref="_wreckedShowDelaySeconds"/>. WaitForSeconds масштабируется timeScale:
+        /// пауза замораживает отсчёт вместе с остальной игрой — осознанно.
+        /// </summary>
         public void ShowWreckedPanel()
         {
-            if (_wreckedPanel != null) _wreckedPanel.SetActive(true);
+            if (_wreckedPanel == null) return;
+
+            if (_wreckedShowRoutine != null) StopCoroutine(_wreckedShowRoutine);
+            _wreckedShowRoutine = StartCoroutine(ShowWreckedPanelDelayed());
         }
 
         public void HideWreckedPanel()
         {
+            // Отменяем и отложенный показ: конец матча в окно задержки не должен
+            // вытолкнуть Wrecked-панель поверх карточки MatchEnd.
+            if (_wreckedShowRoutine != null)
+            {
+                StopCoroutine(_wreckedShowRoutine);
+                _wreckedShowRoutine = null;
+            }
+
             if (_wreckedPanel != null) _wreckedPanel.SetActive(false);
+        }
+
+        private IEnumerator ShowWreckedPanelDelayed()
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, _wreckedShowDelaySeconds));
+            _wreckedPanel.SetActive(true);
+            _wreckedShowRoutine = null;
         }
 
         private void HandleWreckedWatchClicked() => OnWreckedWatchClicked?.Invoke();

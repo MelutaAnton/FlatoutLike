@@ -897,8 +897,16 @@ PrefabInstance:
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 1568313596505957799, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+      propertyPath: m_Name
+      value: _Glass_F
+      objectReference: {fileID: 0}
+    - target: {fileID: 1568313596505957799, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1568313596505957799, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1568313596505957800, guid: cb57a8cbcfcfe5b4a985923afe9c5756, type: 3}
       propertyPath: m_Layer
