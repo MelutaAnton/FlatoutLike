@@ -39,6 +39,15 @@ namespace FlatOutLike.Controllers.Car
         /// <summary>Текущая скорость машины (м/с). Читается HUD-презентерами (Шаг 8d) через ICarRegistry.Player.</summary>
         public float Speed => _rigidbody != null ? _rigidbody.linearVelocity.magnitude : 0f;
 
+        /// <summary>Машина уничтожена (врек) — читается CarEngineSoundBridge, чтобы заглушить двигатель.</summary>
+        public bool IsWrecked => _wrecked;
+
+        /// <summary>Максимальная скорость машины из конфига (м/с) — читается CarEngineSoundBridge для нормировки RPM.</summary>
+        public float TopSpeed => _config != null ? _config.TopSpeed : 0f;
+
+        /// <summary>Модуль вертикальной оси газа (0..1), обновляется в FixedUpdate. Читается CarEngineSoundBridge.</summary>
+        public float ThrottleInput { get; private set; }
+
         public System.Collections.Generic.IReadOnlyList<Transform> WheelVisuals => _wheelVisuals;
         public DriverController Driver => _driver;
 
@@ -135,6 +144,7 @@ namespace FlatOutLike.Controllers.Car
                 // Машина уничтожена: газ/руль/нитро больше не применяются, машина катится по инерции.
                 // Ручник мог быть зажат в момент гибели — вернуть заднее сцепление, чтобы обломок
                 // не скользил хвостом с дрифтовым стиффнессом до конца матча.
+                ThrottleInput = 0f; // двигатель заглох — CarEngineSoundBridge читает это как gasPedalPressing=false
                 UpdateHandbrakeFriction(false);
                 ApplyMotor(0f);
                 ApplySteer(0f);
@@ -145,6 +155,8 @@ namespace FlatOutLike.Controllers.Car
             float throttle = _input.Move.y;
             float steerInput = _input.Move.x;
             bool handbrake = _input.Handbrake;
+
+            ThrottleInput = Mathf.Clamp01(Mathf.Abs(throttle));
 
             float forwardSpeed = Vector3.Dot(_rigidbody.linearVelocity, transform.forward);
 

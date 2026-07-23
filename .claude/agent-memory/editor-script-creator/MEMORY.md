@@ -10,3 +10,4 @@
 - [Step 6 Driver Ragdoll Scripts](project_step6_driver_ragdoll_scripts.md) — 5 скриптов написаны против locked contract ДО готовности рантайма; programmatic ragdoll via HumanBodyBones; null-check FindProperty pattern
 - [Cinemachine Impulse Shake](project_cinemachine_impulse_shake.md) — EnsureImpulse() в SetupCinemachineCameraRigEditor; ImpulseSource Reset()=Uniform (нужно Dissipating!); Listener Reset()=ChannelMask1/Gain1 ok as-is
 - [DeoccluderConfig SO wiring](project_deoccluder_config.md) — CreateDefaultDeoccluderConfigEditor (early-exit idempotent) + _deoccluderConfig прошивка в EnsureChaseCamera/EnsureOrbitCamera; EnsureDeoccluder() не тронут
+- [BridgeScripts asmdef boundary](project_bridgescripts_asmdef_boundary.md) — ThirdParty-паки без asmdef → мост+его editor-скрипт живут в Assets/Development/BridgeScripts/(Editor/), не в обычном Scripts/Editor/; пример SetupEngineSoundsEditor (RealisticEngineSound)
