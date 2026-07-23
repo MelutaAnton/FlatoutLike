@@ -34,6 +34,10 @@ namespace FlatOutLike.Data.Configs.Car
         [SerializeField] private float _nitroCapacity = 100f;
         [SerializeField] private float _nitroForce = 2000f;
         [SerializeField] private float _nitroDrainRate = 25f;
+        // Минимальная скорость (м/с) для срабатывания нитро: стоя на месте кнопка не жжёт
+        // бак и не включает эффекты. Инициализатор покрывает уже собранные .asset'ы
+        // (отсутствующее в YAML поле берёт дефолт из кода).
+        [SerializeField] private float _nitroMinSpeed = 1.5f;
 
         public float Acceleration => _acceleration;
         public float TopSpeed => _topSpeed;
@@ -57,6 +61,7 @@ namespace FlatOutLike.Data.Configs.Car
         public float NitroForce => _nitroForce;
         /// <summary>Расход нитро в единицах/секунду пока кнопка нитро зажата.</summary>
         public float NitroDrainRate => _nitroDrainRate;
+        public float NitroMinSpeed => _nitroMinSpeed;
 
         /// <summary>
         /// Создаёт runtime-клон конфига с применёнными множителями апгрейдов

@@ -207,7 +207,14 @@ namespace FlatOutLike.Controllers.Car
         /// </summary>
         private void ApplyNitro()
         {
-            bool active = _input.Nitro && _nitro.TryConsume(CarId, _config.NitroDrainRate * Time.fixedDeltaTime);
+            // Нитро только в движении ВПЕРЁД: берём проекцию скорости на forward — стоя на
+            // месте она ~0, на заднем ходу отрицательная, оба случая режутся одним порогом
+            // (кнопка не жжёт бак — проверка ДО TryConsume — и не включает трейлы/FOV/звук).
+            // Порог — в CarStatsConfig.
+            float forwardSpeed = Vector3.Dot(_rigidbody.linearVelocity, transform.forward);
+            bool active = _input.Nitro
+                && forwardSpeed >= _config.NitroMinSpeed
+                && _nitro.TryConsume(CarId, _config.NitroDrainRate * Time.fixedDeltaTime);
             if (active)
                 _rigidbody.AddForce(transform.forward * _config.NitroForce);
 
