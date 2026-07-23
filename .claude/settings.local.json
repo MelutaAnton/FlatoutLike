@@ -73,7 +73,10 @@
       "Bash(find Library/PackageCache -maxdepth 1 -iname \"*ugui*\")",
       "Bash(find \"C:/Program Files/Unity/Hub/Editor\" -maxdepth 1 -type d)",
       "Bash(where unity *)",
-      "Bash(py *)"
+      "Bash(py *)",
+      "WebSearch",
+      "WebFetch(domain:imphenzia.com)",
+      "WebFetch(domain:assetstore.unity.com)"
     ]
   }
 }

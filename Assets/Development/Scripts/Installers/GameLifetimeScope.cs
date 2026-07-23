@@ -1,3 +1,4 @@
+using FlatOutLike.Controllers.Audio;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Camera;
 using FlatOutLike.Controllers.Destructible;
@@ -6,6 +7,7 @@ using FlatOutLike.Controllers.Stunts;
 using FlatOutLike.Core.Events;
 using FlatOutLike.Core.Input;
 using FlatOutLike.Core.Pool;
+using FlatOutLike.Data.Configs.Audio;
 using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Combat;
@@ -23,6 +25,7 @@ using FlatOutLike.Factories.Pickup;
 using FlatOutLike.Factories.Vfx;
 using FlatOutLike.Models;
 using FlatOutLike.Services.AI;
+using FlatOutLike.Services.Audio;
 using FlatOutLike.Services.Camera;
 using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
@@ -33,6 +36,7 @@ using FlatOutLike.Services.Meta;
 using FlatOutLike.Services.Pickups;
 using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
+using FlatOutLike.Views.UI.Common;
 using FlatOutLike.Views.UI.Garage;
 using FlatOutLike.Views.UI.Hud;
 using FlatOutLike.Views.UI.MainMenu;
@@ -211,6 +215,27 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private PauseOverlayView _pauseOverlayView;
 
+        // ── Звук (Derby + High Jump + мета-UI) ────────────────────────────────────
+        /// <summary>
+        /// Конфиг звука: SFX/музыка/маппинг GameState→трек. Регистрируется БЕЗУСЛОВНО
+        /// (fallback-инстанс, паттерн _damageConfig) — до импорта звукового ассета все
+        /// массивы клипов пустые, AudioService обязан молча переживать это на любой сцене.
+        /// </summary>
+        [SerializeField] private AudioConfig _audioConfig;
+
+        /// <summary>
+        /// Реальный исполнитель звука (дочерние AudioSource). Условная регистрация
+        /// (паттерн _cameraShaker): если не прошит — регистрируется NullAudioPlayer,
+        /// AudioService на сценах без него просто не издаёт звук.
+        /// </summary>
+        [SerializeField] private AudioPlayerController _audioPlayerController;
+
+        /// <summary>
+        /// Вешает клик-звук на все кнопки сцены. Условная регистрация — на сценах без UI
+        /// (пустые тест-сцены вождения) не прошивается.
+        /// </summary>
+        [SerializeField] private UiClickSoundRelay _uiClickSoundRelay;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -280,6 +305,28 @@ namespace FlatOutLike.Installers
                 builder.Register<PauseOverlayPresenter>(Lifetime.Singleton);
                 builder.RegisterBuildCallback(c => c.Resolve<PauseOverlayPresenter>());
             }
+
+            // ── Звук (Derby + High Jump + мета-UI) ────────────────────────────────
+            // AudioConfig — БЕЗУСЛОВНО, паттерн _damageConfig: пустой конфиг (без клипов,
+            // ассет ещё не импортирован) просто не даёт AudioService что проигрывать.
+            builder.RegisterInstance(_audioConfig != null
+                ? _audioConfig
+                : ScriptableObject.CreateInstance<AudioConfig>());
+
+            // IAudioPlayer — условно по наличию контроллера (паттерн _cameraShaker):
+            // без него AudioService получает no-op реализацию и просто не издаёт звук.
+            if (_audioPlayerController != null)
+                builder.RegisterComponent<IAudioPlayer>(_audioPlayerController);
+            else
+                builder.Register<NullAudioPlayer>(Lifetime.Singleton).As<IAudioPlayer>();
+
+            // AudioService — EntryPoint (IStartable инициализирует плеер и запускает музыку
+            // текущего состояния, IDisposable отписывается). Регистрируется БЕЗУСЛОВНО —
+            // зависит только от сервисов, зарегистрированных выше безусловно.
+            builder.RegisterEntryPoint<AudioService>().As<IAudioService>();
+
+            if (_uiClickSoundRelay != null)
+                builder.RegisterComponent(_uiClickSoundRelay);
 
             // Награды (Шаг 5e) — зачисляет RewardEarnedEvent в профиль игрока.
             // Регистрируется безусловно (не зависит от _derbyMatchConfig/_rewardConfig),

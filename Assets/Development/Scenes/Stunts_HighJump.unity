@@ -87178,6 +87178,9 @@ MonoBehaviour:
   _inputConfig: {fileID: 11400000, guid: 349bb7356c490044bbf8d242e0630cb6, type: 2}
   _mobileInputCanvas: {fileID: 9150318162647215938}
   _pauseOverlayView: {fileID: 163754324}
+  _audioConfig: {fileID: 11400000, guid: 80757996bdaec01418055d36bba348cf, type: 2}
+  _audioPlayerController: {fileID: 939524792}
+  _uiClickSoundRelay: {fileID: 939524791}
 --- !u!4 &791582896
 Transform:
   m_ObjectHideFlags: 0
@@ -124544,6 +124547,85 @@ Transform:
   - {fileID: 758670995}
   m_Father: {fileID: 963008642}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &939524790
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 8126257434619879758, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_Name
+      value: AudioPlayer
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8194051809122991599, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+--- !u!114 &939524791 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 322707696711187157, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+  m_PrefabInstance: {fileID: 939524790}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c42d6c19614c43b4692a95f13099dba4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Views.UI.Common.UiClickSoundRelay
+--- !u!114 &939524792 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1965860967093995860, guid: 882f2313a8c78a440b50c1329300668a, type: 3}
+  m_PrefabInstance: {fileID: 939524790}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7456a6f45dcf7ee488616050d9ffce5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Controllers.Audio.AudioPlayerController
 --- !u!1 &940488984
 GameObject:
   m_ObjectHideFlags: 0
@@ -249883,3 +249965,4 @@ SceneRoots:
   - {fileID: 248322877}
   - {fileID: 9150318162647215937}
   - {fileID: 163754323}
+  - {fileID: 939524790}

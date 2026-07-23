@@ -40,6 +40,12 @@ namespace FlatOutLike.Core.Events
     }
 
     /// <summary>
+    /// Публикуется <c>DriverFlightService.TryConsumeBoost</c> при успешном потреблении
+    /// midair-буста (лимитированный ресурс полёта). Подписчики: AudioService (звук буста).
+    /// </summary>
+    public readonly struct MidairBoostUsedEvent { }
+
+    /// <summary>
     /// Публикуется <c>FlipDetectorService</c> каждый раз, когда накопленное вращение
     /// по одной из осей ragdoll-таза достигает полного оборота (360°).
     /// </summary>

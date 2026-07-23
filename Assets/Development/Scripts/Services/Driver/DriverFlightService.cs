@@ -83,6 +83,7 @@ namespace FlatOutLike.Services.Driver
             if (_boostsUsed >= _config.BoostCount) return false;
 
             _boostsUsed++;
+            _eventBus.Publish(new MidairBoostUsedEvent());
             return true;
         }
 

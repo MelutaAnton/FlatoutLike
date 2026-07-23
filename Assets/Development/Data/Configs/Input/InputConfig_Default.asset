@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ec7ccdfc882cf449a981b955329ecfa, type: 3}
   m_Name: InputConfig_Default
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Input.InputConfig
-  _forceMobileInput: 0
+  _forceMobileInput: 1

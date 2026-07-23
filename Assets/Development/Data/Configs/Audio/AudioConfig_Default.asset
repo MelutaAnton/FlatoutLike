@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c7ddcf435ba12f44b323f6fe75fbd72, type: 3}
+  m_Name: AudioConfig_Default
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Audio.AudioConfig
+  _sfxEntries:
+  - Id: 1
+    Clips:
+    - {fileID: 8300000, guid: bf59b2a161f0d6d4f94ec3570d62072d, type: 3}
+    - {fileID: 8300000, guid: 73f0119d62eabfa4392eac446ba11bdc, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 2
+    Clips:
+    - {fileID: 8300000, guid: 9155bd9f4ecd9da40872e0dfaeee1ea6, type: 3}
+    - {fileID: 8300000, guid: 8daae939f3f72764c8b487a009557511, type: 3}
+    - {fileID: 8300000, guid: 16230d4d867fd7742b40f404350fc779, type: 3}
+    - {fileID: 8300000, guid: 70c5e1176f1086a42999beebf900549e, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 3
+    Clips:
+    - {fileID: 8300000, guid: 66681ebfd16e5ad4f94eadf5cf3b8b05, type: 3}
+    - {fileID: 8300000, guid: d46fa8ee9035f4840901e77d44aa6603, type: 3}
+    - {fileID: 8300000, guid: 9e55477d9fc30f146a9537dc551888a8, type: 3}
+    - {fileID: 8300000, guid: da3e60da04b414c4aba1bf0061c55445, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 4
+    Clips:
+    - {fileID: 8300000, guid: 9428b717feeb8ed4eafcc852c9742b2e, type: 3}
+    - {fileID: 8300000, guid: ed15ac8e6022cf446a233c9891307c4b, type: 3}
+    - {fileID: 8300000, guid: 98a9c402c262fe84cbf89f282517e4e4, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 5
+    Clips:
+    - {fileID: 8300000, guid: 796eb6de0196a4a48b8642ec9beb9386, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 6
+    Clips:
+    - {fileID: 8300000, guid: 9b1fbd0725a63d041a456cc8da6976ae, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 7
+    Clips:
+    - {fileID: 8300000, guid: ce3410fed09acad439b8e028961fe104, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 8
+    Clips:
+    - {fileID: 8300000, guid: ab80bf828a0c25d4787c01cb11827e6b, type: 3}
+    - {fileID: 8300000, guid: 9228feae6f9275c47b4b5b00b1d6a62f, type: 3}
+    - {fileID: 8300000, guid: 5cef5c6ee8580854aa5ff3128fb06d67, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 9
+    Clips:
+    - {fileID: 8300000, guid: f58c815c99aa8fc46aab6d4397f8e9a8, type: 3}
+    - {fileID: 8300000, guid: e6b2a5fc2aa49ce47a945e3d7bc93a60, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 10
+    Clips:
+    - {fileID: 8300000, guid: 3a6b54e808c1bbc419719efa6b3a5e85, type: 3}
+    - {fileID: 8300000, guid: 127ac9325e64045408c22e79a767e99d, type: 3}
+    - {fileID: 8300000, guid: 7004c9efb92e96b468e1b3fdaa61d079, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 11
+    Clips:
+    - {fileID: 8300000, guid: 16e72fc1e8686a9418f195fb3b1d558f, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 12
+    Clips:
+    - {fileID: 8300000, guid: 5e448da6710484a49b1acf902ad146ac, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 13
+    Clips:
+    - {fileID: 8300000, guid: 1d46bb6b3d8cac540827026476b07caf, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 14
+    Clips:
+    - {fileID: 8300000, guid: 1c7f8c59c60b0e74d9cfdea1a5a2f94d, type: 3}
+    - {fileID: 8300000, guid: a5828009e2f79004c8c843281e89e1cf, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  _musicEntries:
+  - Id: 1
+    Clip: {fileID: 8300000, guid: 5f3e15e7781ee9149b2bf932169ca39a, type: 3}
+    Volume: 0.5
+  - Id: 2
+    Clip: {fileID: 8300000, guid: 638ffbc4951d809479acd0f7d4d1e76e, type: 3}
+    Volume: 0.5
+  - Id: 3
+    Clip: {fileID: 8300000, guid: e2948a9750b28644380eaa3fd4d65661, type: 3}
+    Volume: 0.5
+  _stateMusicEntries:
+  - State: 0
+    Track: 1
+  - State: 1
+    Track: 1
+  - State: 2
+    Track: 1
+  - State: 3
+    Track: 2
+  - State: 7
+    Track: 2
+  - State: 4
+    Track: 3
+  - State: 5
+    Track: 3
+  - State: 6
+    Track: 3
+  _minCrashImpactSpeed: 4
+  _crashHeavyImpactSpeed: 12
+  _musicCrossfadeSeconds: 1
+  _oneShotSourcesCount: 8
