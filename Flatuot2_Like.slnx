@@ -4,5 +4,10 @@
   <Project Path="FlatOutLike.csproj" />
   <Project Path="FlatOutLike.Tests.EditMode.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="ToonyColorsPro.Demo.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="CFXRRuntime.csproj" />
+  <Project Path="CFXREditor.csproj" />
+  <Project Path="KinoBloom.Runtime.csproj" />
+  <Project Path="CFXRDemo.csproj" />
 </Solution>
