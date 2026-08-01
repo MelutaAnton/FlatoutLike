@@ -1,9 +1,13 @@
 ﻿<Solution>
   <Project Path="ithappy.Battle_Stadium.csproj" />
+  <Project Path="ArcadeBridge.ArcadeIdleEngine.OdinSerializer.csproj" />
+  <Project Path="NaughtyAttributes.Core.csproj" />
   <Project Path="FlatOutLike.Editor.csproj" />
   <Project Path="FlatOutLike.csproj" />
   <Project Path="FlatOutLike.Tests.EditMode.csproj" />
+  <Project Path="NaughtyAttributes.Test.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="NaughtyAttributes.Editor.csproj" />
   <Project Path="ToonyColorsPro.Demo.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="CFXRRuntime.csproj" />
