@@ -9,6 +9,7 @@
 - VContainer (DI-контейнер)
 - C# с SOLID и Clean Architecture
 - Active Input Handling: **Both** (Project Settings → Player)
+- DOTween для оптимизации анимаций и сложных математических вычислений, и приведению GUI к стандартам гибрид-кэжа
 
 ## Архитектурные паттерны
 
