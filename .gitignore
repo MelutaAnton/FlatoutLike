@@ -44,6 +44,8 @@ ProjectSettings/InputManager.backup
 remote_config_data
 Build_BackUpThisFolder_ButDontShipItWithYourGame/
 *.docx
+# Кроме документации внутри паков: она часть поставки издателя.
+!Assets/ThirdParty/**/*.docx
 docs/архитектура с первого шага.docx
 Assets/Development/Art/Fonts/TMP/Bungee-Regular SDF.asset
 Assets/Development/Art/Fonts/TMP/RussoOne-Regular SDF.asset
