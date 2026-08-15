@@ -1,0 +1,183 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &618696531878141201
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 618696531878141200}
+  - component: {fileID: 618696531878141203}
+  m_Layer: 0
+  m_Name: TaskMan
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &618696531878141200
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 618696531878141201}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &618696531878141203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 618696531878141201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10f402e69bdc4dd448ee5a9064d1584c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ChallengeUIPref: {fileID: 4107062558593054649, guid: 0d7c08b21a5098a459a32cf85ae7b83d,
+    type: 3}
+  SpawnPos: {fileID: 0}
+  Tasks:
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 5
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 0
+  - Type: 0
+    Amount: 0
+    _MaxAmount: 5
+    rewardType: 0
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 0
+  - Type: 3
+    Amount: 0
+    _MaxAmount: 1
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 0
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 10
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 1
+  - Type: 2
+    Amount: 0
+    _MaxAmount: 10
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 2
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 20
+    rewardType: 2
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 1
+  - Type: 0
+    Amount: 0
+    _MaxAmount: 20
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 30
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 0
+    Amount: 0
+    _MaxAmount: 30
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 50
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 2
+    Amount: 0
+    _MaxAmount: 10
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 2
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 50
+    rewardType: 2
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 3
+  - Type: 0
+    Amount: 0
+    _MaxAmount: 60
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 60
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 0
+    Amount: 0
+    _MaxAmount: 70
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 25
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 2
+    Amount: 0
+    _MaxAmount: 15
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  - Type: 1
+    Amount: 0
+    _MaxAmount: 70
+    rewardType: 1
+    CarSkin: 
+    CashAmount: 500
+    WhichVehicle: 4
+  _TaskReward: {fileID: 0}
+  ChallengeGifts:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  DebugTaskType: 0
