@@ -6,12 +6,7 @@
 /[Ll]ogs/
 /[Uu]serSettings/
 /UserSettings/
-# Купленные паки не хранятся в git: вес истории (>4 ГБ) упирается в лимиты GitHub.
-# Восстанавливаются реимпортом из Asset Store — см. docs/assets-checklist.md.
-/Assets/ThirdParty/
-/Assets/ThirdParty.meta
-/Assets/Real Fire & Smoke/
-/Assets/Real Fire & Smoke.meta
+# Купленные паки версионируются: заливаются порциями, т.к. лимит GitHub — 2 ГБ на push.
 /Assets/AssetStoreTools*
 /Assets/UnityVS*
 /Assets/Plugins/Editor/JetBrains*
