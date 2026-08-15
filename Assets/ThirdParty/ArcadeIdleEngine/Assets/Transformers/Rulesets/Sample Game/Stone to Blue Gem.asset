@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 289176c9a89843f0a072b79d32597cfe, type: 3}
+  m_Name: Stone to Blue Gem
+  m_EditorClassIdentifier: 
+  Inputs:
+  - ItemDefinition: {fileID: 11400000, guid: ca8479a4a6cef4914b5df99bfe10bd71, type: 2}
+    Count: 2
+  Outputs:
+  - ItemDefinition: {fileID: 11400000, guid: edebc532df7a46f45afba7963114b2f5, type: 2}
+    Count: 1

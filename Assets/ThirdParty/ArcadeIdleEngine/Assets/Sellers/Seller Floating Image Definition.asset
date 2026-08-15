@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28c0a198ac0943ee91561af916948bd0, type: 3}
+  m_Name: Seller Floating Image Definition
+  m_EditorClassIdentifier: 
+  <FloatingImageResourceAnimator>k__BackingField: {fileID: 11400000, guid: adcc9fbf2017d443f8ad3ec3f5354f70,
+    type: 2}
+  <SellableItemDefinitions>k__BackingField:
+  - {fileID: 11400000, guid: edebc532df7a46f45afba7963114b2f5, type: 2}
+  - {fileID: 11400000, guid: 466f8cd41320545869b9463113bfef1a, type: 2}
+  - {fileID: 11400000, guid: 8ece15d85fbfd4c0f83050505ca6af04, type: 2}
+  - {fileID: 11400000, guid: db5a50dcc72cf47fe93e01248e7866a9, type: 2}
+  <JumpHeight>k__BackingField: 1
+  <JumpDuration>k__BackingField: 0.2

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6715f37fdd424d1db53d9a157ed45bbf, type: 3}
+  m_Name: Basic Ore
+  m_EditorClassIdentifier: 
+  <HitPoints>k__BackingField:
+    _value:
+    - HitPoint: 20
+      ItemSpawnCount: 1
+    - HitPoint: 30
+      ItemSpawnCount: 2
+    - HitPoint: 20
+      ItemSpawnCount: 1
+    - HitPoint: 40
+      ItemSpawnCount: 2
+  <GatheringOutputItemPool>k__BackingField: {fileID: 11400000, guid: 143b9e18bbb81477f853432b4ccbd8c6,
+    type: 2}
+  <ItemSpawnRadius>k__BackingField: 2
+  <DisappearingDuration>k__BackingField: 0.455
+  <ReappearDuration>k__BackingField: 1
+  <IdleDuration>k__BackingField: 3
+  <UseFeedbacks>k__BackingField: 1
+  <ItemSpawnedFeedback>k__BackingField: {fileID: 11400000, guid: 399e2fa44c204421ebb53679dc8aed67,
+    type: 2}
+  <TakeHitFeedback>k__BackingField: {fileID: 11400000, guid: 35335aaaa86b74ce093700a0505e4553,
+    type: 2}

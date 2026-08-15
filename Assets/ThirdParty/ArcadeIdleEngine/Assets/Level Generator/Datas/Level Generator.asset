@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f51aefe02d0d4ee0859fc4e5c3acdc96, type: 3}
+  m_Name: Level Generator
+  m_EditorClassIdentifier: 
+  _data:
+  - {fileID: 11400000, guid: b6090a4e464bd4cfe963a53ffdfd4325, type: 2}
+  - {fileID: 11400000, guid: b29b8407a53c3634b8c8e0ef695accff, type: 2}
+  _townPortal: {fileID: 1555704091643825826, guid: 723601930f45b472eb25ceb27e3ed2a1,
+    type: 3}

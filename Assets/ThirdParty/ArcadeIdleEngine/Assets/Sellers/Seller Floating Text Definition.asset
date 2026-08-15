@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cd9b1351c304e98a90423a88bc8edf1, type: 3}
+  m_Name: Seller Floating Text Definition
+  m_EditorClassIdentifier: 
+  <IncomeResource>k__BackingField: {fileID: 11400000, guid: 7cdca7fabbbb24a3185a21bf9c5967fc,
+    type: 2}
+  <FloatingTextResourceAnimator>k__BackingField: {fileID: 11400000, guid: bb3af8f2ebae0487a970642ba553c989,
+    type: 2}
+  <SellableItemDefinitions>k__BackingField:
+  - {fileID: 11400000, guid: edebc532df7a46f45afba7963114b2f5, type: 2}
+  - {fileID: 11400000, guid: 466f8cd41320545869b9463113bfef1a, type: 2}
+  - {fileID: 11400000, guid: 8ece15d85fbfd4c0f83050505ca6af04, type: 2}
+  - {fileID: 11400000, guid: db5a50dcc72cf47fe93e01248e7866a9, type: 2}
+  - {fileID: 11400000, guid: 2788fae1631aa4d979fda9dbaf9248ce, type: 2}
+  - {fileID: 11400000, guid: ca8479a4a6cef4914b5df99bfe10bd71, type: 2}
+  - {fileID: 11400000, guid: 609fc9dbb9c4c43b59663180056b2d21, type: 2}
+  <JumpHeight>k__BackingField: 1
+  <JumpDuration>k__BackingField: 0.3

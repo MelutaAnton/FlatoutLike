@@ -1,0 +1,129 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!43 &4300000
+Mesh:
+  m_Name: Sport_07_Glass_FR
+  serializedVersion: 8
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 21
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 9
+    localAABB:
+      m_Center: {x: 0.7682182, y: 0.07153106, z: 0.9935582}
+      m_Extent: {x: 0.09901744, y: 0.7127514, z: 0.1761301}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes:
+  m_RootBoneNameHash: 0
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 000001000200000002000300000003000400020001000500020005000600020006000700040003000800
+  m_Skin: []
+  m_VertexData:
+    m_CurrentChannels: 139
+    m_VertexCount: 9
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 12
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 24
+      format: 0
+      dimension: 2
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 32
+      format: 0
+      dimension: 4
+    m_DataSize: 432
+    _typelessdata: bd502b3fc7f4af3e59b8953f08b6653f5120be3c9bafe13e7583163fc8d61e3fd3a9d33c1fea7fbff0341d38000080bf82932e3f7eadbd3d1709943f08d8653f5d02dd3cc308e13ed718303f707f1d3f5bbcf53c82e27fbf73eaa338000080bfe4f0563faeca83bcfe52573fd321663fa56fc93cc1ecdf3eba2c3b3f91b5fa3efaa7dd3cffe77fbf62ec193a000080bf5d044f3f07362f3f291e5e3f71ba653f03a2b33c3ca6e13ea593e73e190f003f6e81c93c2bec7fbfe333b5b9000080bf14e22b3fcd00183f7955933f2dbb653f8e7eb13ceca4e13ebc0dfa3e70f01c3f0e3fc83c68ec7fbf5de523ba000080bf5eb2363f9e1a1fbe32418e3f629c663fcf6ad73c08e5dd3e795e493f38e5183f9412eb3cfbe47fbf60c7833a000080bfaa694c3f72540fbfc96c733f437b653fdfaeb03c23a9e23e5197723f708a083ff34cc43c2eed7fbfe79a4039000080bf27035e3f042724bff742513fb2ef643ffd01b93c65d4e43e47e17a3fece1f53edecfce3c1deb7fbfb8530b34000080bfa6a82e3fbcc6483f377a8f3f92c3653fec59983c2195e13e1839d33e6dde193feeb7a93ceff17fbff1cfedb5000080bf
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data:
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data:
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 0.7682182, y: 0.07153106, z: 0.9935582}
+    m_Extent: {x: 0.09901744, y: 0.7127514, z: 0.1761301}
+  m_MeshUsageFlags: 0
+  m_BakedConvexCollisionMesh:
+  m_BakedTriangleCollisionMesh:
+  m_MeshOptimized: 1

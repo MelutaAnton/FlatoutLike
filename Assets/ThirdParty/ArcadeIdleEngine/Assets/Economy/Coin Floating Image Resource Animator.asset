@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c1eaf3467a74cb6ae80ee6c1cb61d41, type: 3}
+  m_Name: Coin Floating Image Resource Animator
+  m_EditorClassIdentifier: 
+  animatedResourceEntityPool: {fileID: 11400000, guid: b908186a78c1f497d96fd44ba159e928,
+    type: 2}
+  _resource: {fileID: 11400000, guid: 7cdca7fabbbb24a3185a21bf9c5967fc, type: 2}
+  _visualizationDuration: 0.7

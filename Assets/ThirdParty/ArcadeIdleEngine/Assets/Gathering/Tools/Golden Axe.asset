@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5b51222dcac440d96271c9809427ab3, type: 3}
+  m_Name: Golden Axe
+  m_EditorClassIdentifier: 
+  <DatabaseIndex>k__BackingField: 2
+  gatheringToolType: {fileID: 11400000, guid: 189f8e7f9fc57460f9dd9569e5f0708d, type: 2}
+  _toolSprite: {fileID: 0}
+  _gatheringToolPrefab: {fileID: 7407185949172224999, guid: ba0456086c9e0435fb8a141465994511,
+    type: 3}
+  _tier: 1
+  _baseDamage: 20
+  _useInterval: 0.5
+  _gatherables:
+  - {fileID: 11400000, guid: 4412cf795cf4b4691b7d6a002282a9f3, type: 2}
+  - {fileID: 11400000, guid: ef30aa48b744543d8a443ac3466e5534, type: 2}

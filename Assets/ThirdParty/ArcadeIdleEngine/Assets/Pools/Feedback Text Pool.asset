@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b37468a0ecc047e5857222380b148706, type: 3}
+  m_Name: Feedback Text Pool
+  m_EditorClassIdentifier: 
+  MaxSize: 10
+  Behaviour: {fileID: 6217441719359896256, guid: fdde631d33b504b44b68246374823e39,
+    type: 3}

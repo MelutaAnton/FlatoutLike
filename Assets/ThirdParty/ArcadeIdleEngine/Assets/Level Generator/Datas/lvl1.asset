@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59fdb06ce52947ebaa460fa857acb656, type: 3}
+  m_Name: lvl1
+  m_EditorClassIdentifier: 
+  _spawnableGroups:
+  - Groups:
+    - {fileID: 4937971875243567086, guid: 2a172dcc0f83648b1a471cafbdee4500, type: 3}
+    Group:
+    - {fileID: 4937971875243567086, guid: 2a172dcc0f83648b1a471cafbdee4500, type: 3}
+  - Groups:
+    - {fileID: 5280763116477694120, guid: be706ff28fc75467abb2c70ae16cd6fb, type: 3}
+    Group:
+    - {fileID: 5280763116477694120, guid: be706ff28fc75467abb2c70ae16cd6fb, type: 3}
+  - Groups:
+    - {fileID: 2238627002547194290, guid: ebd54fdf542514a2b8baa4a68beee3f0, type: 3}
+    - {fileID: 70179578998152809, guid: aec091111637f4ee6b52dad8d356d780, type: 3}
+    - {fileID: 7823557828926230376, guid: 2c1eaad93af0c4a4c81e6750521f08ad, type: 3}
+    Group:
+    - {fileID: 2238627002547194290, guid: ebd54fdf542514a2b8baa4a68beee3f0, type: 3}
+    - {fileID: 70179578998152809, guid: aec091111637f4ee6b52dad8d356d780, type: 3}
+    - {fileID: 7823557828926230376, guid: 2c1eaad93af0c4a4c81e6750521f08ad, type: 3}
+  - Groups:
+    - {fileID: 7823557828926230376, guid: 42907e1b1a1f849c89ef49be1ce48e33, type: 3}
+    - {fileID: 7823557828926230376, guid: e42516da7649042ed83105a56253a7bb, type: 3}
+    - {fileID: 7823557828926230376, guid: 7626a4705eb9a4fd481cb99b99cb2841, type: 3}
+    - {fileID: 7823557828926230376, guid: 2e2b1bbcedc7e4fbcaacb7f4fadc3030, type: 3}
+    Group:
+    - {fileID: 7823557828926230376, guid: 42907e1b1a1f849c89ef49be1ce48e33, type: 3}
+    - {fileID: 7823557828926230376, guid: e42516da7649042ed83105a56253a7bb, type: 3}
+    - {fileID: 7823557828926230376, guid: 7626a4705eb9a4fd481cb99b99cb2841, type: 3}
+    - {fileID: 7823557828926230376, guid: 2e2b1bbcedc7e4fbcaacb7f4fadc3030, type: 3}
+  - Groups:
+    - {fileID: 7823557828926230376, guid: 27fe8ddecf397cd4e9bf299f5d6c7544, type: 3}
+    - {fileID: 7823557828926230376, guid: 5ab9437fb1135624e87983911f70570d, type: 3}
+    Group:
+    - {fileID: 7823557828926230376, guid: 27fe8ddecf397cd4e9bf299f5d6c7544, type: 3}
+    - {fileID: 7823557828926230376, guid: 5ab9437fb1135624e87983911f70570d, type: 3}
+  levelEndGroup:
+    Groups:
+    - {fileID: 7823557828926230376, guid: 0f2fe3f8c5347e04bad769a793798fc2, type: 3}
+    Group:
+    - {fileID: 7823557828926230376, guid: 0f2fe3f8c5347e04bad769a793798fc2, type: 3}
+  _tile: {fileID: 3048255455058692519, guid: 2dddc0855b2a242c19b3f44db800503c, type: 3}

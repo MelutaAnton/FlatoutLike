@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cd9b1351c304e98a90423a88bc8edf1, type: 3}
+  m_Name: Sample Game Seller Floating Text Definition
+  m_EditorClassIdentifier: 
+  <IncomeResource>k__BackingField: {fileID: 11400000, guid: 7cdca7fabbbb24a3185a21bf9c5967fc,
+    type: 2}
+  <PickablesForSale>k__BackingField:
+  - {fileID: 11400000, guid: 2788fae1631aa4d979fda9dbaf9248ce, type: 2}
+  <FloatingTextResourceAnimator>k__BackingField: {fileID: 11400000, guid: bb3af8f2ebae0487a970642ba553c989,
+    type: 2}
+  <JumpHeight>k__BackingField: 1
+  <JumpDuration>k__BackingField: 0.5
+  <CollectingFromInventoryInterval>k__BackingField: 0.5

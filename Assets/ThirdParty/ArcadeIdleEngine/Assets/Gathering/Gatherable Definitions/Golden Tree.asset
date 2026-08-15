@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6715f37fdd424d1db53d9a157ed45bbf, type: 3}
+  m_Name: Golden Tree
+  m_EditorClassIdentifier: 
+  <HitPoints>k__BackingField:
+    _value:
+    - HitPoint: 60
+      PickableSpawnCount: 2
+    - HitPoint: 80
+      PickableSpawnCount: 4
+    - HitPoint: 120
+      PickableSpawnCount: 6
+    - HitPoint: 100
+      PickableSpawnCount: 10
+  <GatheringOutputPickablePool>k__BackingField: {fileID: 11400000, guid: 5b9da29b1cedf4134a4774965841e19e,
+    type: 2}
+  <DisappearingDuration>k__BackingField: 0.5
+  <ReappearDuration>k__BackingField: 1
+  <IdleDuration>k__BackingField: 3
+  <UseFeedbacks>k__BackingField: 1
+  <PickableSpawnedFeedback>k__BackingField: {fileID: 11400000, guid: 399e2fa44c204421ebb53679dc8aed67,
+    type: 2}
+  <TakeHitFeedback>k__BackingField: {fileID: 11400000, guid: 35335aaaa86b74ce093700a0505e4553,
+    type: 2}

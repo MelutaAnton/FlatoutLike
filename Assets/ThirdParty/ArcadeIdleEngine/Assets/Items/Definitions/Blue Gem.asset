@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19cf3a1c6b7c4269a1ae85e795f4e598, type: 3}
+  m_Name: Blue Gem
+  m_EditorClassIdentifier: 
+  <Pool>k__BackingField: {fileID: 11400000, guid: 13b2bafd4f3124411b586f8c89740458,
+    type: 2}
+  <Variable>k__BackingField: {fileID: 11400000, guid: 1a68e84061081c34bbde4ac983f033cb,
+    type: 2}
+  <Visible>k__BackingField: 1
+  <Sellable>k__BackingField: 1
+  <SellValue>k__BackingField: 5
+  <HasSprite>k__BackingField: 1
+  <Sprite>k__BackingField: {fileID: -1419866068, guid: defd886b612915c4abfc0b9a162ed486,
+    type: 3}
