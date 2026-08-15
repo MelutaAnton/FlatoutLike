@@ -78,5 +78,8 @@
       "WebFetch(domain:imphenzia.com)",
       "WebFetch(domain:assetstore.unity.com)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "mcp-unity"
+  ]
 }
