@@ -1,6 +1,8 @@
 # FlatOutLike — Game Design (вертикальный срез)
 
 > Архитектурные правила, паттерны и запреты — в `CLAUDE.md`. Этот документ их не дублирует, а ссылается. Все параметры геймплея — только ScriptableObject; никаких magic numbers в Controllers.
+>
+> Процесс разработки по шагам — `docs/cli-workflow.md`. Definition of Done каждого шага собирается из строки «DoD» шага в §19 и тех-критериев §16 и записывается в `docs/progress.md`; по нему работает `code-reviewer`.
 
 ---
 
@@ -566,7 +568,7 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 Срез считается готовым, когда **все** пункты ниже выполняются.
 
 ### Derby
-- [ ] Игрок может стартовать Derby-матч из главного меню и попадает на арену с 3–6 AI-машинами (число читается из `DerbyMatchConfig`).
+- [ ] Игрок может стартовать Derby-матч из BaseHub (до шага 11 — кнопкой в `_TempHubMenu`, с шага 11 — через зону Derby Arena) и попадает на арену с 3–6 AI-машинами (число читается из `DerbyMatchConfig`).
 - [ ] Игрок управляет машиной: разгон, поворот, ручник, нитро.
 - [ ] Машины получают физический урон при столкновениях; HP уменьшается; визуальные стейджи переключаются на пороговых значениях (через выбранную стратегию в `CarDamageVisualConfig` — material swap / mesh swap / blend shapes); на финальном стейдже отваливаются части хотя бы при сильном ударе.
 - [ ] При HP ≤ 0 машина перестаёт ехать, водитель автоматически вылетает через лобовое.
@@ -614,10 +616,14 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - [ ] Переключение между провайдерами — через `GameLifetimeScope`, без правки контроллеров.
 
 ### Тех-критерии
-- [ ] Нет `Resources.Load` нигде в коде.
-- [ ] Все идентификаторы (теги, animator-параметры, ключи пулов, имена сцен) — в enum/const, не в строках по месту.
+Входят в DoD **каждого** шага. Пункты с пометкой *(хук)* дополнительно блокируются `arch-guard` в момент записи файла (`docs/cli-workflow.md` → Hooks); остальные проверяют `code-reviewer` и архитектурный аудит.
+
+- [ ] Нет `Resources.Load` нигде в коде. *(хук)*
+- [ ] Все идентификаторы (теги, animator-параметры, ключи пулов, имена сцен) — в enum/const, не в строках по месту. *(хук — для тегов, animator-параметров и имён сцен)*
+- [ ] `Instantiate` и `IPoolManager` — только в `Factories/` и `Core/Pool/`. *(хук)*
+- [ ] Время — только через `ITimeProvider`; `DateTime.Now` / `DateTime.UtcNow` вне `Core/Time/` нет. *(хук)*
 - [ ] Все игровые параметры — в SO, никаких magic numbers в Controllers.
-- [ ] Все триггер-зоны (`EjectTriggerZone`, `LandingZone`, pickup'ы) имеют kinematic Rigidbody.
+- [ ] Все триггер-зоны (`EjectTriggerZone`, `LandingZone`, pickup'ы, зоны BaseHub) имеют kinematic Rigidbody.
 - [ ] Объекты из пула проходят `InjectGameObject` и явный `Launch(...)` (нет инициализации в `Start` / `OnEnable`).
 - [ ] Все MonoBehaviour-зависимости в `GameLifetimeScope` регистрируются через `RegisterComponent`, не `RegisterInstance`.
 
@@ -627,7 +633,7 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 
 Любая рутина — через `[MenuItem("FlatOutLike/<Category>/<Action>")]`. Иерархия и правила — `CLAUDE.md` + skill `add-editor-script` + `.claude/rules/editor-files.md`.
 
-Скрипты, требуемые для среза:
+Скрипты, требуемые для среза (поиск строковых литералов отдельным editor-скриптом не нужен — его делают хук `arch-guard` при записи и skill `audit-architecture` по всему коду):
 
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Scenes/Bake NavMesh For Derby Arena` — bake NavMesh в `Derby_Arena_01` (если AI будет использовать NavMesh для path-planning; если чисто Rigidbody-based — можно опустить).
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Setup/Setup Car Damage Visual` — выделить prefab машины → заполнить `CarDamageVisualConfig` Pristine-стейдж (текущие материалы), зарегистрировать DetachablePart'ы, проверить какие стратегии применимы (есть ли blend shapes на SkinnedMeshRenderer → подсказать использовать стратегию C; есть ли альтернативные меши в папке → подсказать стратегию B; иначе — генерируется заготовка под стратегию A с пустыми material slot'ами). Скрипт стратегия-агностик: НЕ предполагает, какая стратегия будет использована.
@@ -635,7 +641,6 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Setup/Add Kinematic Rigidbody To Selected Triggers` — добавить kinematic Rigidbody на все выделенные триггер-зоны (защита от забывания).
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Configs/Create Empty SO Set` — создаёт пустые `.asset`-инстансы всех ключевых SO в `Assets/Development/Data/Configs/` с правильной структурой папок.
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Validation/Validate Composition Root` — проверка, что все интерфейсы из списка зарегистрированы в `GameLifetimeScope` и нет `RegisterInstance` там, где должен быть `RegisterComponent` для MonoBehaviour.
-- `EDITOR_SCRIPT_NEEDED: FlatOutLike/Validation/Find Magic Strings` — поиск строковых литералов в Controllers, которые должны быть в enum/const (теги, animator-параметры).
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Spawn/Populate Derby Arena Spawn Points` — расставить 7 SpawnPoint'ов по окружности арены равномерно.
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Stunts/Build HighJump Ramp` — построить рамп с заданным углом и длиной из параметров окна, с готовой `EjectTriggerZone` на верхушке (kinematic Rigidbody уже добавлен).
 - `EDITOR_SCRIPT_NEEDED: FlatOutLike/Hub/Build Base Hub Layout` — расставить на сцене `BaseHub` по `BuildingCatalogConfig`: площадки зданий (`BuildSiteController` с привязкой стадийных префабов), зоны вложения/сбора/запуска (Trigger-Collider + kinematic Rigidbody), spawn point персонажа хаба.
@@ -663,20 +668,33 @@ MVP-разделение строгое: View — только `MonoBehaviour` �
 
 ## 19. Implementation Order (рекомендация для Claude Code CLI)
 
-Чтобы получить играбельный билд максимально быстро, реализовывать в таком порядке:
+Чтобы получить играбельный билд максимально быстро, реализовывать в таком порядке. Строка **DoD** каждого шага — функциональная часть его Definition of Done; оркестратор переносит её в `docs/progress.md` вместе с тех-критериями §16 (они входят в DoD каждого шага).
 
 1. **Каркас**: `GameLifetimeScope`, `GameBootstrap`, `IInputProvider` (keyboard сначала), `IEventBus`, FSM, базовые enum/const/Tags/AnimatorHashes.
+   DoD: пустая сцена с `GameBootstrap` стартует без ошибок; `GameLifetimeScope` и `IEventBus` инициализированы; `GameFlowService` стартует в `BaseHub` (сцена-заглушка `_TempHubMenu`) и поддерживает push-pop; все предохранители §15.3 заложены (`Services/Progression/`, `IPlayerProfile`, `IProfileStorage`, `ITimeProvider`).
 2. **Машина одна, без врагов**: `CarController` + `CarMovementService` + `CarStatsConfig` + `ChaseCarCameraBehaviour`. Цель: ездить по пустой сцене.
+   DoD: §16 Derby «Игрок управляет машиной» — разгон, поворот, ручник (нитро — шаг 5); камера следует за машиной; все параметры езды — из `CarStatsConfig`.
 3. **Урон и визуал**: `DamageService`, `CarDamageVisualController`, `CarCollisionEvent`. Цель: машина "ломается" при ударе об стену.
+   DoD: §16 Derby — физический урон при столкновениях, HP уменьшается, визуальные стейджи переключаются на порогах (стратегия A), на финальном стейдже отваливаются части при сильном ударе.
 4. **AI**: `EnemyAIService` + `EnemyCarController` + 1 personality. Цель: одна вражеская машина таранит игрока.
+   DoD: одна AI-машина с профилем `Aggressor` находит игрока и таранит его; управление AI идёт через тот же `IInputProvider`-контракт, что у игрока.
 5. **Derby-матч**: `DerbyMatchService`, win/lose, 3 personality, спавн 3–6 AI, hazards и pickup'ы. Цель: первый играбельный Derby.
+   DoD: §16 Derby — 3–6 AI из `DerbyMatchConfig`; три профиля различимы; pickup'ы (repair, nitro) подбираются и респаунятся; нитро работает (`NitroService`); hazards смещаются / разрушаются; матч заканчивается на последней машине с объявлением победителя (начисление coins — шаг 8).
 6. **Eject + полёт**: `EjectCommand`, `DriverController` ragdoll switch, `DriverFlightService`, `OrbitDriverCameraBehaviour`. Цель: водитель вылетает при гибели машины.
+   DoD: §16 Derby — при HP ≤ 0 машина перестаёт ехать, водитель автоматически вылетает через лобовое; ragdoll не пропадает из кадра и не даёт «игл» на одежде (нюансы `CLAUDE.md`); камера переключается на orbit вокруг водителя.
 7. **High Jump**: сцена, рамп, `EjectTriggerZone`, `LandingZone`, `HighJumpScoreService`, `FlipDetectorService`. Цель: первая Stunts-попытка.
+   DoD: §16 Stunts: High Jump — все пункты, кроме входа из BaseHub (шаг 12) и сохранения рекорда (шаг 8): разгон и трамплин, авто-eject по trigger-зоне, orbit-камера, управление полётом `Look` со штрафом, одноразовый midair-boost, подсчёт флипов, замер пиковой высоты и показ результата.
 8. **Meta**: `MetaProgressService`, `EconomyService`, Garage UI, временная заглушка `_TempHubMenu` (кнопки Derby / High Jump / Garage; заменяется картой BaseHub на шаге 11 — отдельный Stunts Hub не делаем). Цель: цикл «играй → копи → апай → играй».
+   DoD: §16 Garage / Meta — все пункты; coins начисляются за Derby и High Jump через `RewardEarnedEvent`; рекорд High Jump сохраняется; §16 «Поток состояний» — `_TempHubMenu` → режим → MatchEnd / Scoring → `_TempHubMenu` без багов.
 9. **Mobile input**: `MobileInputProvider` + `MobileInputCanvas`. Цель: играется на телефоне.
+   DoD: §16 Платформы и input — все пункты.
 10. **Polish кора**: kill-feed, pause, баланс через playtest, ответы на Open Questions кора.
+   DoD: §16 Derby — поведение при смерти игрока (по ответу на Open Question #6); §16 «Поток состояний и UI» — Pause во всех геймплейных состояниях, HUD релевантен фазе; kill-feed работает; ответы на Open Questions 2–7 отражены в SO.
 11. **BaseHub-каркас**: сцена `BaseHub`, `HubCharacterController` (персонаж-водитель, локомоция из `IInputProvider.Move`), `HubCameraBehaviour` (follow), `BuildingCatalogConfig`, `BuildSiteController` + `LaunchZoneController` (зоны с таймером-кругом), расстановка editor-скриптом `Build Base Hub Layout`, замена `_TempHubMenu` картой. Цель: персонаж бегает по базе, все режимы запускаются через зоны.
+   DoD: §16 BaseHub — старт игры в BaseHub с управляемым персонажем и follow-камерой; Derby Arena и Garage построены, запуск через вход в зону + таймер-круг, выход из зоны сбрасывает таймер; §16 «Поток состояний» — BaseHub → режим → BaseHub без багов.
 12. **Стадийная стройка**: `BuildProgressService`, потоковое вложение стоя в зоне (`InvestStreamRate`), `BuildingPanelView` (world-space ценник), визуальные стадии, unlock-гейтинг (High Jump открывается стройкой башни), отдельный save-блок стройки. Цель: петля «заработал → встал у площадки → построил → открыл».
+   DoD: §16 BaseHub — стройка High Jump Tower за 3 этапа потоком из стопки, стадии меняют визуал, завершение активирует зону запуска; income-здания строятся с ростом rate; 5 заглушек «Coming soon» без вложений; состояние стройки сохраняется отдельным save-блоком; §16 Stunts — первый пункт (вход в High Jump из построенной башни).
 13. **Idle-доход**: `ITimeProvider` в деле, `IdleIncomeService`, `CoinStackController` (стопка над головой), сбор проходом (`CoinBubbleController`), offline-начисление с капом, `WelcomeBackPopupView`, ребаланс `RewardConfig` под sink стройки. Цель: полная гибрид-кэж петля с пассивным доходом.
+   DoD: §16 BaseHub — стопка монет синхронна с HUD; онлайн-доход копится «пузырём» и собирается проходом (`RewardEarnedEvent`, `source = IdleIncome`); offline-доход с капом через push-pop Welcome Back, отрицательный offline клампится в 0; несобранный доход и timestamp выхода сохраняются.
 
-После каждого шага — playable build, проверяемый по соответствующим пунктам Acceptance Criteria.
+После каждого шага — playable build, проверяемый по его строке DoD и тех-критериям §16.

@@ -17,7 +17,7 @@ memory: project
 - **ScriptsRoot**: `Assets/Development/Scripts/`
 - **ConfigsRoot**: `Assets/Development/Data/Configs/`
 - **CompositionRoot**: `Assets/Development/Scripts/Installers/GameLifetimeScope.cs`
-- **MenuRoot**: `Flatuot2_Like` (префикс `[MenuItem(...)]` и `[CreateAssetMenu(menuName=...)]`)
+- **MenuRoot**: `FlatOutLike` (префикс `[MenuItem(...)]` и `[CreateAssetMenu(menuName=...)]`)
 - **DI**: VContainer
 - **Engine**: Unity 6 (6000.3.9f1 LTS), URP
 
@@ -32,6 +32,15 @@ memory: project
 3. **Определи слой** нового кода: Service (чистый C#) / Controller (MonoBehaviour) / Factory / View (только UI) / Core (EventBus, Pool, StateMachine, Commands) / Config (SO) / Event (struct).
 4. **Проверь папку** по таблице структуры из CLAUDE.md — размести файл в правильном каталоге.
 5. Только после этих шагов — пиши код.
+
+---
+
+## Работа в пайплайне шага
+
+- **Скоуп = утверждённый план шага.** Создавай и меняй только файлы из плана, который передал оркестратор. Если для задачи нужен файл, сервис или конфиг вне плана — не создавай его, а верни оркестратору одну строку `OUT_OF_PLAN: <что и зачем>`: решение принимает пользователь.
+- **Хук `arch-guard`** проверяет каждый записанный `.cs`. Если он вернул нарушения `файл:строка` — исправь их сразу, до финального ответа. Не обходи шаблон проверки (переименованием, разбиением строки и т.п.). Если срабатывание ложное — оставь код и укажи это отдельной строкой в ответе: `ARCH_GUARD_FALSE_POSITIVE: <файл:строка — почему>`.
+- **Правки после ревью**: исправляй ровно перечисленные Critical (и Warnings, если оркестратор их передал), не переписывая остальной код шага.
+- **`docs/progress.md` не трогай** — его ведёт только оркестратор.
 
 ---
 
@@ -220,6 +229,8 @@ public class XxxCommand : ICommand
    - Бизнес-логика не в `Start/Awake/OnEnable`?
    - Регистрация в `GameLifetimeScope` добавлена?
    - Для пул-объектов: `InjectGameObject` + `Launch()`?
+   - Замечания `arch-guard` устранены (или помечены `ARCH_GUARD_FALSE_POSITIVE`)?
+   - Нет файлов вне плана шага?
 
 3. **Если задача требует действий в Unity Editor** (создание объекта на сцене, настройка компонентов, назначение ссылок в Inspector, bake NavMesh, создание префаба, настройка тегов) — **обязательно** выведи маркер последней строкой:
 

@@ -1,6 +1,6 @@
 # Flatuot2_Like — правила проекта
 
-Геймдизайн и сущности — в `docs/game-design.md`. 
+Геймдизайн и сущности — в `docs/game-design.md`. Регламент работы по шагам — `docs/cli-workflow.md`. Текущее состояние (шаг, DoD, отклонения, итоги ревью) — `docs/progress.md`, подгружается в контекст хуком `SessionStart`.
 
 ## Технологии
 
@@ -49,7 +49,8 @@ Assets/
     │   │   ├── Events/             # EventBus + game events (struct'ы)
     │   │   ├── Input/              # IInputProvider, InputRouter, Keyboard/Mobile providers
     │   │   ├── Pool/               # GameObjectPool, PoolManager
-    │   │   └── StateMachine/       # Generic StateMachine<TEnum>
+    │   │   ├── StateMachine/       # Generic StateMachine<TEnum>
+    │   │   └── Time/               # ITimeProvider, SystemTimeProvider — единственное место с DateTime
     │   ├── Data/Configs/           # Определения ScriptableObject (один файл = один класс)
     │   ├── Models/                 # Чистые данные, enums (GameState, ResourceType, VfxEffectType)
     │   ├── Services/               # Бизнес-логика (pure C#, без MonoBehaviour)
@@ -207,7 +208,7 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 - Теги: `static class Tags { public const string Enemy = "Enemy"; }`.
 - Сцены: enum или константы в одном файле.
 
-Поиск нарушений автоматизирован — skill `audit-architecture`.
+Поиск нарушений автоматизирован: в момент записи файла — хук `arch-guard` (см. «Состояние и хуки»), по всему коду — skill `audit-architecture`.
 
 ### `Resources.Load` запрещён
 
@@ -215,28 +216,42 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 
 ## Workflow (orchestrator)
 
-Ты оркестратор. Когда пользователь просит написать код:
+Ты оркестратор. Полный регламент шага — «Цикл шага» в `docs/cli-workflow.md`; ниже — порядок, который действует в каждой сессии. Когда пользователь просит написать код:
 
-1. **Планирование** — разобрать требования, выделить задачи.
-2. **Реализация** — делегировать `code-writer`.
-3. **Параллельная работа** сразу после `code-writer`:
-   - запустить `code-reviewer` для ревью качества;
-   - если в ответе `code-writer` есть строка `EDITOR_SCRIPT_NEEDED: ...` — параллельно запустить `editor-script-creator`.
-4. **Правки** — с учётом замечаний `code-reviewer` делегировать исправления `code-writer`.
-5. **Завершение** — финальная проверка, отчёт пользователю.
+1. **Планирование** — пройти чек-лист ниже; показать план файлов и модель `code-writer` на шаг (Sonnet / Opus по правилу эскалации, с одной строкой причины). Ждать «ок» пользователя.
+2. **Фиксация** — после «ок» записать в `docs/progress.md` статус `in-progress` и Definition of Done шага (строка «DoD» шага в §19 `game-design.md` + тех-критерии §16).
+3. **Реализация** — делегировать `code-writer` на утверждённой модели. Если в его ответе есть строка `EDITOR_SCRIPT_NEEDED: ...` — параллельно запустить `editor-script-creator` (контракт имён — пункт 4 чек-листа). Замечания хука `arch-guard` исправлять сразу, до ревью.
+4. **Компиляция** — через MCP `get_console_logs` убедиться, что ошибок компиляции нет. Некомпилирующийся код на ревью не отправляется.
+5. **Ревью** — `code-reviewer` в **чистом контексте**: передать только номер и название шага, разделы `game-design.md` и ссылку на DoD в `progress.md`. Не передавать свои рассуждения, обоснования решений и пересказ изменений — ревьюер читает diff сам.
+6. **Правки** — по Critical делегировать исправления `code-writer` (архитектурные Critical — на Opus), затем **новый** вызов `code-reviewer`, не продолжение прежнего. Максимум 2 раунда; второй FAIL — стоп: записать ситуацию в `progress.md` и вынести решение пользователю.
+7. **Завершение** — при PASS: `progress.md` → `awaiting-unity-check`, отчёт пользователю (что сделано, что проверить в Unity, какие пункты DoD проверяемы только плейтестом). Статус `done` — только после «ок» пользователя по Unity-checkpoint.
 
-### Ответственности агентов
+### Агенты и модели
 
-- `code-writer` — новый C#: интерфейс + сервис + регистрация.
-- `code-reviewer` — ревью git diff на SOLID, Clean Architecture, правила CLAUDE.md.
-- `editor-script-creator` — Editor-скрипты для автоматизации Unity Editor.
-- `unity-error-analyzer` — разбор stacktrace из Unity Console.
+Модели — алиасами `opus` / `sonnet` (последняя версия семейства). Заморозка версии — только через `env` в `.claude/settings.json` (см. `cli-workflow.md` → «Роли моделей и effort»); `claude update` — только между шагами.
+
+| Агент | Модель | Отвечает за |
+|---|---|---|
+| `code-writer` | `sonnet`; эскалация — `opus` через параметр `model` при вызове | новый C#: интерфейс + сервис + регистрация |
+| `editor-script-creator` | `sonnet` | Editor-скрипты для автоматизации Unity Editor |
+| `unity-error-analyzer` | `opus` | разбор stacktrace из Unity Console |
+| `code-reviewer` | `opus`, без Edit/Write | ревью git diff на SOLID, Clean Architecture, правила CLAUDE.md, DoD шага — по «Контракту ревью» в своём описании |
+
+**Эскалация `code-writer` на Opus:**
+- **весь шаг**, если он затрагивает регистрации VContainer, FSM и переходы `GameFlowService`, физику / триггеры / ragdoll / буферизацию ввода, save/load или время — эти ошибки не видны ни компилятору, ни `arch-guard` и проявляются только в Play Mode;
+- **только правка**, если ревью вернуло FAIL с Critical архитектурного характера (границы слоёв, DI, FSM, пул).
+
+### Состояние и хуки
+
+- `docs/progress.md` — единственное хранилище состояния шага между сессиями и после компакции. Обновлять в моменты из `cli-workflow.md` («Когда обновляется»). Любое отступление от `game-design.md` — сначала строка в «Отклонения», потом код.
+- Хук `arch-guard` (после каждой записи `.cs` в `Assets/Development/`) при нарушении механических правил этого файла возвращает список `файл:строка` — исправить до ревью. Ложное срабатывание — указать в отчёте шага и в `progress.md`; не обходить (не переписывать код ради обхода шаблона, не отключать хуки).
+- Хук `progress-guard` не даёт завершить ход, пока `progress.md` старше изменённого кода: сначала обновить `progress.md`.
 
 ### Чек-лист этапа планирования (пройти ДО делегирования)
 
 Каждый пункт — накопленные грабли проекта; проверять на этапе плана, а не после ошибки компиляции:
 
-1. **Память**: прочитать step-файлы из MEMORY.md по теме шага — уроки там, а не в коде.
+1. **Память**: прочитать step-файлы из MEMORY.md по теме шага — уроки там, а не в коде; сверить с разделами «Отклонения» и «Открытые вопросы» в `docs/progress.md`.
 2. **Зависимость на код ThirdParty-пака**: проверить наличие asmdef у пака. Нет asmdef → его классы в Assembly-CSharp и из asmdef-сборок проекта НЕДОСТУПНЫ. Варианты: (а) своя реализация (прецедент — VirtualJoystickView вместо Joystick Pack); (б) мост в `Assets/Development/BridgeScripts/` (+`BridgeScripts/Editor/`) — папки БЕЗ asmdef компилируются в Assembly-CSharp(-Editor) и видят и классы пака, и публичное API FlatOutLike (autoReferenced) — прецедент CarEngineSoundBridge/RealisticEngineSound. Мост — тонкая проводка без бизнес-логики и без DI.
 3. **Новые классы в под-неймспейсах**: точные `using` для под-неймспейсов в промптах агентам (C# не импортирует детей через родительский); в `Controllers.*`/`Views.*` голые имена Unity-типов могут схлопнуться с соседним под-неймспейсом (например `Camera` → под-неймспейс `<Root>.Controllers.Camera`, CS0118) — квалифицировать `UnityEngine.*`.
 4. **Параллельные агенты** (code-writer ∥ editor-script-creator): контракт имён — классы, SerializeField-поля, пункты меню, пути префабов — зафиксировать в ОБОИХ промптах заранее, дословно.
@@ -249,6 +264,7 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 8. **Editor-скрипт правит существующую сцену/канвас** → миграционная идемпотентность: дособрать недостающее в собранное старой версией, без дублей.
 9. **Одноразовый ввод, потребляемый физикой** → буферизация Update→FixedUpdate (`.claude/rules/physics-input.md`).
 10. **Глобальный static-стейт** (`Time.timeScale` и т.п.): переживает загрузку сцены при per-scene scope — планировать страховки сброса.
+11. **Модель `code-writer`**: определить по правилу эскалации («Агенты и модели») и указать в плане с причиной. Сомнение — Opus.
 
 ## Editor-автоматизация (обязательно)
 
@@ -267,6 +283,7 @@ _container.InjectGameObject(gameObject);  // using VContainer.Unity
 | Новый Editor-скрипт | skill `add-editor-script` + `.claude/rules/editor-files.md` |
 | Формальный аудит кода | skill `audit-architecture` |
 | Обновление CLAUDE.md / MEMORY.md | skill `update-claude-md` |
+| Новое механическое правило (ловится поиском по строке) | пункт в этот файл + строка в `$rules` хука `.claude/hooks/arch-guard.ps1` |
 | Новый сервис | интерфейс + реализация + регистрация в `GameLifetimeScope` |
 | Новое игровое состояние | значение в `GameState` enum + реализация `IState` + регистрация в `GameFlowService` |
 | Новая команда | класс `: ICommand`, вызывать из контроллера |
