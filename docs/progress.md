@@ -46,6 +46,7 @@
 - Противоречия в ГДД: §13 издатель `RewardEarnedEvent`; `_TempHubMenu` в §9/§16/§19; имена editor-скриптов §17 — пользователь
 - `IProfileStorage` типизирован под `IPlayerProfile` — обобщить для save-блока стройки — шаг 12
 - Долг 8c: мёртвое поле `StuntsCardEntry._sceneKey` — шаг 11
+- Kill-feed: символа `▸` (`DerbyHudPresenter.FormatKillFeedEntry`) нет ни в RussoOne, ни в LiberationSans, глобальные фоллбэки TMP пусты → вероятно квадрат; в Bungee нет кириллицы (важно для RU-локализации) — пользователь (найдено 2026-10-03; перевод шрифтов в Static отменён — остаются Dynamic)
 
 ## Ревью текущего шага
 - 10a–10c: ревью пройдено до введения пайплайна (память step10-polish-status)
