@@ -72,8 +72,8 @@ namespace FlatOutLike.Bridge
 
             // Псевдо-передачи: имитируем пилообразный рост RPM внутри каждой передачи по скорости.
             float gearFrac = speed01 >= 1f ? 1f : Mathf.Repeat(speed01 * _config.GearCount, 1f);
-            // Пол 0.15 — RPM не проваливается в чистый idle между переключениями передач.
-            float rpm01 = Mathf.Clamp01(0.15f + 0.85f * gearFrac);
+            // Пол GearRpmFloor (из конфига) — RPM не проваливается в чистый idle между переключениями передач.
+            float rpm01 = Mathf.Lerp(_config.GearRpmFloor, 1f, gearFrac);
 
             _engineSound.engineCurrentRPM = Mathf.Lerp(_config.IdleRpm, _config.MaxRpm, rpm01);
 

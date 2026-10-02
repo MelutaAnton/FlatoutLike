@@ -12,6 +12,9 @@ namespace FlatOutLike.Controllers.Camera
     /// </summary>
     public sealed class CinemachineOrbitDriverCameraBehaviour : MonoBehaviour, ICameraBehaviour
     {
+        // Предел наклона орбиты по вертикали, град (не доходим до полюсов ±90°).
+        private const float MaxPitchDegrees = 89f;
+
         [SerializeField] private CinemachineCamera _camera;
         [SerializeField] private OrbitCameraConfig _config;
         [SerializeField] private DeoccluderConfig _deoccluderConfig;
@@ -67,7 +70,7 @@ namespace FlatOutLike.Controllers.Camera
             // углом наклона (град, вращение вокруг right-вектора). Пересчитываем Height/Distance
             // в угол через atan2: при 0° камера на уровне цели, при 90° — прямо сверху.
             float verticalAngle = Mathf.Atan2(_config.Height, _config.Distance) * Mathf.Rad2Deg;
-            _orbital.VerticalAxis.Range = new Vector2(-89f, 89f);
+            _orbital.VerticalAxis.Range = new Vector2(-MaxPitchDegrees, MaxPitchDegrees);
             _orbital.VerticalAxis.Center = verticalAngle;
             _orbital.VerticalAxis.Value = verticalAngle;
 
@@ -98,7 +101,7 @@ namespace FlatOutLike.Controllers.Camera
             // Приоритет — единственный переключатель между chase/orbit, как у chase-адаптера;
             // enabled компонента не трогаем (Update ниже продолжает крутить угол и в фоне —
             // это безопасно, т.к. orbit активируется один раз за матч и назад не переключается).
-            _camera.Priority = new PrioritySettings { Enabled = true, Value = active ? 10 : 0 };
+            _camera.Priority = new PrioritySettings { Enabled = true, Value = active ? CameraPriorities.Active : CameraPriorities.Inactive };
         }
 
         private void Update()

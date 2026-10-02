@@ -9,6 +9,10 @@ namespace FlatOutLike.Core.Input
     /// </summary>
     public sealed class KeyboardInputProvider : IInputProvider
     {
+        // Имена осей Input Manager (legacy Input).
+        private const string HorizontalAxis = "Horizontal";
+        private const string VerticalAxis = "Vertical";
+
         // Default = Driving (first enum value). Until GameFlowService publishes a
         // real GameStateChangedEvent, the test driving scene needs working input.
         // Will be overwritten by InputRouter on the first FSM transition.
@@ -38,8 +42,8 @@ namespace FlatOutLike.Core.Input
 
             _move = isDriving
                 ? new Vector2(
-                    UnityEngine.Input.GetAxisRaw("Horizontal"),
-                    UnityEngine.Input.GetAxisRaw("Vertical"))
+                    UnityEngine.Input.GetAxisRaw(HorizontalAxis),
+                    UnityEngine.Input.GetAxisRaw(VerticalAxis))
                 : Vector2.zero;
 
             // WASD/стрелки вместо мыши: дельта мыши (GetAxis("Mouse X"/"Y")) даёт микрозначения
@@ -48,8 +52,8 @@ namespace FlatOutLike.Core.Input
             // зажата клавиша — руление в воздухе ощущается как в FlatOut 2.
             _look = isFlight
                 ? new Vector2(
-                    UnityEngine.Input.GetAxisRaw("Horizontal"),
-                    UnityEngine.Input.GetAxisRaw("Vertical"))
+                    UnityEngine.Input.GetAxisRaw(HorizontalAxis),
+                    UnityEngine.Input.GetAxisRaw(VerticalAxis))
                 : Vector2.zero;
 
             _handbrake = isDriving && UnityEngine.Input.GetKey(KeyCode.Space);

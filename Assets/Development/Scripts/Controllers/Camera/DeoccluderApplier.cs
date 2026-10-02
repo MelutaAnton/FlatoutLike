@@ -13,6 +13,9 @@ namespace FlatOutLike.Controllers.Camera
     /// </summary>
     public static class DeoccluderApplier
     {
+        // Макс. число попыток CinemachineDeoccluder найти позицию без препятствий за кадр.
+        private const int MaxDeoccluderEffort = 4;
+
         public static void Apply(CinemachineDeoccluder deoccluder, DeoccluderConfig config)
         {
             // Нет компонента/конфига — остаются значения, запечённые editor-скриптом.
@@ -28,7 +31,7 @@ namespace FlatOutLike.Controllers.Camera
             avoid.MinimumOcclusionTime = 0f;
             avoid.CameraRadius = config.CameraRadius;
             avoid.Strategy = CinemachineDeoccluder.ObstacleAvoidance.ResolutionStrategy.PullCameraForward; // стратегия — осознанно в коде, не в конфиге
-            avoid.MaximumEffort = 4;
+            avoid.MaximumEffort = MaxDeoccluderEffort;
             avoid.SmoothingTime = config.SmoothingTime;
             avoid.Damping = config.Damping;
             avoid.DampingWhenOccluded = config.DampingWhenOccluded;

@@ -3,10 +3,11 @@
 - [DI Lazy Singletons](project-di-lazy-singletons.md) — ctor-side-effect синглтоны создаются только когда RegisterComponentInHierarchy-потребитель их тянет; не флагать как «never created»
 - [VFX Naming Divergence](project-vfx-naming-divergence.md) — код использует Vfx*, а CLAUDE.md/скиллы — VFX*; грепать оба написания
 - [VContainer Inject Order](project-vcontainer-inject-order.md) — InjectGameObject инжектит в порядке GetComponents (Inspector); cross-Construct запись в общее поле = fragile-ordering риск
-- [SO New-Field Asset Gap](project-so-newfield-asset-gap.md) — новые [SerializeField] в конфиге с существующим .asset не получают C#-дефолты; Create*Editor идемпотентно скипает → нужен re-serialize
+- [SO New-Field Asset Gap](project-so-newfield-asset-gap.md) — новое SO-поле при существующем .asset: верхний уровень берёт инициализатор (Warning), элементы массивов → 0 (риск)
 - [asmdef VContainer Transitive](project-asmdef-vcontainer-transitive.md) — Editor-asmdef обязан ref VContainer (editor-скрипты трогают GameLifetimeScope : LifetimeScope); ссылки asmdef не транзитивны → CS0012
 - [AI ApproachTimer Reverse Gap](project-ai-approachtimer-reverse-gap.md) — moonwalk-guard кроет только StuckTimer; ApproachTimer знакобойный → откинутая назад машина может реверсить дальше; watch дерби шага 5
 - [VContainer Optional Params](project-vcontainer-optional-params.md) — VContainer 1.18 игнорирует C# default-значения в [Inject] Construct; `Foo x = null` бросает если Foo не зарегистрирован — «optional DI» не работает
 - [asmdef UI Missing](project-asmdef-ui-missing.md) — FlatOutLike/Editor asmdef НЕ ссылаются на UnityEngine.UI; первое `using UnityEngine.UI` без ref роняет всю сборку (CS0234)
 - [Test asmdef VContainer](project-test-asmdef-vcontainer.md) — EditMode test asmdef без VContainer ref; `new`-инстанс сервиса с ITickable может дать CS0012 → уронить всю test-сборку
 - [PlayerPrefs EditMode test hazard](hotspot_playerprefs_tests.md) — тесты хранилища профиля бьют по реальным PlayerPrefs-ключам игры; прогон стирает сейв разработчика в редакторе
+- [TMP dynamic font dirty](hotspot_tmp_dynamic_font_dirty.md) — Art/Fonts/TMP/*SDF.asset грязнеют после Play Mode (атлас 1024²); в diff шага — Warning «не коммитить», не скоуп-Critical

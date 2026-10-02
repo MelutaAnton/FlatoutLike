@@ -5,6 +5,11 @@ namespace FlatOutLike.Services.Car
 {
     public sealed class CarMovementService : ICarMovementService
     {
+        // Газ ниже порога считается отпущенным (engine braking включается).
+        private const float ThrottleDeadzone = 0.05f;
+        // Скорость выше порога (м/с) считается движением.
+        private const float MovingSpeedThreshold = 0.1f;
+
         public float CalculateMotorTorque(float throttle, float currentForwardSpeed, CarStatsConfig stats)
         {
             float clampedThrottle = Mathf.Clamp(throttle, -1f, 1f);
@@ -53,8 +58,8 @@ namespace FlatOutLike.Services.Car
             // apply a soft brake to mimic engine drag. Disengaged in two cases:
             //   1) throttle pressed (motor torque takes over)
             //   2) car is at rest (no point braking standstill — would also lock wheels)
-            bool throttleReleased = Mathf.Abs(throttle) < 0.05f;
-            bool isMoving = Mathf.Abs(currentForwardSpeed) > 0.1f;
+            bool throttleReleased = Mathf.Abs(throttle) < ThrottleDeadzone;
+            bool isMoving = Mathf.Abs(currentForwardSpeed) > MovingSpeedThreshold;
             if (throttleReleased && isMoving) return stats.EngineBrakeForce;
 
             return 0f;

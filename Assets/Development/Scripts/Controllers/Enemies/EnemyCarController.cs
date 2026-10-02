@@ -35,8 +35,8 @@ namespace FlatOutLike.Controllers.Enemies
         [Header("Diagnostics")]
         // Печать состояния AI в Console каждые _diagInterval секунд. Используется
         // для отладки wedge-сценариев — видно state, таймеры, скорость, дистанции
-        // лучей и итоговое решение. В релизной сборке выключить.
-        [SerializeField] private bool  _diagEnabled  = true;
+        // лучей и итоговое решение. По умолчанию выключено — включать на префабе на время отладки.
+        [SerializeField] private bool  _diagEnabled  = false;
         [SerializeField] private float _diagInterval = 0.25f;
         private float _diagTimer;
 

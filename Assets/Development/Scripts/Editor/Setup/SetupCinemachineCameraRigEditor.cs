@@ -43,9 +43,6 @@ namespace FlatOutLike.Editor.Setup
         private const string OrbitCameraConfigHighJumpPath = "Assets/Development/Data/Configs/Camera/OrbitCameraConfig_HighJump.asset";
         private const string DeoccluderConfigPath = "Assets/Development/Data/Configs/Camera/DeoccluderConfig_Default.asset";
 
-        private const int ChasePriority = 10;
-        private const int OrbitPriority = 0;
-
         // Дистанция затухания импульса-тряски: удары дальше этого радиуса на арене
         // (60x60, см. память проекта) почти не ощущаются игроком.
         private const float ImpulseDissipationDistance = 40f;
@@ -75,7 +72,7 @@ namespace FlatOutLike.Editor.Setup
             if (chaseConfig == null)
                 Debug.LogWarning("[Editor] ChaseCameraConfig_Default не найден по " + ChaseCameraConfigPath +
                                   ". Запусти 'FlatOutLike/Configs/Create Default ChaseCameraConfig' сначала.");
-            var chase = EnsureChaseCamera(chaseConfig, ChasePriority);
+            var chase = EnsureChaseCamera(chaseConfig, CameraPriorities.Active);
 
             // ── 4. CM_OrbitCamera ────────────────────────────────────────
             string orbitConfigPath = SceneManager.GetActiveScene().name == SceneKeys.StuntsHighJump
@@ -86,7 +83,7 @@ namespace FlatOutLike.Editor.Setup
             if (orbitConfig == null)
                 Debug.LogWarning("[Editor] OrbitCameraConfig не найден по " + orbitConfigPath +
                                   ". Запусти 'FlatOutLike/Configs/Create Default OrbitCameraConfig' сначала.");
-            var orbit = EnsureOrbitCamera(orbitConfig, OrbitPriority);
+            var orbit = EnsureOrbitCamera(orbitConfig, CameraPriorities.Inactive);
 
             // ── 5. Прошиваем CameraRig на Main Camera ───────────────────────
             var mainCam = Camera.main;

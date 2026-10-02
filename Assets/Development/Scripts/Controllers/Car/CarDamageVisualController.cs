@@ -149,9 +149,6 @@ namespace FlatOutLike.Controllers.Car
             float maxArmor = _statsConfig.MaxArmor;
             if (maxArmor <= 0f) return;
 
-            // Лог для проверки шага 3 (HUD ещё нет); убрать на шаге 8, когда появится DerbyHudView.
-            Debug.Log($"[Damage] {e.Target} HP {e.RemainingHp:F0}/{maxArmor:F0} (-{e.Damage:F0})");
-
             float ratio = e.RemainingHp / maxArmor;
             _targetDamage01 = Mathf.Clamp01(1f - ratio); // непрерывно гонит шейдер, независимо от стадии
 
@@ -163,9 +160,6 @@ namespace FlatOutLike.Controllers.Car
             // Используется как guard для одноразовых эффектов (decals, VFX), чтобы они не повторялись при восстановлении HP.
             bool goingDeeper = newIndex > _currentStageIndex;
             _currentStageIndex = newIndex;
-
-            // Лог для проверки шага 3; убрать на шаге 8 (HUD).
-            Debug.Log($"[Damage] {e.Target} stage → {newIndex} (ratio {ratio:P0}, {(goingDeeper ? "worse" : "repaired")})");
 
             if (newIndex >= 0 && newIndex < _visualConfig.Stages.Count)
                 ApplyStage(_visualConfig.Stages[newIndex], goingDeeper);

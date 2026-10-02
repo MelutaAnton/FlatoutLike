@@ -14,6 +14,13 @@ namespace FlatOutLike.Controllers.Driver
     /// </summary>
     public sealed class DriverController : MonoBehaviour
     {
+        // Макс. растяжение сустава ragdoll до принудительной проекции, м.
+        private const float JointProjectionDistance = 0.05f;
+        // Лимит скорости депенетрации костей ragdoll, м/с.
+        private const float BoneMaxDepenetrationVelocity = 3f;
+        // Число итераций солвера (позиций и скоростей) для костей ragdoll.
+        private const int BoneSolverIterations = 12;
+
         [SerializeField] private Animator _animator;
         [SerializeField] private Rigidbody[] _boneRigidbodies;
         [SerializeField] private Rigidbody _pelvis;
@@ -103,7 +110,7 @@ namespace FlatOutLike.Controllers.Driver
             foreach (var joint in GetComponentsInChildren<CharacterJoint>(true))
             {
                 joint.enableProjection = true;
-                joint.projectionDistance = 0.05f;
+                joint.projectionDistance = JointProjectionDistance;
             }
 
             SetBoneCollidersEnabled(true);
@@ -140,9 +147,9 @@ namespace FlatOutLike.Controllers.Driver
         private static void HardenBonePhysics(Rigidbody bone)
         {
             bone.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            bone.maxDepenetrationVelocity = 3f;
-            bone.solverIterations = 12;
-            bone.solverVelocityIterations = 12;
+            bone.maxDepenetrationVelocity = BoneMaxDepenetrationVelocity;
+            bone.solverIterations = BoneSolverIterations;
+            bone.solverVelocityIterations = BoneSolverIterations;
             // Орбитальная камера следит за тазом каждый render-кадр — без интерполяции
             // ragdoll на 50 Гц физики дрожит в кадре (особенно в длинном полёте High Jump).
             bone.interpolation = RigidbodyInterpolation.Interpolate;

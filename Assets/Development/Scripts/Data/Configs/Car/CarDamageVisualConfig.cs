@@ -11,7 +11,8 @@ namespace FlatOutLike.Data.Configs.Car
         [SerializeField] private DamageStage[] _stages;
 
         /// <summary>
-        /// Материалы, которые никогда не перезаписываются damageMaterial (например, стекло, фары).
+        /// Материалы, которые не получают шейдерное свойство _DamageAmount (например, стекло, фары):
+        /// рендерер, у которого все слоты из этого списка, исключается из damage-визуализации.
         /// Сравнение идёт по ссылке на исходный материал слота, а не по текущему состоянию renderer.
         /// </summary>
         [SerializeField] private Material[] _preservedMaterials;
@@ -38,11 +39,9 @@ namespace FlatOutLike.Data.Configs.Car
             [Tooltip("Normalized HP fraction (0..1). Stage activates when HP ratio falls to or below this value.")]
             public float hpThreshold;
 
-            [Header("Strategy A: Material / Texture Swap")]
-            [Tooltip("Single damage material painted over ALL slots of ALL body renderers. Null = use materials[] or restore originals.")]
-            public Material damageMaterial;
-            [Tooltip("Legacy fallback: applied only to bodyRenderers[0] when damageMaterial is null. Null = restore originals.")]
-            public Material[] materials;
+            // Подмена материалов (исходная стратегия A) удалена: износ кузова непрерывно гонит
+            // шейдерное свойство _DamageAmount (CarDamageVisualController.Update).
+            [Header("Decals")]
             [Tooltip("Decal prefabs to Instantiate as persistent children of the car.")]
             public GameObject[] decalPrefabsToSpawn;
 

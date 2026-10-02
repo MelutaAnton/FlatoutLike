@@ -13,6 +13,21 @@ namespace FlatOutLike.Controllers.Camera
     /// </summary>
     public sealed class CinemachineChaseCameraBehaviour : MonoBehaviour, ICameraBehaviour
     {
+        // Эмпирический множитель пересчёта PositionSmoothing (SmoothDamp, с) в damping Cinemachine.
+        private const float PositionDampingScale = 6f;
+        // Числитель инверсии RotationSmoothing → damping (RotationSmoothing=10 даёт damping=1).
+        private const float RotationDampingNumerator = 10f;
+        // Нижний предел damping (позиция и поворот).
+        private const float MinDamping = 0.05f;
+        // Верхний предел damping позиции.
+        private const float MaxPositionDamping = 3f;
+        // Верхний предел damping поворота.
+        private const float MaxRotationDamping = 5f;
+        // Защитный минимум RotationSmoothing — от деления на ноль.
+        private const float MinRotationSmoothing = 0.01f;
+        // Верхний предел сглаживания look-ahead.
+        private const float MaxLookAheadSmoothing = 30f;
+
         [SerializeField] private CinemachineCamera _camera;
         [SerializeField] private ChaseCameraConfig _config;
         [SerializeField] private DeoccluderConfig _deoccluderConfig;
@@ -66,7 +81,7 @@ namespace FlatOutLike.Controllers.Camera
                 // экспоненциальная, а не критически задемпфированная SmoothDamp). Эмпирический
                 // множитель x6 подобран так, чтобы дефолт 0.09с давал damping ~0.5 — заметный,
                 // но не вялый чейз. Поле одно число на все 3 оси (изотропный damping).
-                float positionDamping = Mathf.Clamp(_config.PositionSmoothing * 6f, 0.05f, 3f);
+                float positionDamping = Mathf.Clamp(_config.PositionSmoothing * PositionDampingScale, MinDamping, MaxPositionDamping);
                 _follow.TrackerSettings.PositionDamping = Vector3.one * positionDamping;
             }
 
@@ -79,7 +94,9 @@ namespace FlatOutLike.Controllers.Camera
                 // (больше значение = медленнее), поэтому инвертируем: damping = k / RotationSmoothing.
                 // k=10 подобран так, что дефолтный RotationSmoothing=10 даёт damping=1
                 // (умеренная отзывчивость, аналог старого поведения).
-                float rotationDamping = Mathf.Clamp(10f / Mathf.Max(_config.RotationSmoothing, 0.01f), 0.05f, 5f);
+                float rotationDamping = Mathf.Clamp(
+                    RotationDampingNumerator / Mathf.Max(_config.RotationSmoothing, MinRotationSmoothing),
+                    MinDamping, MaxRotationDamping);
                 _composer.Damping = new Vector2(rotationDamping, rotationDamping);
 
                 // Lookahead: прямого аналога LookAheadFactor/MaxLookAhead в CM3 нет — там был
@@ -90,7 +107,7 @@ namespace FlatOutLike.Controllers.Camera
                 // Это приближение, а не точный перенос старой формулы.
                 _composer.Lookahead.Enabled = _config.LookAheadFactor > 0f;
                 _composer.Lookahead.Time = Mathf.Clamp01(_config.LookAheadFactor);
-                _composer.Lookahead.Smoothing = Mathf.Clamp(_config.MaxLookAhead, 0f, 30f);
+                _composer.Lookahead.Smoothing = Mathf.Clamp(_config.MaxLookAhead, 0f, MaxLookAheadSmoothing);
             }
 
             // MaxLagDistance не мигрирован: в damping-модели Cinemachine нет жёсткого клэмпа
@@ -111,7 +128,7 @@ namespace FlatOutLike.Controllers.Camera
 
             // Приоритет — единственный переключатель между chase/orbit; Brain сам блендит
             // по приоритету, компонент camera/adapter'а не отключаем (enabled не трогаем).
-            _camera.Priority = new PrioritySettings { Enabled = true, Value = active ? 10 : 0 };
+            _camera.Priority = new PrioritySettings { Enabled = true, Value = active ? CameraPriorities.Active : CameraPriorities.Inactive };
         }
     }
 }

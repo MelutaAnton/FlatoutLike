@@ -17,6 +17,8 @@ namespace FlatOutLike.Data.Configs.Audio
         [SerializeField] private float _maxRpm = 6500f;
         [Tooltip("Количество псевдо-передач для имитации пилообразного роста RPM по скорости.")]
         [SerializeField] private int _gearCount = 5;
+        [Tooltip("Минимальная доля RPM внутри передачи (0..1): RPM не проваливается в idle между переключениями.")]
+        [SerializeField, Range(0f, 1f)] private float _gearRpmFloor = 0.15f;
         [Tooltip("Порог ThrottleInput, выше которого считаем что газ нажат (для gasPedalPressing).")]
         [SerializeField] private float _throttleThreshold = 0.05f;
 
@@ -28,6 +30,7 @@ namespace FlatOutLike.Data.Configs.Audio
         public float IdleRpm => _idleRpm;
         public float MaxRpm => _maxRpm;
         public int GearCount => _gearCount;
+        public float GearRpmFloor => _gearRpmFloor;
         public float ThrottleThreshold => _throttleThreshold;
         public float MasterVolume => _masterVolume;
         public float MinDistance => _minDistance;

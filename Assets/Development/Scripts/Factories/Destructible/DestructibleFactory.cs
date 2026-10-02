@@ -13,6 +13,13 @@ namespace FlatOutLike.Factories.Destructible
     /// </summary>
     public sealed class DestructibleFactory : IDestructibleFactory
     {
+        // Вертикальная компонента направления разлёта обломков: [min, max] до нормализации.
+        private const float DebrisDirectionUpMin = 0.2f;
+        private const float DebrisDirectionUpMax = 1f;
+        // Разброс смещения точки спавна обломков: ±по горизонтали, [0, max] вверх (м).
+        private const float DebrisSpawnOffsetHorizontal = 0.4f;
+        private const float DebrisSpawnOffsetUpMax = 0.4f;
+
         private readonly IPoolManager _pool;
 
         // Префабы, для которых пул уже прогрет — чтобы не прогревать повторно на каждый таран
@@ -65,7 +72,7 @@ namespace FlatOutLike.Factories.Destructible
                 // Случайное направление разлёта: произвольно по горизонтали, немного вверх
                 var direction = new Vector3(
                     Random.Range(-1f, 1f),
-                    Random.Range(0.2f, 1f),
+                    Random.Range(DebrisDirectionUpMin, DebrisDirectionUpMax),
                     Random.Range(-1f, 1f)
                 );
                 // Случайный разлёт + наследуемая скорость источника (Vector3.zero для статики)
@@ -73,9 +80,9 @@ namespace FlatOutLike.Factories.Destructible
 
                 // Небольшое смещение спавна, чтобы обломки не накладывались в одной точке
                 var offset = new Vector3(
-                    Random.Range(-0.4f, 0.4f),
-                    Random.Range(0f,    0.4f),
-                    Random.Range(-0.4f, 0.4f)
+                    Random.Range(-DebrisSpawnOffsetHorizontal, DebrisSpawnOffsetHorizontal),
+                    Random.Range(0f, DebrisSpawnOffsetUpMax),
+                    Random.Range(-DebrisSpawnOffsetHorizontal, DebrisSpawnOffsetHorizontal)
                 );
 
                 // Колбэк возвращает именно тот gameObject, который был взят из пула

@@ -14,24 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlatOutLike.Data.Configs.Car.CarDamageVisualConfig
   _stages:
   - hpThreshold: 1
-    damageMaterial: {fileID: 0}
-    materials: []
     decalPrefabsToSpawn: []
     damagedMesh: {fileID: 0}
     blendShapeWeights: []
     vfxToActivate: 
     enableDetachableParts: 0
   - hpThreshold: 0.66
-    damageMaterial: {fileID: 2100000, guid: 5123d0b148164ac49b5b36be7de7bcb8, type: 2}
-    materials: []
     decalPrefabsToSpawn: []
     damagedMesh: {fileID: 0}
     blendShapeWeights: []
     vfxToActivate: 
     enableDetachableParts: 0
   - hpThreshold: 0.33
-    damageMaterial: {fileID: 2100000, guid: 5123d0b148164ac49b5b36be7de7bcb8, type: 2}
-    materials: []
     decalPrefabsToSpawn: []
     damagedMesh: {fileID: 0}
     blendShapeWeights: []

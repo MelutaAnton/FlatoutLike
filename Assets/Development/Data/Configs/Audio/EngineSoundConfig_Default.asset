@@ -15,6 +15,7 @@ MonoBehaviour:
   _idleRpm: 900
   _maxRpm: 6500
   _gearCount: 5
+  _gearRpmFloor: 0.15
   _throttleThreshold: 0.05
   _masterVolume: 0.6
   _minDistance: 5

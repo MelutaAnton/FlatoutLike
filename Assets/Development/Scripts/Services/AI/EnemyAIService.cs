@@ -24,6 +24,13 @@ namespace FlatOutLike.Services.AI
     /// </summary>
     public sealed class EnemyAIService : IEnemyAIService
     {
+        // Порог |PostRecoverSteerBias| / bias, выше которого руль считается «заданным».
+        private const float SteerBiasThreshold = 0.5f;
+        // Порог газа, выше которого нитро допустимо (газ не сброшен при side-stuck).
+        private const float NitroThrottleThreshold = 0.5f;
+        // Допуск равенства engageSteer и steer (обхода препятствия нет).
+        private const float SteerEqualityEpsilon = 0.01f;
+
         public AIDecision Tick(ref AIBrainState brain, in AIPerception p,
             EnemyPersonalityConfig profile, float deltaTime)
         {
@@ -112,7 +119,7 @@ namespace FlatOutLike.Services.AI
             // Бэйас перебивает target-steer, но не avoidance: если по ходу
             // grace-окна центральный луч снова показывает препятствие, picker
             // выше уже подкорректировал engageSteer на актуальное направление.
-            if (brain.GraceTimer > 0f && Math.Abs(brain.PostRecoverSteerBias) > 0.5f
+            if (brain.GraceTimer > 0f && Math.Abs(brain.PostRecoverSteerBias) > SteerBiasThreshold
                 && !obstacleBlocksPath)
                 engageSteer = brain.PostRecoverSteerBias;
 
@@ -240,7 +247,7 @@ namespace FlatOutLike.Services.AI
                 // Симметрично для RightBlocked. Без этого реверс шёл по target-axis
                 // (обычно ≈0 = прямо назад), машина откатывалась параллельно стене
                 // и на grace-форварде сразу налетала на тот же угол.
-                return Reverse(Math.Abs(bias) > 0.5f ? bias : steer);
+                return Reverse(Math.Abs(bias) > SteerBiasThreshold ? bias : steer);
             }
 
             // ── FSM ─────────────────────────────────────────────────────────────
@@ -274,9 +281,9 @@ namespace FlatOutLike.Services.AI
                     // Также nitro отключаем когда forwardThrottle=0 (side-stuck) — какой
                     // буст при разгрузке газа.
                     bool aimed = forwardDot > profile.RamAlignmentDot
-                              && Math.Abs(engageSteer - steer) < 0.01f;
+                              && Math.Abs(engageSteer - steer) < SteerEqualityEpsilon;
                     return Drive(engageSteer, forwardThrottle,
-                                 profile.NitroOnRam && aimed && forwardThrottle > 0.5f);
+                                 profile.NitroOnRam && aimed && forwardThrottle > NitroThrottleThreshold);
 
                 case AIState.Recover:
                     return TickRecover(ref brain, profile, steer, deltaTime);
@@ -313,7 +320,7 @@ namespace FlatOutLike.Services.AI
             // чтобы нос отворачивал прочь от стены (для side-stuck-wedge'а), а не
             // по target-axis. Без bias — обычная семантика Reverse(steer):
             // -steer разворачивает нос к цели во время отката.
-            float reverseSteer = Math.Abs(brain.PostRecoverSteerBias) > 0.5f
+            float reverseSteer = Math.Abs(brain.PostRecoverSteerBias) > SteerBiasThreshold
                 ? brain.PostRecoverSteerBias
                 : steer;
             return Reverse(reverseSteer);
