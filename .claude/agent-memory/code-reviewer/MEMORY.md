@@ -11,3 +11,5 @@
 - [Test asmdef VContainer](project-test-asmdef-vcontainer.md) — EditMode test asmdef без VContainer ref; `new`-инстанс сервиса с ITickable может дать CS0012 → уронить всю test-сборку
 - [PlayerPrefs EditMode test hazard](hotspot_playerprefs_tests.md) — тесты хранилища профиля бьют по реальным PlayerPrefs-ключам игры; прогон стирает сейв разработчика в редакторе
 - [TMP dynamic font dirty](hotspot_tmp_dynamic_font_dirty.md) — Art/Fonts/TMP/*SDF.asset грязнеют после Play Mode (атлас 1024²); в diff шага — Warning «не коммитить», не скоуп-Critical
+- [Editor scene-path literals](project-editor-scene-path-literals.md) — литералы "Scenes/X.unity" в editor-скриптах — прецедент, Warning; Critical только в runtime
+- [Hub camera outside rig](project-hub-camera-outside-rig.md) — камера BaseHub вне ICameraRig/CameraService (статичный Priority); 3 штатных LogWarning на загрузку хаба

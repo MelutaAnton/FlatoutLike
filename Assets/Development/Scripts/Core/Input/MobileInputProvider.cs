@@ -65,8 +65,10 @@ namespace FlatOutLike.Core.Input
         {
             bool isDriving = CurrentContext == InputContext.Driving;
             bool isFlight = CurrentContext == InputContext.Flight;
+            // Hub (BaseHub): персонаж бегает — нужен только Move; машинные действия гасятся.
+            bool isHub = CurrentContext == InputContext.Hub;
 
-            _move = isDriving ? _rawMove : Vector2.zero;
+            _move = isDriving || isHub ? _rawMove : Vector2.zero;
             _look = isFlight ? _rawLook : Vector2.zero;
             _handbrake = isDriving && _rawHandbrake;
             _nitro = isDriving && _rawNitro;

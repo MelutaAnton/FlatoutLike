@@ -6,3 +6,4 @@
 - [Step 5b — Target Selection](step5b_target_selection.md) — CarRegistry, TargetSelectionService, TargetSelectionMode enum, EnemyPersonalityConfig новое поле, SetTarget удалён
 - [Step 5c — Nitro + Pickups](step5c_nitro_pickups.md) — NitroService, RepairPickup/NitroPickup, PickupFactory, PickupSpawnerService (ITickable EntryPoint), DamageService.Repair, условные регистрации
 - [Driving feel polish](driving_feel_polish.md) — CalculateSmoothedSteerAngle (MoveTowards), handbrake drift (stiffness switch), CarStatsConfig new fields, "SO new-field-gap" YAML-patch nuance
+- [Tooling gotchas](tooling_gotchas.md) — arch-guard не видит Bash-записи (прогон вручную), python=заглушка, LF, ns FlatOutLike

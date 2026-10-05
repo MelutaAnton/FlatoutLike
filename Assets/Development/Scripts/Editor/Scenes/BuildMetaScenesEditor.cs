@@ -14,10 +14,11 @@ using FlatOutLike.Models;
 namespace FlatOutLike.Editor.Scenes
 {
     /// <summary>
-    /// Шаг 8b: собирает три мета-сцены (MainMenu, Garage, Stunts_Hub) и регистрирует
-    /// ВСЕ игровые сцены проекта в Build Settings.
+    /// Шаг 8b (после шага 11a): собирает мета-сцену Garage и регистрирует ВСЕ игровые сцены
+    /// проекта в Build Settings. Сцену BaseHub собирает отдельное меню
+    /// «FlatOutLike/Hub/Build Base Hub Layout» (BuildBaseHubLayoutEditor).
     ///
-    /// Что создаётся в каждой из трёх сцен:
+    /// Что создаётся в мета-сцене:
     ///   • Main Camera   — tag MainCamera, Solid Color фон, БЕЗ CameraController'ов
     ///                     (мета-сцены статичны, камера не следует ни за чем).
     ///   • GameLifetimeScope + GameBootstrap — Composition Root сцены.
@@ -52,9 +53,8 @@ namespace FlatOutLike.Editor.Scenes
         private static readonly string[] BuildSceneOrder =
         {
             SceneKeys.Boot,
-            SceneKeys.MainMenu,
+            SceneKeys.BaseHub,
             SceneKeys.Garage,
-            SceneKeys.StuntsHub,
             SceneKeys.DerbyArena01,
             SceneKeys.StuntsHighJump,
         };
@@ -75,10 +75,8 @@ namespace FlatOutLike.Editor.Scenes
                 // ── 1. Boot.unity — дособираем существующим идемпотентным скриптом ──
                 BuildBootstrapSceneEditor.BuildBootstrapScene();
 
-                // ── 2. Три мета-сцены ────────────────────────────────────────────
-                BuildMetaScene(SceneKeys.MainMenu);
+                // ── 2. Мета-сцена Garage ─────────────────────────────────────────
                 BuildMetaScene(SceneKeys.Garage);
-                BuildMetaScene(SceneKeys.StuntsHub);
 
                 // ── 3. Build Settings — регистрируем все игровые сцены ──────────
                 RegisterAllScenesInBuildSettings();
@@ -97,11 +95,32 @@ namespace FlatOutLike.Editor.Scenes
         public static void RegisterAllScenesInBuildSettings()
         {
             var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            bool changed = false;
+
+            // ── 1. Чистка устаревших записей ────────────────────────────────────
+            // Build Settings отражает реестр BuildSceneOrder: убираем записи с отсутствующим
+            // файлом и записи игровых сцен из ScenesFolder, которых нет в реестре (сцены,
+            // выведенные из проекта, например старая мета). Служебные сцены с "_" не трогаем.
+            for (int i = scenes.Count - 1; i >= 0; i--)
+            {
+                string path = scenes[i].path;
+                bool missingFile = string.IsNullOrEmpty(path) ||
+                                   !File.Exists(Path.Combine(Directory.GetCurrentDirectory(), path));
+                bool retired = !missingFile && IsRetiredProjectScene(path);
+
+                if (!missingFile && !retired)
+                    continue;
+
+                scenes.RemoveAt(i);
+                changed = true;
+                Debug.Log("[Editor] Убрана запись из Build Settings: " + path +
+                          (missingFile ? " (файл отсутствует)." : " (сцена выведена из проекта)."));
+            }
+
+            // ── 2. Добавление недостающих сцен реестра ──────────────────────────
             var existingPaths = new HashSet<string>();
             foreach (var s in scenes)
                 existingPaths.Add(s.path);
-
-            bool changed = false;
 
             foreach (var sceneKey in BuildSceneOrder)
             {
@@ -123,28 +142,50 @@ namespace FlatOutLike.Editor.Scenes
                 Debug.Log("[Editor] Добавлена сцена в Build Settings: " + scenePath);
             }
 
-            // Boot должна быть первой в списке (точка входа сборки), не удаляя остальные.
-            string bootPath = GetScenePath(SceneKeys.Boot);
-            int bootIndex = scenes.FindIndex(s => s.path == bootPath);
-            if (bootIndex > 0)
-            {
-                var bootScene = scenes[bootIndex];
-                scenes.RemoveAt(bootIndex);
-                scenes.Insert(0, bootScene);
-                changed = true;
-                Debug.Log("[Editor] Boot.unity перемещена в начало списка Build Settings.");
-            }
+            // ── 3. Порядок: Boot первой, BaseHub второй, остальные не трогаем ────
+            changed |= MoveToIndex(scenes, GetScenePath(SceneKeys.Boot), 0);
+            changed |= MoveToIndex(scenes, GetScenePath(SceneKeys.BaseHub), 1);
 
             if (changed)
             {
                 EditorBuildSettings.scenes = scenes.ToArray();
                 Debug.Log("[Editor] Build Settings обновлены (" + scenes.Count + " сцен всего, " +
-                          "чужие entries не удалены).");
+                          "служебные entries не удалены).");
             }
             else
             {
                 Debug.Log("[Editor] Build Settings уже содержат все нужные сцены — изменений нет.");
             }
+        }
+
+        /// <summary>Сцена из папки игровых сцен, которой нет в реестре и которая не служебная ("_" в начале).</summary>
+        private static bool IsRetiredProjectScene(string path)
+        {
+            if (!path.StartsWith(ScenesFolder + "/", System.StringComparison.Ordinal))
+                return false;
+
+            if (Path.GetFileName(path).StartsWith("_", System.StringComparison.Ordinal))
+                return false;
+
+            foreach (var sceneKey in BuildSceneOrder)
+                if (path == GetScenePath(sceneKey))
+                    return false;
+
+            return true;
+        }
+
+        /// <summary>Переносит запись на индекс (если она есть и стоит не там). true — порядок изменён.</summary>
+        private static bool MoveToIndex(List<EditorBuildSettingsScene> scenes, string path, int index)
+        {
+            int current = scenes.FindIndex(s => s.path == path);
+            if (current < 0 || current == index)
+                return false;
+
+            var entry = scenes[current];
+            scenes.RemoveAt(current);
+            scenes.Insert(System.Math.Min(index, scenes.Count), entry);
+            Debug.Log("[Editor] " + path + " перемещена на позицию " + index + " в Build Settings.");
+            return true;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -240,7 +281,7 @@ namespace FlatOutLike.Editor.Scenes
             Debug.Log("[Editor] Main Camera настроена: tag MainCamera, Solid Color фон.");
         }
 
-        private static void CreateGameLifetimeScope()
+        public static void CreateGameLifetimeScope()
         {
             var existing = Object.FindAnyObjectByType<GameLifetimeScope>();
             if (existing != null)
@@ -255,7 +296,7 @@ namespace FlatOutLike.Editor.Scenes
             Debug.Log("[Editor] Создан GameLifetimeScope.");
         }
 
-        private static void CreateGameBootstrap()
+        public static void CreateGameBootstrap()
         {
             var existing = Object.FindAnyObjectByType<FlatOutLike.GameBootstrap>();
             if (existing != null)

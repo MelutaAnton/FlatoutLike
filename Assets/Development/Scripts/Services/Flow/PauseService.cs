@@ -58,8 +58,12 @@ namespace FlatOutLike.Services.Flow
                 _flow.Push(GameState.Paused);
         }
 
-        /// <summary>Состояния, из которых разрешена пауза — только активный геймплей.</summary>
+        /// <summary>
+        /// Состояния, из которых разрешена пауза — активный геймплей и BaseHub (персонаж бегает
+        /// по базе; оверлей там без кнопки Leave — уходить некуда, см. PauseOverlayPresenter).
+        /// </summary>
         private static bool IsPausable(GameState state) =>
+            state == GameState.BaseHub ||
             state == GameState.DerbyMatch ||
             state == GameState.StuntsHighJumpDriving ||
             state == GameState.StuntsHighJumpFlight;

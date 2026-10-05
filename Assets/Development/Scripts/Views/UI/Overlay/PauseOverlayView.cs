@@ -41,6 +41,12 @@ namespace FlatOutLike.Views.UI.Overlay
             if (_panel != null) _panel.SetActive(false);
         }
 
+        /// <summary>Показывает/скрывает кнопку Leave (в BaseHub уходить некуда — кнопка скрыта).</summary>
+        public void SetLeaveVisible(bool visible)
+        {
+            if (_leaveButton != null) _leaveButton.gameObject.SetActive(visible);
+        }
+
         private void HandleResumeClicked() => OnResumeClicked?.Invoke();
         private void HandleLeaveClicked() => OnLeaveClicked?.Invoke();
     }

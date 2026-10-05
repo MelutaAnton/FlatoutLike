@@ -26,6 +26,11 @@ namespace FlatOutLike.Controllers.Mobile
         [SerializeField] private HoldButtonView _boostButton;
         [SerializeField] private HoldButtonView _pauseButton;
 
+        // BaseHub (Шаг 11a): отдельная группа с единственным стиком — полный вектор Move,
+        // педали не участвуют. Видима только в InputContext.Hub.
+        [SerializeField] private GameObject _hubGroup;
+        [SerializeField] private VirtualJoystickView _hubStick;
+
         private MobileInputProvider _provider;
         private IDriverFlightService _flight;
         private bool _initialized;
@@ -82,9 +87,13 @@ namespace FlatOutLike.Controllers.Mobile
         /// <summary>
         /// Move по схеме «педали + стик»: X — руление левым стиком, Y — газ (+1) / тормоз-реверс (−1)
         /// с педалей; обе зажаты → 0 (паритет с GetAxisRaw клавиатуры при W+S).
+        /// В контексте Hub — полный вектор хаб-стика (бег персонажа), педали не участвуют.
         /// </summary>
         private Vector2 ComposeMove()
         {
+            if (_provider.CurrentContext == InputContext.Hub)
+                return _hubStick != null ? _hubStick.Direction : Vector2.zero;
+
             float steer = _leftStick != null ? _leftStick.Direction.x : 0f;
 
             float throttle = 0f;
@@ -100,9 +109,11 @@ namespace FlatOutLike.Controllers.Mobile
 
             bool drivingVisible = context == InputContext.Driving;
             bool flightVisible = context == InputContext.Flight;
+            bool hubVisible = context == InputContext.Hub;
 
             if (_drivingGroup != null) _drivingGroup.SetActive(drivingVisible);
             if (_flightGroup != null) _flightGroup.SetActive(flightVisible);
+            if (_hubGroup != null) _hubGroup.SetActive(hubVisible);
 
             _lastAppliedContext = context;
             _hasAppliedContext = true;

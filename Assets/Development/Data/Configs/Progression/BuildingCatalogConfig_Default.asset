@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe3c37736c4a9f646bbf85378f219f64, type: 3}
+  m_Name: BuildingCatalogConfig_Default
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Progression.BuildingCatalogConfig
+  _entries:
+  - Id: 0
+    Position: {x: 0, y: 0, z: 26}
+    YRotation: 180
+    Enabled: 1
+    VisualPrefab: {fileID: 159070, guid: 54c86e934c1824f46a2a8955ea57091b, type: 3}
+  - Id: 1
+    Position: {x: -22, y: 0, z: 10}
+    YRotation: 90
+    Enabled: 1
+    VisualPrefab: {fileID: 120682, guid: 84c719d9545655049b535e2613281b11, type: 3}
+  - Id: 2
+    Position: {x: 22, y: 0, z: 10}
+    YRotation: -90
+    Enabled: 1
+    VisualPrefab: {fileID: 5877204875843800954, guid: d9a001bf78b5713478560acd770bd6dc, type: 3}
+  - Id: 3
+    Position: {x: -22, y: 0, z: -8}
+    YRotation: 90
+    Enabled: 1
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  - Id: 4
+    Position: {x: 22, y: 0, z: -8}
+    YRotation: -90
+    Enabled: 1
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  - Id: 5
+    Position: {x: -24, y: 0, z: -26}
+    YRotation: 0
+    Enabled: 0
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  - Id: 6
+    Position: {x: -12, y: 0, z: -26}
+    YRotation: 0
+    Enabled: 0
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  - Id: 7
+    Position: {x: 0, y: 0, z: -26}
+    YRotation: 0
+    Enabled: 0
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  - Id: 8
+    Position: {x: 12, y: 0, z: -26}
+    YRotation: 0
+    Enabled: 0
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  - Id: 9
+    Position: {x: 24, y: 0, z: -26}
+    YRotation: 0
+    Enabled: 0
+    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+  _characterSpawnPosition: {x: 0, y: 0, z: 0}
+  _characterSpawnYRotation: 0
+  _comingSoonLabel: COMING SOON

@@ -6,9 +6,10 @@ using UnityEngine;
 namespace FlatOutLike.Data.Configs.Stunts
 {
     /// <summary>
-    /// Каталог карточек Stunts Hub (см. §6 game-design.md). Единственный источник правды
-    /// для списка трюков — StuntsHubPresenter читает entries отсюда и не хардкодит
-    /// типы/сцены/подписи по местам.
+    /// Каталог трюков (см. §6 game-design.md). Единственный источник правды для списка
+    /// трюков — типы/подписи/превью не хардкодятся по местам. Отдельный экран Stunts Hub
+    /// удалён (шаг 11a): точки входа в трюки — постройки BaseHub; целевая сцена трюка
+    /// определяется GameStateSceneMap, а не строкой в каталоге.
     /// </summary>
     [CreateAssetMenu(fileName = "StuntsCatalogConfig", menuName = "FlatOutLike/Stunts/StuntsCatalogConfig")]
     public sealed class StuntsCatalogConfig : ScriptableObject
@@ -34,19 +35,17 @@ namespace FlatOutLike.Data.Configs.Stunts
         }
     }
 
-    /// <summary>Одна карточка Stunts Hub: тип трюка, отображаемые данные, целевая сцена и доступность.</summary>
+    /// <summary>Один трюк каталога: тип, отображаемые данные и доступность.</summary>
     [Serializable]
     public sealed class StuntsCardEntry
     {
         [SerializeField] private StuntType _type;
         [SerializeField] private string _title;
-        [SerializeField] private string _sceneKey;
         [SerializeField] private bool _enabled;
         [SerializeField] private Sprite _preview;
 
         public StuntType Type => _type;
         public string Title => _title;
-        public string SceneKey => _sceneKey;
         public bool Enabled => _enabled;
         public Sprite Preview => _preview;
     }

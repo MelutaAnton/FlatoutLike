@@ -153,7 +153,7 @@ namespace FlatOutLike.Tests
         /// <summary>Минимальная реализация IGameFlowService, запоминающая последний ChangeState.</summary>
         private sealed class FakeGameFlowService : IGameFlowService
         {
-            public GameState LastChanged { get; private set; } = GameState.MainMenu;
+            public GameState LastChanged { get; private set; } = GameState.BaseHub;
 
             public GameState Current => LastChanged;
 

@@ -6,7 +6,7 @@ namespace FlatOutLike.Services.Flow
 {
     /// <summary>
     /// Единственная реализация IState для всех состояний, привязанных к отдельной сцене
-    /// (MainMenu, GarageMeta, StuntsHub, DerbyMatch, StuntsHighJumpDriving). Межэкранный
+    /// (BaseHub, GarageMeta, DerbyMatch, StuntsHighJumpDriving). Межэкранный
     /// переход = загрузка сцены; guard на ActiveSceneName не даёт перезагрузить сцену,
     /// в которой scope уже стартовал в этом состоянии.
     /// </summary>

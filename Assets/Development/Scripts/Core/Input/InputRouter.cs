@@ -58,9 +58,10 @@ namespace FlatOutLike.Core.Input
                 case GameState.StuntsHighJumpFlight:
                     return InputContext.Flight;
 
-                case GameState.MainMenu:
+                case GameState.BaseHub:
+                    return InputContext.Hub;
+
                 case GameState.GarageMeta:
-                case GameState.StuntsHub:
                 case GameState.StuntsHighJumpScoring:
                 case GameState.MatchEnd:
                 case GameState.Paused:

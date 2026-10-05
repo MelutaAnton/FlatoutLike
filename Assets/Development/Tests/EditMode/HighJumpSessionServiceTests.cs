@@ -69,7 +69,7 @@ namespace FlatOutLike.Tests
         {
             _bus.Publish(new DriverEjectedEvent(Player, Vector3.up, EjectReason.CarDestroyed));
 
-            Assert.AreEqual(GameState.MainMenu, _gameFlow.LastChanged, "CarDestroyed не относится к HighJump — состояние не должно меняться.");
+            Assert.AreEqual(GameState.BaseHub, _gameFlow.LastChanged, "CarDestroyed не относится к HighJump — состояние не должно меняться.");
         }
 
         // d) DriverLandedEvent вызывает скоринг и переводит GameFlow в Scoring
@@ -87,7 +87,7 @@ namespace FlatOutLike.Tests
         /// <summary>Минимальная реализация IGameFlowService, запоминающая последний ChangeState.</summary>
         private sealed class FakeGameFlowService : IGameFlowService
         {
-            public GameState LastChanged { get; private set; } = GameState.MainMenu;
+            public GameState LastChanged { get; private set; } = GameState.BaseHub;
 
             public GameState Current => LastChanged;
 

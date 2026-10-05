@@ -29,7 +29,7 @@ namespace FlatOutLike.Tests
             Assert.IsTrue(HighJumpHudPresenter.IsDrivingPhase(GameState.StuntsHighJumpDriving));
             Assert.IsFalse(HighJumpHudPresenter.IsDrivingPhase(GameState.StuntsHighJumpFlight));
             Assert.IsFalse(HighJumpHudPresenter.IsDrivingPhase(GameState.StuntsHighJumpScoring));
-            Assert.IsFalse(HighJumpHudPresenter.IsDrivingPhase(GameState.MainMenu));
+            Assert.IsFalse(HighJumpHudPresenter.IsDrivingPhase(GameState.BaseHub));
         }
 
         [Test]

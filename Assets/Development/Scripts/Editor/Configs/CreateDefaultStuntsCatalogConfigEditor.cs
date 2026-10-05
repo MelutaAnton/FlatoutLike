@@ -9,9 +9,9 @@ namespace FlatOutLike.Editor.Configs
 {
     /// <summary>
     /// Шаг 8c: создаёт StuntsCatalogConfig_Default.asset — единственный источник правды
-    /// о трюках, доступных из Stunts Hub (заголовок, ключ сцены, флаг доступности, превью).
-    /// Только HighJump включён и указывает на реальную сцену (SceneKeys.StuntsHighJump);
-    /// остальные пять — "Coming soon" (enabled=false, sceneKey пуст).
+    /// о трюках (заголовок, флаг доступности, превью). Только HighJump включён;
+    /// остальные пять — "Coming soon" (enabled=false). Ключа сцены у записи больше нет
+    /// (запуск режимов — зоны BaseHub, шаг 11b).
     ///
     /// Идемпотентно по _type (enum StuntType — уникальный технический ключ трюка):
     /// существующие entries не пересоздаются.
@@ -29,7 +29,6 @@ namespace FlatOutLike.Editor.Configs
         {
             public StuntType Type;
             public string Title;
-            public string SceneKey;
             public bool Enabled;
             public string PreviewPath;
         }
@@ -60,12 +59,12 @@ namespace FlatOutLike.Editor.Configs
 
             var entries = new[]
             {
-                new EntryDef { Type = StuntType.HighJump,  Title = "High Jump",  SceneKey = SceneKeys.StuntsHighJump, Enabled = true,  PreviewPath = StuntIconsFolder + "/stunt_1.png" },
-                new EntryDef { Type = StuntType.LongJump,  Title = "Long Jump",  SceneKey = "",                       Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_2.png" },
-                new EntryDef { Type = StuntType.FireRings, Title = "Fire Rings", SceneKey = "",                       Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_3.png" },
-                new EntryDef { Type = StuntType.Bowling,   Title = "Bowling",    SceneKey = "",                       Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_4.png" },
-                new EntryDef { Type = StuntType.FieldGoal, Title = "Field Goal", SceneKey = "",                       Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_5.png" },
-                new EntryDef { Type = StuntType.HighCard,  Title = "High Card",  SceneKey = "",                       Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_6.png" },
+                new EntryDef { Type = StuntType.HighJump,  Title = "High Jump",  Enabled = true,  PreviewPath = StuntIconsFolder + "/stunt_1.png" },
+                new EntryDef { Type = StuntType.LongJump,  Title = "Long Jump",  Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_2.png" },
+                new EntryDef { Type = StuntType.FireRings, Title = "Fire Rings", Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_3.png" },
+                new EntryDef { Type = StuntType.Bowling,   Title = "Bowling",    Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_4.png" },
+                new EntryDef { Type = StuntType.FieldGoal, Title = "Field Goal", Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_5.png" },
+                new EntryDef { Type = StuntType.HighCard,  Title = "High Card",  Enabled = false, PreviewPath = StuntIconsFolder + "/stunt_6.png" },
             };
 
             var so = new SerializedObject(config);
@@ -92,7 +91,6 @@ namespace FlatOutLike.Editor.Configs
 
                     entry.FindPropertyRelative("_type").enumValueIndex = (int)def.Type;
                     entry.FindPropertyRelative("_title").stringValue = def.Title;
-                    entry.FindPropertyRelative("_sceneKey").stringValue = def.SceneKey;
                     entry.FindPropertyRelative("_enabled").boolValue = def.Enabled;
 
                     var preview = UIBuildHelpers.LoadSprite(def.PreviewPath);

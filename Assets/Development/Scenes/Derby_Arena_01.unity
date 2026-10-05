@@ -56466,9 +56466,7 @@ MonoBehaviour:
   _carCatalogConfig: {fileID: 11400000, guid: 03abf7b0f6c0d834481f7ebfb33aac38, type: 2}
   _upgradeCatalogConfig: {fileID: 11400000, guid: d3bbf239dd4ad4648b0cd3ea30b410ee, type: 2}
   _stuntsCatalogConfig: {fileID: 11400000, guid: c161c758b916a19418ac326d0b2f7240, type: 2}
-  _mainMenuView: {fileID: 0}
   _garageView: {fileID: 0}
-  _stuntsHubView: {fileID: 0}
   _matchEndView: {fileID: 2102752059}
   _derbyHudView: {fileID: 1855647554}
   _highJumpHudView: {fileID: 0}
@@ -56478,6 +56476,8 @@ MonoBehaviour:
   _audioConfig: {fileID: 11400000, guid: 80757996bdaec01418055d36bba348cf, type: 2}
   _audioPlayerController: {fileID: 582447696}
   _uiClickSoundRelay: {fileID: 582447695}
+  _hubCharacterConfig: {fileID: 0}
+  _hubCharacter: {fileID: 0}
 --- !u!4 &324100677
 Transform:
   m_ObjectHideFlags: 0
@@ -249977,25 +249977,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2394890802286757131, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3965561222018073852, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
       propertyPath: m_Name
       value: MobileInputCanvas
-      objectReference: {fileID: 0}
-    - target: {fileID: 3965561222018073852, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6121172061004842993, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7958207103405655652, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
-      propertyPath: m_Enabled
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8646954516040515504, guid: 285c7c05a46b6674eb27349e32a2f1d3, type: 3}
       propertyPath: m_Pivot.x

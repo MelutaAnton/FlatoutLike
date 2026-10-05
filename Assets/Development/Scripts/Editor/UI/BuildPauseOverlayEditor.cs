@@ -55,7 +55,7 @@ namespace FlatOutLike.Editor.UI
         /// <summary>ПОВЕРХ мобильного ввода (тот держит 50, см. BuildMobileInputCanvasEditor).</summary>
         private const int SortingOrder = 60;
 
-        private const string PrefabPath = "Assets/Development/Prefabs/UI/PauseOverlayCanvas.prefab";
+        public const string PrefabPath = "Assets/Development/Prefabs/UI/PauseOverlayCanvas.prefab";
 
         [MenuItem("FlatOutLike/UI/Build Pause Overlay")]
         public static void BuildPauseOverlay()

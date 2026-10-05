@@ -2,6 +2,7 @@ using FlatOutLike.Controllers.Audio;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Camera;
 using FlatOutLike.Controllers.Destructible;
+using FlatOutLike.Controllers.Hub;
 using FlatOutLike.Controllers.Mobile;
 using FlatOutLike.Controllers.Stunts;
 using FlatOutLike.Core.Events;
@@ -12,6 +13,7 @@ using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Driver;
+using FlatOutLike.Data.Configs.Hub;
 using FlatOutLike.Data.Configs.Input;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
@@ -39,9 +41,7 @@ using FlatOutLike.Services.Vfx;
 using FlatOutLike.Views.UI.Common;
 using FlatOutLike.Views.UI.Garage;
 using FlatOutLike.Views.UI.Hud;
-using FlatOutLike.Views.UI.MainMenu;
 using FlatOutLike.Views.UI.Overlay;
-using FlatOutLike.Views.UI.Stunts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VContainer;
@@ -160,20 +160,18 @@ namespace FlatOutLike.Installers
 
         // ── Шаг 8c: UI меты (MVP) ─────────────────────────────────────────────────
         /// <summary>
-        /// Каталог карточек Stunts Hub. Регистрируется БЕЗУСЛОВНО (fallback-инстанс, паттерн
-        /// CarCatalogConfig/UpgradeCatalogConfig) — пустой каталог просто не даёт карточек,
-        /// сцены без Stunts Hub не падают.
+        /// Каталог трюков. Регистрируется БЕЗУСЛОВНО (fallback-инстанс, паттерн
+        /// CarCatalogConfig/UpgradeCatalogConfig) — пустой каталог просто не даёт трюков,
+        /// сцены без него не падают.
         /// </summary>
         [SerializeField] private StuntsCatalogConfig _stuntsCatalogConfig;
 
         /// <summary>
-        /// View'ы UI-экранов меты. Каждая заполняется editor-скриптом сборки Canvas на своей
-        /// сцене; на остальных сценах поле остаётся null — соответствующий Presenter тогда не
-        /// регистрируется (условно, без warning-спама — это норма для чужих сцен, не ошибка).
+        /// View экрана Garage. Заполняется editor-скриптом сборки Canvas на своей сцене;
+        /// на остальных сценах поле остаётся null — Presenter тогда не регистрируется
+        /// (условно, без warning-спама — это норма для чужих сцен, не ошибка).
         /// </summary>
-        [SerializeField] private MainMenuView _mainMenuView;
         [SerializeField] private GarageView _garageView;
-        [SerializeField] private StuntsHubView _stuntsHubView;
 
         /// <summary>
         /// Оверлей результата Derby-матча. Живёт в Derby-сцене (не в мета-сценах!) — его
@@ -209,9 +207,9 @@ namespace FlatOutLike.Installers
 
         // ── Шаг 10a: Pause ────────────────────────────────────────────────────────
         /// <summary>
-        /// Оверлей паузы. Живёт в геймплейных сценах (Derby/HighJump), зависит только от
+        /// Оверлей паузы. Живёт в геймплейных сценах (Derby/HighJump) и в BaseHub, зависит только от
         /// IEventBus/IGameFlowService (безусловны) — паттерн MatchEndView. На сценах без него
-        /// (мета-UI) поле остаётся null, Presenter не регистрируется.
+        /// (Garage) поле остаётся null, Presenter не регистрируется.
         /// </summary>
         [SerializeField] private PauseOverlayView _pauseOverlayView;
 
@@ -235,6 +233,21 @@ namespace FlatOutLike.Installers
         /// (пустые тест-сцены вождения) не прошивается.
         /// </summary>
         [SerializeField] private UiClickSoundRelay _uiClickSoundRelay;
+
+        // ── Шаг 11a: BaseHub (персонаж на базе) ──────────────────────────────────
+        /// <summary>
+        /// Параметры бега персонажа BaseHub. Регистрируется БЕЗУСЛОВНО (fallback-инстанс,
+        /// паттерн DriverEjectConfig) — на сценах без хаба поле не прошито, а RegisterInstance(null)
+        /// бросает NRE при построении контейнера.
+        /// </summary>
+        [SerializeField] private HubCharacterConfig _hubCharacterConfig;
+
+        /// <summary>
+        /// Персонаж BaseHub (MonoBehaviour, нужна инъекция IInputProvider/HubCharacterConfig —
+        /// поэтому RegisterComponent). Живёт только в сцене BaseHub; на остальных null —
+        /// не регистрируется.
+        /// </summary>
+        [SerializeField] private HubCharacterController _hubCharacter;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -335,22 +348,14 @@ namespace FlatOutLike.Installers
 
             // ── UI меты, MVP (Шаг 8c) ────────────────────────────────────────────
             // StuntsCatalogConfig — БЕЗУСЛОВНО, паттерн CarCatalogConfig/UpgradeCatalogConfig:
-            // пустой каталог просто не даёт карточек в Stunts Hub.
+            // пустой каталог просто не даёт трюков.
             builder.RegisterInstance(_stuntsCatalogConfig != null
                 ? _stuntsCatalogConfig
                 : ScriptableObject.CreateInstance<StuntsCatalogConfig>());
 
-            // Presenter'ы условны по наличию соответствующего View — их никто не резолвит
-            // напрямую (никакой Controller/сервис на них не завязан), поэтому build callback
-            // обязателен: без него конструктор Presenter'а не вызовется и подписки на клики/
-            // события не произойдут.
-            if (_mainMenuView != null)
-            {
-                builder.RegisterComponent(_mainMenuView);
-                builder.Register<MainMenuPresenter>(Lifetime.Singleton);
-                builder.RegisterBuildCallback(c => c.Resolve<MainMenuPresenter>());
-            }
-
+            // Presenter условен по наличию View — его никто не резолвит напрямую (никакой
+            // Controller/сервис на него не завязан), поэтому build callback обязателен: без него
+            // конструктор Presenter'а не вызовется и подписки на клики/события не произойдут.
             if (_garageView != null)
             {
                 builder.RegisterComponent(_garageView);
@@ -358,12 +363,17 @@ namespace FlatOutLike.Installers
                 builder.RegisterBuildCallback(c => c.Resolve<GaragePresenter>());
             }
 
-            if (_stuntsHubView != null)
-            {
-                builder.RegisterComponent(_stuntsHubView);
-                builder.Register<StuntsHubPresenter>(Lifetime.Singleton);
-                builder.RegisterBuildCallback(c => c.Resolve<StuntsHubPresenter>());
-            }
+            // ── BaseHub (Шаг 11a) ─────────────────────────────────────────────────
+            // HubCharacterConfig — БЕЗУСЛОВНО (fallback-инстанс, чек-лист п.5): RegisterInstance(null)
+            // роняет построение контейнера на сценах без хаба.
+            builder.RegisterInstance(_hubCharacterConfig != null
+                ? _hubCharacterConfig
+                : ScriptableObject.CreateInstance<HubCharacterConfig>());
+
+            // Персонаж — сцено-объект с [Inject] Construct: RegisterComponent, НЕ RegisterInstance
+            // (иначе Construct не вызовется). Условно — существует только в сцене BaseHub.
+            if (_hubCharacter != null)
+                builder.RegisterComponent(_hubCharacter);
 
             // MatchEndView живёт в Derby-сцене — зависит только от IEventBus/ICarRegistry/
             // IGameFlowService (все регистрируются безусловно ниже по файлу), никаких
@@ -397,8 +407,8 @@ namespace FlatOutLike.Installers
             // Car
             builder.Register<CarMovementService>(Lifetime.Singleton).As<ICarMovementService>();
 
-            // Combat (Шаг 3). Фоллбэк-инстанс (паттерн DriverEjectConfig): в UI-сценах
-            // (MainMenu/Garage/Stunts_Hub) поле не прошито, а RegisterInstance(null)
+            // Combat (Шаг 3). Фоллбэк-инстанс (паттерн DriverEjectConfig): в мета-сценах/хабе
+            // (BaseHub/Garage) поле не прошито, а RegisterInstance(null)
             // бросает NRE при построении контейнера — scope обязан переживать мета-сцены.
             builder.RegisterInstance(_damageConfig != null
                 ? _damageConfig
@@ -406,7 +416,7 @@ namespace FlatOutLike.Installers
             builder.Register<DamageService>(Lifetime.Singleton).As<IDamageService>();
             builder.Register<DamageStageResolver>(Lifetime.Singleton).As<IDamageStageResolver>();
 
-            // VFX (Шаг 3). Фоллбэк по той же причине — VfxFactory в UI-сценах лениво не резолвится.
+            // VFX (Шаг 3). Фоллбэк по той же причине — VfxFactory в мета-сценах лениво не резолвится.
             builder.RegisterInstance(_vfxConfig != null
                 ? _vfxConfig
                 : ScriptableObject.CreateInstance<VfxConfig>());
@@ -456,8 +466,9 @@ namespace FlatOutLike.Installers
             }
             else
             {
-                // Ожидаемо для UI-сцен (MainMenu/Garage/Stunts_Hub) — там нет ни камеры, ни машин.
-                Debug.LogWarning("[GameLifetimeScope] _cameraRig не задан — ICameraService не регистрируется (UI-сцена или тест-сцена без камеры).");
+                // Ожидаемо для мета-сцен/хаба (BaseHub/Garage) — там нет машинного рига: камера хаба
+                // (CinemachineHubCameraBehaviour) живёт отдельно и в ICameraRig не входит.
+                Debug.LogWarning("[GameLifetimeScope] _cameraRig не задан — ICameraService не регистрируется (мета-сцена/хаб или тест-сцена без камеры).");
             }
 
             // Тряска камеры от столкновений (Impulse). Условно — оба поля заполняются
@@ -470,7 +481,7 @@ namespace FlatOutLike.Installers
             }
             else
             {
-                Debug.LogWarning("[GameLifetimeScope] _cameraShakeConfig/_cameraShaker не заданы — ICameraShakeService не регистрируется (UI-сцена или тест-сцена без рига).");
+                Debug.LogWarning("[GameLifetimeScope] _cameraShakeConfig/_cameraShaker не заданы — ICameraShakeService не регистрируется (мета-сцена/хаб или тест-сцена без рига).");
             }
 
             // NitroCameraEffectController — MonoBehaviour, ему нужна инъекция (IEventBus, ICarRegistry),
@@ -481,7 +492,7 @@ namespace FlatOutLike.Installers
             }
             else
             {
-                Debug.LogWarning("[GameLifetimeScope] _nitroCameraEffectController не задан — эффект нитро-камеры не регистрируется (UI-сцена или тест-сцена без камеры).");
+                Debug.LogWarning("[GameLifetimeScope] _nitroCameraEffectController не задан — эффект нитро-камеры не регистрируется (мета-сцена/хаб или тест-сцена без камеры).");
             }
 
             // Полёт водителя (Шаг 7). DriverFlightConfig — БЕЗУСЛОВНО, тот же резон, что и

@@ -167,7 +167,7 @@ namespace FlatOutLike.Views.UI.Garage
             RefreshUpgradeRows();
         }
 
-        private void HandleBackClicked() => _gameFlow.ChangeState(GameState.MainMenu);
+        private void HandleBackClicked() => _gameFlow.ChangeState(GameState.BaseHub);
 
         // ── Обработчики событий экономики ───────────────────────────────────────
 

@@ -39,8 +39,10 @@ namespace FlatOutLike.Core.Input
         {
             bool isDriving = CurrentContext == InputContext.Driving;
             bool isFlight = CurrentContext == InputContext.Flight;
+            // Hub (BaseHub): WASD/стрелки двигают персонажа по базе; Handbrake/Nitro/Eject — только Driving.
+            bool isHub = CurrentContext == InputContext.Hub;
 
-            _move = isDriving
+            _move = isDriving || isHub
                 ? new Vector2(
                     UnityEngine.Input.GetAxisRaw(HorizontalAxis),
                     UnityEngine.Input.GetAxisRaw(VerticalAxis))

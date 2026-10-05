@@ -127,8 +127,6 @@ MonoBehaviour:
     Track: 1
   - State: 1
     Track: 1
-  - State: 2
-    Track: 1
   - State: 3
     Track: 2
   - State: 7

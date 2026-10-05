@@ -84,14 +84,26 @@ namespace FlatOutLike.Tests
         }
 
         [Test]
-        public void Tick_PausePressedInMainMenu_Ignored()
+        public void Tick_PausePressedInBaseHub_PushesPaused()
         {
-            ReplaceService(GameState.MainMenu);
+            // Шаг 11a: в BaseHub персонаж бегает по базе — пауза разрешена (оверлей без Leave).
+            ReplaceService(GameState.BaseHub);
             _input.PausePressed = true;
 
             _service.Tick();
 
-            Assert.AreEqual(GameState.MainMenu, _flow.Current);
+            Assert.AreEqual(GameState.Paused, _flow.Current);
+        }
+
+        [Test]
+        public void Tick_PausePressedInGarageMeta_Ignored()
+        {
+            ReplaceService(GameState.GarageMeta);
+            _input.PausePressed = true;
+
+            _service.Tick();
+
+            Assert.AreEqual(GameState.GarageMeta, _flow.Current);
         }
 
         [Test]
@@ -131,7 +143,7 @@ namespace FlatOutLike.Tests
             // в любое состояние, кроме Paused, обязан восстановить его даже без GameResumedEvent.
             Time.timeScale = 0f;
 
-            _bus.Publish(new GameStateChangedEvent(GameState.Paused, GameState.MainMenu));
+            _bus.Publish(new GameStateChangedEvent(GameState.Paused, GameState.BaseHub));
 
             Assert.AreEqual(1f, Time.timeScale);
         }

@@ -17,10 +17,9 @@ namespace FlatOutLike.Editor.Wizards
     ///   1. Generate TMP Font Assets   — Bungee/RussoOne/TitanOne (сцено-независимо).
     ///   2. Generate Car Icons         — превью машин из CarCatalogConfig_Default (сцено-независимо).
     ///   3. Create Default StuntsCatalogConfig — 6 трюков (сцено-независимо).
-    ///   4. Build MainMenu UI          — в сцене MainMenu.
-    ///   5. Build Garage UI            — в сцене Garage.
-    ///   6. Build StuntsHub UI         — в сцене Stunts_Hub.
-    ///   7. Build MatchEnd UI          — в сцене Derby_Arena_01.
+    ///   4. Build Garage UI            — в сцене Garage.
+    ///   5. Build MatchEnd UI          — в сцене Derby_Arena_01.
+    /// UI хаба (BaseHub) собирается отдельно (шаг 11b).
     /// Прошивка GameLifetimeScope (Шаг 8) выполняется ВНУТРИ каждого Build*UIEditor
     /// сразу после сборки своего View — см. BindMetaUIRefsEditor.
     ///
@@ -63,9 +62,7 @@ namespace FlatOutLike.Editor.Wizards
                 CreateDefaultStuntsCatalogConfigEditor.CreateDefaultStuntsCatalogConfig();
 
                 // ── UI по сценам ─────────────────────────────────────────────────
-                RunInScene(SceneKeys.MainMenu, BuildMainMenuUIEditor.BuildMainMenuUI);
                 RunInScene(SceneKeys.Garage, BuildGarageUIEditor.BuildGarageUI);
-                RunInScene(SceneKeys.StuntsHub, BuildStuntsHubUIEditor.BuildStuntsHubUI);
                 RunInScene(SceneKeys.DerbyArena01, BuildMatchEndUIEditor.BuildMatchEndUI);
 
                 Debug.Log("[Editor] Build Meta UI (Step 8c) завершён.");

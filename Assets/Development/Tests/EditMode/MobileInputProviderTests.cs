@@ -7,7 +7,7 @@ namespace FlatOutLike.Tests
     /// <summary>
     /// Юнит-тесты pure-C# провайдера <see cref="MobileInputProvider"/> (Шаг 9).
     /// Проверяем: латч одноразовых триггеров на один Tick(), контекст-гейтинг
-    /// (Move/Look/EjectPressed/MidairBoostPressed завязаны на CurrentContext,
+    /// (Move/Look/EjectPressed/MidairBoostPressed завязаны на CurrentContext, включая Hub,
     /// PausePressed — нет), и что continuous-ввод (Handbrake/Nitro) не латчится.
     /// </summary>
     [TestFixture]
@@ -133,7 +133,27 @@ namespace FlatOutLike.Tests
             _provider.Tick();
 
             Assert.AreEqual(Vector2.zero, _provider.Move,
-                "Move действует только в Driving-контексте.");
+                "Move действует только в Driving/Hub-контекстах.");
+        }
+
+        [Test]
+        public void HubContext_MovePasses_DrivingActionsBlocked()
+        {
+            // Шаг 11a: в BaseHub персонаж бегает — Move проходит полным вектором,
+            // машинные действия (ручник/нитро/катапульта) гасятся.
+            _provider.CurrentContext = InputContext.Hub;
+            var move = new Vector2(-0.7f, 0.7f);
+            _provider.SetMove(move);
+            _provider.SetHandbrake(true);
+            _provider.SetNitro(true);
+            _provider.QueueEject();
+
+            _provider.Tick();
+
+            Assert.AreEqual(move, _provider.Move, "В Hub-контексте Move должен проходить без изменений.");
+            Assert.IsFalse(_provider.Handbrake, "Handbrake в Hub-контексте не действует.");
+            Assert.IsFalse(_provider.Nitro, "Nitro в Hub-контексте не действует.");
+            Assert.IsFalse(_provider.EjectPressed, "Eject в Hub-контексте не действует.");
         }
 
         [Test]

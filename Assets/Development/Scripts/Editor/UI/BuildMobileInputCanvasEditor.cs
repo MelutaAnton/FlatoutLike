@@ -13,9 +13,9 @@ namespace FlatOutLike.Editor.UI
     /// <summary>
     /// Шаг 9: собирает мобильный input-канвас (виртуальные джойстики + hold-кнопки) для
     /// вождения (DrivingGroup: LeftStick только для руления + педали Gas/Brake +
-    /// Handbrake/Nitro/Eject) и полёта (FlightGroup: RightStick + Boost). PauseButton
-    /// один на канвасе — видна в обоих контекстах, показ/скрытие групп делает рантайм
-    /// (MobileInputCanvas), не editor-скрипт.
+    /// Handbrake/Nitro/Eject), полёта (FlightGroup: RightStick + Boost) и хаба (HubGroup:
+    /// HubStick на полный 2D Move). PauseButton один на канвасе — общая для всех контекстов,
+    /// показ/скрытие групп делает рантайм (MobileInputCanvas), не editor-скрипт.
     ///
     /// Схема управления (решение пользователя, актуально с шага «педали + стик руления»):
     /// Move.x = LeftStick.x (только руление), Move.y = газ(+1 с GasButton) / тормоз(−1
@@ -77,7 +77,7 @@ namespace FlatOutLike.Editor.UI
         private static readonly Color EjectColor     = new Color(0.58f, 0.28f, 0.72f, 0.85f); // фиолетовый «особое действие» — осознанно не красный, чтобы не путать с тормозом.
         private static readonly Color PauseColor     = ButtonTint; // паузу по семантике функции не перекрашиваем.
 
-        private const string PrefabPath = "Assets/Development/Prefabs/UI/MobileInputCanvas.prefab";
+        public const string PrefabPath = "Assets/Development/Prefabs/UI/MobileInputCanvas.prefab";
 
         [MenuItem("FlatOutLike/UI/Build Mobile Input Canvas")]
         public static void BuildMobileInputCanvas()
@@ -154,6 +154,16 @@ namespace FlatOutLike.Editor.UI
             var boostBtn = CreateHoldButton(flightGroup, "BoostButton", BoostSprite,
                 new Vector2(0f, 0f), new Vector2(60f, 60f), 200f);
 
+            // ── HubGroup (шаг 11a) ───────────────────────────────────────────
+            // Хаб (BaseHub): один стик на полный 2D Move слева внизу — тот же размер/спрайты/
+            // положение, что у LeftStick. Миграционно: на уже собранном канвасе группа
+            // дособирается, существующие группы не пересоздаются. Видимость — рантайм.
+            var hubGroup = UIBuildHelpers.FindOrCreateChild(root, "HubGroup");
+            UIBuildHelpers.Stretch(hubGroup);
+
+            var hubStick = CreateJoystick(hubGroup, "HubStick",
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(60f, 60f));
+
             // ── PauseButton (общий, на корне канваса — виден в обоих контекстах) ─
             var pauseBtn = CreateHoldButton(root, "PauseButton", PauseSprite,
                 new Vector2(1f, 1f), new Vector2(-60f, -60f), 100f);
@@ -179,6 +189,8 @@ namespace FlatOutLike.Editor.UI
             SetRef(so, "_rightStick", rightStick.GetComponent<VirtualJoystickView>());
             SetRef(so, "_drivingGroup", drivingGroup.gameObject);
             SetRef(so, "_flightGroup", flightGroup.gameObject);
+            SetRef(so, "_hubGroup", hubGroup.gameObject);
+            SetRef(so, "_hubStick", hubStick.GetComponent<VirtualJoystickView>());
             SetRef(so, "_gasButton", gasBtn.GetComponent<HoldButtonView>());
             SetRef(so, "_brakeButton", brakeBtn.GetComponent<HoldButtonView>());
             SetRef(so, "_handbrakeButton", handbrakeBtn.GetComponent<HoldButtonView>());

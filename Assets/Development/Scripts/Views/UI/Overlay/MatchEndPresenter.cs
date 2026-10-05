@@ -72,7 +72,7 @@ namespace FlatOutLike.Views.UI.Overlay
         private void HandleContinueClicked()
         {
             _view.Hide();
-            _gameFlow.ChangeState(GameState.GarageMeta);
+            _gameFlow.ChangeState(GameState.BaseHub);
         }
     }
 }

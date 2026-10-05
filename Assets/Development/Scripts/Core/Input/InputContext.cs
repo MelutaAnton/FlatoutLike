@@ -4,6 +4,9 @@ namespace FlatOutLike.Core.Input
     {
         Driving,
         Flight,
-        UI
+        UI,
+
+        // BaseHub: персонаж бегает по базе — только Move (полный вектор), без машинных действий.
+        Hub
     }
 }

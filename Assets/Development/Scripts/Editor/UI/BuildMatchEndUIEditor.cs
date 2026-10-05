@@ -12,7 +12,7 @@ namespace FlatOutLike.Editor.UI
     /// <summary>
     /// Шаг 8c: наполняет сцену Derby_Arena_01 экраном итогов матча — панель (изначально
     /// НЕАКТИВНАЯ, включается рантаймом при завершении матча), огромный _resultLabel,
-    /// _rewardLabel и кнопку CONTINUE. В отличие от MainMenu/Garage/Stunts_Hub, у арены
+    /// _rewardLabel и кнопку CONTINUE. В отличие от мета-сцены Garage, у арены
     /// нет готового UICanvas от BuildMetaScenesEditor — Canvas+EventSystem создаются здесь
     /// же (UIBuildHelpers.EnsureCanvasAndEventSystem), поверх остального содержимого сцены.
     ///

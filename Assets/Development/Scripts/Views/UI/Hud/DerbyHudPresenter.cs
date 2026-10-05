@@ -107,7 +107,7 @@ namespace FlatOutLike.Views.UI.Hud
             _view.SetVisible(true);
         }
 
-        private void HandleWreckedLeaveClicked() => _gameFlow.ChangeState(GameState.GarageMeta);
+        private void HandleWreckedLeaveClicked() => _gameFlow.ChangeState(GameState.BaseHub);
 
         /// <summary>Резолвит отображаемое имя машины через ICarRegistry, с фоллбэком "CAR &lt;id&gt;".</summary>
         private string ResolveCarName(CarId id) =>

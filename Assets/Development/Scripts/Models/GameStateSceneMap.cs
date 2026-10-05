@@ -15,31 +15,29 @@ namespace FlatOutLike.Models
         {
             switch (state)
             {
-                case GameState.MainMenu:              return SceneKeys.MainMenu;
+                case GameState.BaseHub:                return SceneKeys.BaseHub;
                 case GameState.GarageMeta:             return SceneKeys.Garage;
-                case GameState.StuntsHub:              return SceneKeys.StuntsHub;
-                case GameState.DerbyMatch:              return SceneKeys.DerbyArena01;
+                case GameState.DerbyMatch:             return SceneKeys.DerbyArena01;
                 case GameState.StuntsHighJumpDriving:  return SceneKeys.StuntsHighJump;
-                default:                                return null;
+                default:                               return null;
             }
         }
 
         /// <summary>
         /// Состояние, с которого GameFlowService должен стартовать в этой сцене.
-        /// Boot сразу уводит в главное меню — самостоятельного состояния для Boot нет.
-        /// Неизвестная сцена (тестовые "_"-сцены) даёт MainMenu без исключения —
+        /// Boot сразу уводит в BaseHub — самостоятельного состояния для Boot нет.
+        /// Неизвестная сцена (тестовые "_"-сцены) даёт BaseHub без исключения —
         /// вызывающая сторона может залогировать это отдельно, если нужно.
         /// </summary>
         public static GameState InitialStateFor(string sceneName)
         {
-            if (sceneName == SceneKeys.Boot)               return GameState.MainMenu;
-            if (sceneName == SceneKeys.MainMenu)            return GameState.MainMenu;
-            if (sceneName == SceneKeys.Garage)              return GameState.GarageMeta;
-            if (sceneName == SceneKeys.StuntsHub)           return GameState.StuntsHub;
-            if (sceneName == SceneKeys.DerbyArena01)        return GameState.DerbyMatch;
-            if (sceneName == SceneKeys.StuntsHighJump)      return GameState.StuntsHighJumpDriving;
+            if (sceneName == SceneKeys.Boot)               return GameState.BaseHub;
+            if (sceneName == SceneKeys.BaseHub)            return GameState.BaseHub;
+            if (sceneName == SceneKeys.Garage)             return GameState.GarageMeta;
+            if (sceneName == SceneKeys.DerbyArena01)       return GameState.DerbyMatch;
+            if (sceneName == SceneKeys.StuntsHighJump)     return GameState.StuntsHighJumpDriving;
 
-            return GameState.MainMenu;
+            return GameState.BaseHub;
         }
     }
 }

@@ -94,7 +94,7 @@ namespace FlatOutLike.Views.UI.Hud
                     _view.ShowScoringPhase(0f, best, false);
                 }
             }
-            // Любое другое состояние (MainMenu/GarageMeta/Paused/...) — HUD трамплина не при делах,
+            // Любое другое состояние (BaseHub/GarageMeta/Paused/...) — HUD трамплина не при делах,
             // presenter просто ничего не показывает поверх текущей фазы.
         }
 
@@ -131,7 +131,7 @@ namespace FlatOutLike.Views.UI.Hud
             return player != null ? player.Speed : 0f;
         }
 
-        private void HandleContinueClicked() => _gameFlow.ChangeState(GameState.GarageMeta);
+        private void HandleContinueClicked() => _gameFlow.ChangeState(GameState.BaseHub);
 
         // ── Вычислительные хелперы: публичные static ради юнит-тестов без живого View
         // (HighJumpHudView — MonoBehaviour, требует сцену/префаб — см. GaragePresenterTests). ──

@@ -54,9 +54,9 @@ namespace FlatOutLike.Editor.Setup
     /// </summary>
     public static class SetupAudioEditor
     {
-        private const string ConfigAssetPath = "Assets/Development/Data/Configs/Audio/AudioConfig_Default.asset";
+        public const string ConfigAssetPath = "Assets/Development/Data/Configs/Audio/AudioConfig_Default.asset";
 
-        private const string PrefabPath   = "Assets/Development/Prefabs/Systems/AudioPlayer.prefab";
+        public const string PrefabPath   = "Assets/Development/Prefabs/Systems/AudioPlayer.prefab";
         private const string PrefabGoName = "AudioPlayer";
 
         // Кандидаты имён сериализованных списков AudioConfig — первое найденное используется.
@@ -64,18 +64,18 @@ namespace FlatOutLike.Editor.Setup
         private static readonly string[] MusicEntriesCandidates      = { "_musicEntries", "_music", "_musicList", "musicEntries" };
         private static readonly string[] StateMusicEntriesCandidates = { "_stateMusicEntries", "_stateMusic", "_stateMusicMap", "stateMusicEntries" };
 
-        // GameState → MusicTrackId (см. задачу). Значения, отсутствующие в текущем GameState.cs,
-        // пропускаются с Debug.Log — enum мог измениться независимо от этого скрипта.
-        private static readonly (string state, MusicTrackId track)[] StateMusicMap =
+        // GameState → MusicTrackId. Музыка меню принадлежит хабу (BaseHub) и мета-сцене гаража.
+        // В сериализованное поле пишется ЧИСЛОВОЕ значение enum (у GameState значения явные и
+        // не равны индексу в Enum.GetValues) — см. FillStateMusicEntries.
+        private static readonly (GameState state, MusicTrackId track)[] StateMusicMap =
         {
-            ("MainMenu", MusicTrackId.Menu),
-            ("GarageMeta", MusicTrackId.Menu),
-            ("StuntsHub", MusicTrackId.Menu),
-            ("DerbyMatch", MusicTrackId.Derby),
-            ("MatchEnd", MusicTrackId.Derby),
-            ("StuntsHighJumpDriving", MusicTrackId.HighJump),
-            ("StuntsHighJumpFlight", MusicTrackId.HighJump),
-            ("StuntsHighJumpScoring", MusicTrackId.HighJump),
+            (GameState.BaseHub, MusicTrackId.Menu),
+            (GameState.GarageMeta, MusicTrackId.Menu),
+            (GameState.DerbyMatch, MusicTrackId.Derby),
+            (GameState.MatchEnd, MusicTrackId.Derby),
+            (GameState.StuntsHighJumpDriving, MusicTrackId.HighJump),
+            (GameState.StuntsHighJumpFlight, MusicTrackId.HighJump),
+            (GameState.StuntsHighJumpScoring, MusicTrackId.HighJump),
         };
 
         [MenuItem("FlatOutLike/Setup/Setup Audio (All Scenes)")]
@@ -147,14 +147,14 @@ namespace FlatOutLike.Editor.Setup
                 var id = values[i];
                 if (id == SfxId.None) continue;
 
-                if (FindEnumEntryIndex(entries, "Id", i) >= 0)
+                if (FindEnumEntryIndex(entries, "Id", (int)id) >= 0)
                     continue; // уже есть entry на этот SfxId — не трогаем (может быть донастроен вручную)
 
                 int idx = entries.arraySize;
                 entries.arraySize = idx + 1;
                 var e = entries.GetArrayElementAtIndex(idx);
                 var idProp = e.FindPropertyRelative("Id");
-                if (idProp != null) idProp.enumValueIndex = i;
+                if (idProp != null) idProp.intValue = (int)id;
                 var clipsProp = e.FindPropertyRelative("Clips");
                 if (clipsProp != null) clipsProp.arraySize = 0;
                 SetFloatIfExists(e, "Volume", 1f);
@@ -172,22 +172,20 @@ namespace FlatOutLike.Editor.Setup
             if (entries == null) return;
 
             MusicTrackId[] tracks = { MusicTrackId.Menu, MusicTrackId.Derby, MusicTrackId.HighJump };
-            var allValues = (MusicTrackId[])Enum.GetValues(typeof(MusicTrackId));
             int added = 0;
 
             foreach (var track in tracks)
             {
-                int enumIndex = Array.IndexOf(allValues, track);
-                if (enumIndex < 0) continue;
+                int enumValue = (int)track;
 
-                if (FindEnumEntryIndex(entries, "Id", enumIndex) >= 0)
+                if (FindEnumEntryIndex(entries, "Id", enumValue) >= 0)
                     continue;
 
                 int idx = entries.arraySize;
                 entries.arraySize = idx + 1;
                 var e = entries.GetArrayElementAtIndex(idx);
                 var idProp = e.FindPropertyRelative("Id");
-                if (idProp != null) idProp.enumValueIndex = enumIndex;
+                if (idProp != null) idProp.intValue = enumValue;
                 var clipProp = e.FindPropertyRelative("Clip");
                 if (clipProp != null) clipProp.objectReferenceValue = null;
                 // Элементы, созданные через arraySize++, инициализируются НУЛЯМИ — C#
@@ -205,38 +203,47 @@ namespace FlatOutLike.Editor.Setup
             var entries = FindPropertyAny(so, StateMusicEntriesCandidates, "StateMusicEntry[]");
             if (entries == null) return;
 
-            var gameStateValues = (GameState[])Enum.GetValues(typeof(GameState));
-            var trackValues = (MusicTrackId[])Enum.GetValues(typeof(MusicTrackId));
-            int added = 0;
-            int skipped = 0;
-
-            foreach (var (stateName, track) in StateMusicMap)
+            // ── Чистка осиротевших записей ─────────────────────────────────────────
+            // Запись, чей State не является определённым значением GameState (например,
+            // удалённое значение 2), в рантайме не сработает никогда, а в Inspector
+            // показывается мусором — удаляем.
+            int removed = 0;
+            for (int i = entries.arraySize - 1; i >= 0; i--)
             {
-                int stateIndex = Array.FindIndex(gameStateValues, s => s.ToString() == stateName);
-                if (stateIndex < 0)
-                {
-                    Debug.Log("[Editor] AudioConfig StateMusicEntry: GameState." + stateName +
-                              " не найден в текущем enum — пропуск.");
-                    skipped++;
-                    continue;
-                }
+                var stateProp = entries.GetArrayElementAtIndex(i).FindPropertyRelative("State");
+                if (stateProp == null) continue;
 
-                int trackIndex = Array.IndexOf(trackValues, track);
+                int raw = stateProp.intValue;
+                if (Enum.IsDefined(typeof(GameState), raw)) continue;
 
-                if (FindEnumEntryIndex(entries, "State", stateIndex) >= 0)
+                entries.DeleteArrayElementAtIndex(i);
+                removed++;
+                Debug.Log("[Editor] AudioConfig StateMusicEntry: удалена осиротевшая запись State=" + raw +
+                          " (значение не определено в GameState).");
+            }
+
+            int added = 0;
+
+            foreach (var (state, track) in StateMusicMap)
+            {
+                // Числовое значение enum, НЕ индекс: GameState объявлен с явными значениями
+                // (0,1,3,...), enumValueIndex/индекс в Enum.GetValues перепутал бы треки.
+                int stateValue = (int)state;
+
+                if (FindEnumEntryIndex(entries, "State", stateValue) >= 0)
                     continue;
 
                 int idx = entries.arraySize;
                 entries.arraySize = idx + 1;
                 var e = entries.GetArrayElementAtIndex(idx);
                 var stateProp = e.FindPropertyRelative("State");
-                if (stateProp != null) stateProp.enumValueIndex = stateIndex;
+                if (stateProp != null) stateProp.intValue = stateValue;
                 var trackProp = e.FindPropertyRelative("Track");
-                if (trackProp != null) trackProp.enumValueIndex = trackIndex;
+                if (trackProp != null) trackProp.intValue = (int)track;
                 added++;
             }
 
-            Debug.Log("[Editor] AudioConfig StateMusicEntry: добавлено " + added + ", пропущено " + skipped + ".");
+            Debug.Log("[Editor] AudioConfig StateMusicEntry: добавлено " + added + ", удалено осиротевших " + removed + ".");
         }
 
         // ── Шаг 2: AudioPlayer prefab ───────────────────────────────────────────
@@ -368,6 +375,17 @@ namespace FlatOutLike.Editor.Setup
             Debug.Log("[Editor] Setup Audio: обработано " + wired + ", пропущено " + skipped + " из " + scenes.Length + " enabled-сцен.");
         }
 
+        /// <summary>
+        /// Прошивает аудио-слой в УЖЕ ОТКРЫТОЙ сцене (инстанс AudioPlayer, AudioListener, поля scope).
+        /// Ассеты читаются здесь же, свежими ссылками — вызывать ПОСЛЕ OpenScene. Сцену не сохраняет.
+        /// </summary>
+        public static bool WireOpenedScene(Scene scene, GameLifetimeScope scope)
+        {
+            var config = AssetDatabase.LoadAssetAtPath<AudioConfig>(ConfigAssetPath);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            return WireScene(scene, scope, config, prefab);
+        }
+
         private static bool WireScene(Scene scene, GameLifetimeScope scope, AudioConfig config, GameObject prefab)
         {
             bool changed = false;
@@ -493,13 +511,14 @@ namespace FlatOutLike.Editor.Setup
             return null;
         }
 
-        private static int FindEnumEntryIndex(SerializedProperty arrayProp, string enumFieldName, int enumValueIndex)
+        /// <summary>Индекс записи, у которой enum-поле имеет ЧИСЛОВОЕ значение enumValue (не индекс в списке имён).</summary>
+        private static int FindEnumEntryIndex(SerializedProperty arrayProp, string enumFieldName, int enumValue)
         {
             for (int i = 0; i < arrayProp.arraySize; i++)
             {
                 var e = arrayProp.GetArrayElementAtIndex(i);
                 var f = e.FindPropertyRelative(enumFieldName);
-                if (f != null && f.enumValueIndex == enumValueIndex)
+                if (f != null && f.intValue == enumValue)
                     return i;
             }
             return -1;

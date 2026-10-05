@@ -7,16 +7,14 @@ using FlatOutLike.Data.Configs.Stunts;
 using FlatOutLike.Installers;
 using FlatOutLike.Views.UI.Garage;
 using FlatOutLike.Views.UI.Hud;
-using FlatOutLike.Views.UI.MainMenu;
 using FlatOutLike.Views.UI.Overlay;
-using FlatOutLike.Views.UI.Stunts;
 using Object = UnityEngine.Object;
 
 namespace FlatOutLike.Editor.Setup
 {
     /// <summary>
     /// Шаг 8c/8d/10: прошивает GameLifetimeScope активной сцены ссылками на UI-View'ы
-    /// (_mainMenuView / _garageView / _stuntsHubView / _matchEndView / _derbyHudView /
+    /// (_garageView / _matchEndView / _derbyHudView /
     /// _highJumpHudView / _pauseOverlayView) и на StuntsCatalogConfig_Default (_stuntsCatalogConfig). Единственное место, где
     /// прошиваются эти поля — каждый Build*UIEditor вызывает соответствующий метод
     /// сразу после создания своего View; отдельный пункт меню — для ручной перепрошивки.
@@ -38,14 +36,8 @@ namespace FlatOutLike.Editor.Setup
             Undo.SetCurrentGroupName("Bind Meta UI Refs (Step 8c)");
             int undoGroup = Undo.GetCurrentGroup();
 
-            var mainMenuView = Object.FindAnyObjectByType<MainMenuView>();
-            if (mainMenuView != null) BindMainMenuView(mainMenuView);
-
             var garageView = Object.FindAnyObjectByType<GarageView>();
             if (garageView != null) BindGarageView(garageView);
-
-            var stuntsHubView = Object.FindAnyObjectByType<StuntsHubView>();
-            if (stuntsHubView != null) BindStuntsHubView(stuntsHubView);
 
             var matchEndView = Object.FindAnyObjectByType<MatchEndView>();
             if (matchEndView != null) BindMatchEndView(matchEndView);
@@ -66,9 +58,7 @@ namespace FlatOutLike.Editor.Setup
             Debug.Log("[Editor] Bind Meta UI Refs (Step 8c) завершён для активной сцены.");
         }
 
-        public static void BindMainMenuView(MainMenuView view)   => BindField("_mainMenuView", view);
         public static void BindGarageView(GarageView view)       => BindField("_garageView", view);
-        public static void BindStuntsHubView(StuntsHubView view) => BindField("_stuntsHubView", view);
         public static void BindMatchEndView(MatchEndView view)   => BindField("_matchEndView", view);
         public static void BindDerbyHudView(DerbyHudView view)         => BindField("_derbyHudView", view);
         public static void BindHighJumpHudView(HighJumpHudView view)   => BindField("_highJumpHudView", view);
