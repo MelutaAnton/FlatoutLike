@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlatOutLike.Editor.Tools;
 using UnityEngine.SceneManagement;
 using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Installers;
@@ -33,7 +34,7 @@ namespace FlatOutLike.Editor.Setup
     /// </summary>
     public static class BuildDerbyArenaEditor
     {
-        private const string ScenePath              = "Assets/Development/Scenes/Derby_Arena_01.unity";
+        private static readonly string ScenePath = ScenePaths.For(SceneKeys.DerbyArena01);
         private const string ScenesFolder           = "Assets/Development/Scenes";
         private const string StadiumPrefabPath      = "Assets/ThirdParty/Battle_Stadium/Prefabs/Stadium/battle_stadium_003.prefab";
         private const string ChaseCameraConfigPath  = "Assets/Development/Data/Configs/Camera/ChaseCameraConfig_Default.asset";

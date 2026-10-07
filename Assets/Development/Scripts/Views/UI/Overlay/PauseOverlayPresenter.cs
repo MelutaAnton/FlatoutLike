@@ -15,10 +15,11 @@ namespace FlatOutLike.Views.UI.Overlay
         private readonly IGameFlowService _gameFlow;
         private readonly IEventBus _eventBus;
 
-        // Состояние, из которого ушли в паузу. GameFlowService.Push публикует сначала
+        // Ушли ли в паузу из BaseHub. GameFlowService.Push публикует сначала
         // GameStateChangedEvent(from, Paused), потом GamePausedEvent — к моменту OnPaused
-        // значение уже закэшировано.
-        private GameState _pausedFrom;
+        // флаг уже выставлен. Булев флаг, а не GameState: дефолт GameState = BaseHub (0)
+        // молча прятал бы Leave, если бы GamePausedEvent пришёл без предшествующего перехода.
+        private bool _pausedFromHub;
 
         public PauseOverlayPresenter(PauseOverlayView view, IGameFlowService gameFlow, IEventBus eventBus)
         {
@@ -45,13 +46,13 @@ namespace FlatOutLike.Views.UI.Overlay
         private void OnGameStateChanged(GameStateChangedEvent e)
         {
             if (e.To == GameState.Paused)
-                _pausedFrom = e.From;
+                _pausedFromHub = e.From == GameState.BaseHub;
         }
 
         private void OnPaused(GamePausedEvent e)
         {
             // Из BaseHub уходить некуда (Leave вёл бы в ту же сцену) — оставляем только Resume.
-            _view.SetLeaveVisible(_pausedFrom != GameState.BaseHub);
+            _view.SetLeaveVisible(!_pausedFromHub);
             _view.Show();
         }
 

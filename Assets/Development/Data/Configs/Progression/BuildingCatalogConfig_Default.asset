@@ -14,55 +14,118 @@ MonoBehaviour:
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Progression.BuildingCatalogConfig
   _entries:
   - Id: 0
-    Position: {x: 0, y: 0, z: 26}
+    Position: {x: 0, y: 0, z: 14}
     YRotation: 180
     Enabled: 1
     VisualPrefab: {fileID: 159070, guid: 54c86e934c1824f46a2a8955ea57091b, type: 3}
+    DisplayName: DERBY
+    VisualFootprint: 10
+    HasLaunchZone: 1
+    LaunchState: 3
+    LaunchZoneOffset: {x: 0, y: 0, z: 8.5}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 1
-    Position: {x: -22, y: 0, z: 10}
+    Position: {x: -15, y: 0, z: 4}
     YRotation: 90
     Enabled: 1
     VisualPrefab: {fileID: 120682, guid: 84c719d9545655049b535e2613281b11, type: 3}
+    DisplayName: GARAGE
+    VisualFootprint: 8
+    HasLaunchZone: 1
+    LaunchState: 1
+    LaunchZoneOffset: {x: 0, y: 0, z: 7.5}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 2
-    Position: {x: 22, y: 0, z: 10}
+    Position: {x: 15, y: 0, z: 4}
     YRotation: -90
     Enabled: 1
     VisualPrefab: {fileID: 5877204875843800954, guid: d9a001bf78b5713478560acd770bd6dc, type: 3}
+    DisplayName: HIGH JUMP
+    VisualFootprint: 8
+    HasLaunchZone: 1
+    LaunchState: 4
+    LaunchZoneOffset: {x: 0, y: 0, z: 7.5}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 3
-    Position: {x: -22, y: 0, z: -8}
+    Position: {x: -15, y: 0, z: -8}
     YRotation: 90
     Enabled: 1
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: TICKET BOOTH
+    VisualFootprint: 7
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 4
-    Position: {x: 22, y: 0, z: -8}
+    Position: {x: 15, y: 0, z: -8}
     YRotation: -90
     Enabled: 1
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: TRIBUNES
+    VisualFootprint: 7
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 5
-    Position: {x: -24, y: 0, z: -26}
+    Position: {x: -16, y: 0, z: -18}
     YRotation: 0
     Enabled: 0
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: LONG JUMP
+    VisualFootprint: 6
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 6
-    Position: {x: -12, y: 0, z: -26}
+    Position: {x: -8, y: 0, z: -18}
     YRotation: 0
     Enabled: 0
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: FIRE RINGS
+    VisualFootprint: 6
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 7
-    Position: {x: 0, y: 0, z: -26}
+    Position: {x: 0, y: 0, z: -18}
     YRotation: 0
     Enabled: 0
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: BOWLING
+    VisualFootprint: 6
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 8
-    Position: {x: 12, y: 0, z: -26}
+    Position: {x: 8, y: 0, z: -18}
     YRotation: 0
     Enabled: 0
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: FIELD GOAL
+    VisualFootprint: 6
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   - Id: 9
-    Position: {x: 24, y: 0, z: -26}
+    Position: {x: 16, y: 0, z: -18}
     YRotation: 0
     Enabled: 0
     VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    DisplayName: HIGH CARD
+    VisualFootprint: 6
+    HasLaunchZone: 0
+    LaunchState: 0
+    LaunchZoneOffset: {x: 0, y: 0, z: 0}
+    LaunchZoneSize: {x: 6, y: 3, z: 6}
   _characterSpawnPosition: {x: 0, y: 0, z: 0}
   _characterSpawnYRotation: 0
   _comingSoonLabel: COMING SOON
+  _launchConfirmSeconds: 1
+  _launchIndicatorHeight: 3
+  _presentationDefaultsApplied: 1

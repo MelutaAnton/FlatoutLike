@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e5c261f2c52da049b7ba3d462944210, type: 3}
   m_Name: HubCameraConfig_Default
   m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Camera.HubCameraConfig
-  _followOffset: {x: 0, y: 14, z: -10}
-  _fieldOfView: 50
+  _followOffset: {x: 0, y: 20, z: -15}
+  _fieldOfView: 45
   _positionDamping: 0.5

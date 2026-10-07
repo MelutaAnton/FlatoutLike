@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlatOutLike.Editor.Tools;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using FlatOutLike.Controllers.Camera;
@@ -46,7 +47,7 @@ namespace FlatOutLike.Editor.Setup
     /// </summary>
     public static class BuildHighJumpSceneEditor
     {
-        private const string ScenePath        = "Assets/Development/Scenes/" + SceneKeys.StuntsHighJump + ".unity";
+        private static readonly string ScenePath = ScenePaths.For(SceneKeys.StuntsHighJump);
         private const string ScenesFolder     = "Assets/Development/Scenes";
         private const string CarPrefabPath    = "Assets/Development/Prefabs/Vehicles/Car_Sport_09.prefab";
 

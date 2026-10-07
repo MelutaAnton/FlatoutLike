@@ -1,19 +1,19 @@
 ---
 name: project-editor-scene-path-literals
-description: Editor-скрипты повсеместно держат литералы путей сцен ("Assets/Development/Scenes/X.unity") при наличии SceneKeys; оценивать как Warning, не Critical
+description: С 11b путь сцены в editor-коде — ScenePaths.For(SceneKeys.X) (Editor/Tools/ScenePaths.cs); литерал "Scenes/X.unity" в новом editor-коде — Warning, в runtime — Critical
 metadata:
   type: project
 ---
 
-В Editor-скриптах (BuildBootstrapSceneEditor, BuildDerbyArenaEditor, PopulateDerbyArenaHazardsEditor,
-CreateDefaultRewardConfigEditor, SetupCarDamageVisualEditor, с 11a — BuildBaseHubLayoutEditor) путь сцены
-задан `private const string ScenePath = "Assets/Development/Scenes/<Name>.unity"`, хотя имя сцены есть в
-`Models/SceneKeys`. Правильный образец — `GetScenePath(sceneKey) => ScenesFolder + "/" + sceneKey + ".unity"`
-(BuildMetaScenesEditor/BuildGameHudEditor/BuildMetaUIEditor, но он везде private).
+11b закрыл хвост: `Assets/Development/Scripts/Editor/Tools/ScenePaths.cs` — единственное место сборки пути
+(`Folder + key + ".unity"`); BuildBootstrapScene/BuildDerbyArena/BuildHighJumpScene/PopulateDerbyArenaHazards/
+CreateDefaultRewardConfig/SetupCarDamageVisual/BuildBaseHubLayout переведены. Временная `_TestDriving` — const
+ключ только в SetupCarDamageVisualEditor (в runtime SceneKeys её нет).
+Остались дубли логики (не литералы): private `GetScenePath` в BuildMetaScenesEditor/BuildGameHudEditor/
+BuildMetaUIEditor и константы `ScenesFolder = "Assets/Development/Scenes"` в нескольких файлах — Suggestion.
 
-**Why:** arch-guard этот шаблон не ловит, прецедент сложился до пайплайна ревью; рантайм-загрузка сцен идёт
-только через SceneKeys/GameStateSceneMap, так что расхождение ломает лишь editor-меню при переименовании.
+**Why:** arch-guard шаблон пути не ловит; рантайм-загрузка сцен идёт только через SceneKeys/GameStateSceneMap,
+так что расхождение ломает лишь editor-меню при переименовании.
 
-**How to apply:** в новых editor-скриптах — Warning с фиксом «собрать путь из SceneKeys»; Critical — только
-если литерал имени сцены появился в runtime-коде (LoadScene/сравнение имени). Кандидат на общий
-`EditorScenePaths.For(sceneKey)` при следующем аудите.
+**How to apply:** новый editor-код с литералом пути сцены — Warning с фиксом «ScenePaths.For(SceneKeys.X)»;
+Critical — только если литерал имени сцены появился в runtime-коде (LoadScene/сравнение имени).

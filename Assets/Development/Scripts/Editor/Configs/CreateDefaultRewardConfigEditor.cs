@@ -3,6 +3,8 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlatOutLike.Models;
+using FlatOutLike.Editor.Tools;
 using UnityEngine.SceneManagement;
 using FlatOutLike.Data.Configs.Rewards;
 using FlatOutLike.Installers;
@@ -32,7 +34,7 @@ namespace FlatOutLike.Editor.Configs
         private const string FolderRoot = "Assets/Development/Data/Configs";
         private const string FolderDest = "Assets/Development/Data/Configs/Rewards";
 
-        private const string ArenaScenePath = "Assets/Development/Scenes/Derby_Arena_01.unity";
+        private static readonly string ArenaScenePath = ScenePaths.For(SceneKeys.DerbyArena01);
 
         [MenuItem("FlatOutLike/Configs/Create Default RewardConfig")]
         public static void CreateDefaultRewardConfig()

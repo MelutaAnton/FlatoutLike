@@ -2,6 +2,8 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlatOutLike.Models;
+using FlatOutLike.Editor.Tools;
 using UnityEngine.SceneManagement;
 
 namespace FlatOutLike.Editor.Setup
@@ -37,7 +39,7 @@ namespace FlatOutLike.Editor.Setup
     public static class PopulateDerbyArenaHazardsEditor
     {
         // Путь к сцене арены
-        private const string ScenePath = "Assets/Development/Scenes/Derby_Arena_01.unity";
+        private static readonly string ScenePath = ScenePaths.For(SceneKeys.DerbyArena01);
 
         // Имя родительского объекта в иерархии
         private const string HazardsParentName = "Hazards";

@@ -1,11 +1,11 @@
 ---
 name: project-asmdef-ui-missing
-description: FlatOutLike/FlatOutLike.Editor asmdefs don't reference UnityEngine.UI; any first UI usage needs the ref added or the whole assembly fails to compile
+description: FlatOutLike и FlatOutLike.Editor asmdef УЖЕ ссылаются на UnityEngine.UI и Unity.TextMeshPro (проверено 2026-10-06) — `using UnityEngine.UI` безопасен
 metadata:
   type: project
 ---
-As of Step 7, `Assets/Development/Scripts/FlatOutLike.asmdef` references only `["VContainer"]` and `FlatOutLike.Editor.asmdef` only `["FlatOutLike","VContainer"]`. Neither references `UnityEngine.UI` (com.unity.ugui is installed, v2.0.0). `Assets/Development/Scripts/Views/UI` is currently EMPTY — no runtime code uses `UnityEngine.UI` yet.
+`Assets/Development/Scripts/FlatOutLike.asmdef` и `Assets/Development/Scripts/Editor/FlatOutLike.Editor.asmdef` содержат в references `UnityEngine.UI`, `Unity.TextMeshPro`, `VContainer`, `Unity.Cinemachine`, URP Runtime/Core (проверено на ревью 11b).
 
-**Why:** UnityEngine.UI ships as its own asmdef in the ugui package; asmdef-to-asmdef references are NOT transitive/auto — a consuming asmdef must list `"UnityEngine.UI"` explicitly. `noEngineReferences:false` covers core UnityEngine modules but NOT ugui.
+**Why:** раньше ссылки на UnityEngine.UI не было, и первый `using UnityEngine.UI` ронял всю сборку (CS0234). Исправлено.
 
-**How to apply:** When reviewing any new code that does `using UnityEngine.UI;` (Text/Canvas/Image/Button/CanvasScaler/GraphicRaycaster), verify the owning asmdef gained a `"UnityEngine.UI"` reference. If not → CS0234 "namespace 'UI' does not exist in 'UnityEngine'", which breaks the ENTIRE assembly (and, for FlatOutLike, all EditMode tests that reference it). Flag as blocker. First offender was `Controllers/Stunts/HighJumpDebugOverlayController.cs` + `Editor/Setup/BuildHighJumpSceneEditor.cs`.
+**How to apply:** не флагать `using UnityEngine.UI` / TMP в коде проекта. При новом пакете (namespace вне этого списка) — проверить, что asmdef на него ссылается; ссылки asmdef не транзитивны (см. [[project-asmdef-vcontainer-transitive]]).

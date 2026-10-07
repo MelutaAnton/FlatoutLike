@@ -1,11 +1,11 @@
 ---
 name: project-test-asmdef-vcontainer
-description: EditMode test asmdef references only FlatOutLike; instantiating a service that implements VContainer.Unity.ITickable may need a VContainer ref (CS0012)
+description: EditMode test asmdef УЖЕ ссылается на VContainer (проверено 2026-10-06) — new-инстанс ITickable-сервиса в тестах безопасен; риск CS0012 закрыт
 metadata:
   type: project
 ---
-`Assets/Development/Tests/EditMode/FlatOutLike.Tests.EditMode.asmdef` references `["FlatOutLike","UnityEngine.TestRunner","UnityEditor.TestRunner"]` + nunit — NOT `VContainer`.
+`Assets/Development/Tests/EditMode/FlatOutLike.Tests.EditMode.asmdef` references `["FlatOutLike","VContainer","UnityEngine.TestRunner","UnityEditor.TestRunner"]` + nunit (проверено на ревью 11b, 2026-10-06).
 
-**Why:** Until Step 7 no test instantiated a class implementing `VContainer.Unity.ITickable`/`IStartable`. Step 7's `HighJumpSessionServiceTests` does `new HighJumpSessionService(...)` (class implements ITickable). Constructing a type whose implemented-interface lives in an unreferenced assembly can raise CS0012 ("ITickable is defined in an assembly that is not referenced"), which fails the WHOLE EditMode test assembly.
+**Why:** раньше (до шага 7) ссылки на VContainer не было, и `new XxxService()` для класса с `VContainer.Unity.ITickable` грозил CS0012 на всю тест-сборку. Ссылку добавили; `HubLaunchServiceTests`, `HighJumpSessionServiceTests` компилируются.
 
-**How to apply:** When a test newly instantiates a service implementing a VContainer.Unity interface, verify the test asmdef references `VContainer` (or that compilation passes). Trivial fix: add `"VContainer"` to the test asmdef references. Watch item — behavior depends on Roslyn interface-binding; confirm by actually compiling in Unity.
+**How to apply:** не флагать `new`-инстанс ITickable/IStartable-сервиса в тестах как риск. Если asmdef снова изменится — перепроверить список references. Фактический результат прогона — `%LOCALAPPDATA%Low/DefaultCompany/Flatuot2_Like/TestResults.xml` (атрибуты total/passed/failed у `<test-run>`, можно грепнуть имя фикстуры).

@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlatOutLike.Editor.Tools;
 using UnityEngine.SceneManagement;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Data.Configs.Car;
@@ -27,7 +28,9 @@ namespace FlatOutLike.Editor.Setup
     /// </summary>
     public static class SetupCarDamageVisualEditor
     {
-        private const string ScenePath       = "Assets/Development/Scenes/_TestDriving.unity";
+        // Временная тест-сцена шага 3 — в SceneKeys (runtime) её нет, ключ только здесь.
+        private const string TestDrivingSceneKey = "_TestDriving";
+        private static readonly string ScenePath = ScenePaths.For(TestDrivingSceneKey);
         private const string StatsConfigPath = "Assets/Development/Data/Configs/Car/CarStatsConfig_Default.asset";
         private const string VisualConfigPath= "Assets/Development/Data/Configs/Car/CarDamageVisualConfig.asset";
 

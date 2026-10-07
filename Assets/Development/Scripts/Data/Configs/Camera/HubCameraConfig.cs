@@ -10,10 +10,10 @@ namespace FlatOutLike.Data.Configs.Camera
     public sealed class HubCameraConfig : ScriptableObject
     {
         [Tooltip("Смещение камеры от персонажа в мировых осях, м.")]
-        [SerializeField] private Vector3 _followOffset = new Vector3(0f, 14f, -10f);
+        [SerializeField] private Vector3 _followOffset = new Vector3(0f, 20f, -15f);
 
         [Tooltip("FOV камеры; 0 — не трогать текущее значение линзы.")]
-        [SerializeField] private float _fieldOfView = 50f;
+        [SerializeField] private float _fieldOfView = 45f;
 
         [Tooltip("Damping следования (Cinemachine), одинаковый для всех осей.")]
         [SerializeField] private float _positionDamping = 0.5f;

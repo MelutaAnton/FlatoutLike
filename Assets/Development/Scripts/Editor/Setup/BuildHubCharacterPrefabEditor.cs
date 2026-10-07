@@ -12,7 +12,7 @@ namespace FlatOutLike.Editor.Setup
     /// <summary>
     /// Шаг 11a: собирает персонажа BaseHub.
     ///   1) AC_HubCharacter.controller — float-параметр <see cref="AnimatorHashes.HubSpeedParam"/>,
-    ///      на base layer 1D BlendTree по нему: 0 → Idle, 1 → Runnig (клипы Arcade Idle Engine
+    ///      на base layer 1D BlendTree по нему: 0 → Idle, 0.5 → Walking, 1 → Runnig (клипы Arcade Idle Engine
     ///      ССЫЛКОЙ, не копируются). useAutomaticThresholds = false — иначе Unity молча
     ///      пересчитает пороги. Существующий контроллер пересобирается на месте (тот же GUID).
     ///   2) HubCharacter.prefab — корень с CharacterController + HubCharacterController и
@@ -31,16 +31,20 @@ namespace FlatOutLike.Editor.Setup
             "Assets/ThirdParty/DriverAvatars/npc_casual_set_00/Prefabs/npc_csl_00_character_01m_01.prefab";
         private const string IdleClipPath =
             "Assets/ThirdParty/Arcade Idle Engine/Animation/Idle.anim";
+        private const string WalkClipPath =
+            "Assets/ThirdParty/Arcade Idle Engine/Animation/Walking.anim";
         private const string RunClipPath =
             "Assets/ThirdParty/Arcade Idle Engine/Animation/Runnig.anim";
 
         private const string RootName = "HubCharacter";
         private const string BlendTreeName = "Locomotion";
         private const float IdleThreshold = 0f;
+        // Промежуточный шаг — правка пользователя после плейтеста 11a (ходьба между idle и бегом).
+        private const float WalkThreshold = 0.5f;
         private const float RunThreshold  = 1f;
 
         private const float CapsuleHeight = 1.8f;
-        private const float CapsuleRadius = 0.35f;
+        public const float CapsuleRadius = 0.35f;
 
         [MenuItem("FlatOutLike/Setup/Build Hub Character Prefab")]
         public static void BuildHubCharacterPrefab()
@@ -61,11 +65,12 @@ namespace FlatOutLike.Editor.Setup
         private static AnimatorController BuildAnimatorController()
         {
             var idle = AssetDatabase.LoadAssetAtPath<AnimationClip>(IdleClipPath);
+            var walk = AssetDatabase.LoadAssetAtPath<AnimationClip>(WalkClipPath);
             var run  = AssetDatabase.LoadAssetAtPath<AnimationClip>(RunClipPath);
-            if (idle == null || run == null)
+            if (idle == null || walk == null || run == null)
             {
                 Debug.LogError("[Editor] Клипы Arcade Idle Engine не найдены (" + IdleClipPath + " / " +
-                               RunClipPath + ") — AC_HubCharacter не собран.");
+                               WalkClipPath + " / " + RunClipPath + ") — AC_HubCharacter не собран.");
                 return null;
             }
 
@@ -112,13 +117,16 @@ namespace FlatOutLike.Editor.Setup
             };
             AssetDatabase.AddObjectToAsset(tree, controller);
 
+            // Порядок детей = порядок порогов (1D-блендтри ожидает возрастание).
             tree.AddChild(idle, IdleThreshold);
+            tree.AddChild(walk, WalkThreshold);
             tree.AddChild(run, RunThreshold);
 
             // Явная перезапись порогов — на случай, если AddChild что-то пересчитал.
             var children = tree.children;
             children[0].threshold = IdleThreshold;
-            children[1].threshold = RunThreshold;
+            children[1].threshold = WalkThreshold;
+            children[2].threshold = RunThreshold;
             tree.children = children;
             tree.minThreshold = IdleThreshold;
             tree.maxThreshold = RunThreshold;
@@ -132,7 +140,8 @@ namespace FlatOutLike.Editor.Setup
             AssetDatabase.SaveAssets();
 
             Debug.Log("[Editor] AC_HubCharacter: параметр '" + AnimatorHashes.HubSpeedParam +
-                      "', BlendTree " + IdleThreshold + " → " + idle.name + ", " + RunThreshold + " → " + run.name + ".");
+                      "', BlendTree " + IdleThreshold + " → " + idle.name + ", " + WalkThreshold + " → " + walk.name +
+                      ", " + RunThreshold + " → " + run.name + ".");
             return controller;
         }
 

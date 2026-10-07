@@ -2,13 +2,15 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using FlatOutLike.Models;
+using FlatOutLike.Editor.Tools;
 using FlatOutLike.Installers;
 
 namespace FlatOutLike.Editor.Setup
 {
     public static class BuildBootstrapSceneEditor
     {
-        private const string ScenePath   = "Assets/Development/Scenes/Boot.unity";
+        private static readonly string ScenePath = ScenePaths.For(SceneKeys.Boot);
         private const string ScenesFolder = "Assets/Development/Scenes";
         private const string ScenesParent = "Assets/Development";
 
@@ -52,7 +54,7 @@ namespace FlatOutLike.Editor.Setup
             // ── 4. Save ───────────────────────────────────────────────────────
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
-            Debug.Log("[Editor] Bootstrap scene saved at Assets/Development/Scenes/Boot.unity");
+            Debug.Log("[Editor] Bootstrap scene saved at " + ScenePath);
 
             Undo.CollapseUndoOperations(undoGroup);
 

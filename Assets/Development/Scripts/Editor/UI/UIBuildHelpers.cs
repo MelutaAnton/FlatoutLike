@@ -24,6 +24,9 @@ namespace FlatOutLike.Editor.UI
         public const string FontsRoot    = "Assets/Development/Art/Fonts";
         public const string TmpFontsRoot = FontsRoot + "/TMP";
         public const string UiPackRoot   = "Assets/ThirdParty/Racing Game Ui Pack/Assets";
+
+        // Имя дочернего TMP-узла подписи кнопки (CreateButton) — единственное определение.
+        public const string ButtonLabelName = "Label";
         /// <summary>Куда копируются используемые спрайты пака (наша папка, правки легальны).</summary>
         public const string UiPackCopyRoot = "Assets/Development/Art/UI/UiPack";
 
@@ -215,9 +218,38 @@ namespace FlatOutLike.Editor.UI
             btn.targetGraphic = img;
 
             if (!string.IsNullOrEmpty(label))
-                CreateLabel(rt, "Label", label, fontPath, fontSize, textColor);
+                CreateLabel(rt, ButtonLabelName, label, fontPath, fontSize, textColor);
 
             return btn;
+        }
+
+        /// <summary>
+        /// Настраивает тапабельную кнопку по чек-листу CLAUDE.md п.7: Transition = Color Tint
+        /// с прошитым targetGraphic (без него tint молча не работает), selectedColor = normalColor
+        /// (иначе после тапа кнопка залипает в selected-цвете), Navigation = None.
+        /// Идемпотентно — безопасно вызывать на каждом прогоне.
+        /// </summary>
+        public static void ConfigureTapButton(Button btn)
+        {
+            var image = btn.GetComponent<Image>();
+            if (image != null)
+                btn.targetGraphic = image;
+            else
+                Debug.LogWarning("[Editor] ConfigureTapButton: на '" + btn.name + "' нет Image — targetGraphic не прошит.");
+
+            btn.transition = Selectable.Transition.ColorTint;
+
+            var colors = btn.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = Color.white;
+            colors.pressedColor = new Color(0.62f, 0.62f, 0.62f, 1f);
+            colors.selectedColor = colors.normalColor;
+            colors.disabledColor = new Color(1f, 1f, 1f, 0.4f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            btn.colors = colors;
+
+            btn.navigation = new Navigation { mode = Navigation.Mode.None };
         }
 
         /// <summary>

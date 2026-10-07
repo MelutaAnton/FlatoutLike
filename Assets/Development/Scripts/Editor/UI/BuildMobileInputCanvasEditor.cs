@@ -38,6 +38,9 @@ namespace FlatOutLike.Editor.UI
         private const string UiPackButtons = UIBuildHelpers.UiPackRoot + "/Buttons/png";
         private const string UiPackIcons   = UIBuildHelpers.UiPackRoot + "/Icons/png";
 
+        // Имя группы хаба в префабе канваса — единственное определение.
+        private const string HubGroupName = "HubGroup";
+
         // Джойстик — круглая подложка + ручка (Racing Game Ui Pack, Icons/png).
         private const string JoystickBgSprite     = UiPackIcons + "/circle empty.png";
         private const string JoystickHandleSprite = UiPackIcons + "/circle bar.png";
@@ -158,11 +161,20 @@ namespace FlatOutLike.Editor.UI
             // Хаб (BaseHub): один стик на полный 2D Move слева внизу — тот же размер/спрайты/
             // положение, что у LeftStick. Миграционно: на уже собранном канвасе группа
             // дособирается, существующие группы не пересоздаются. Видимость — рантайм.
-            var hubGroup = UIBuildHelpers.FindOrCreateChild(root, "HubGroup");
+            var hubGroup = UIBuildHelpers.FindOrCreateChild(root, HubGroupName);
             UIBuildHelpers.Stretch(hubGroup);
 
             var hubStick = CreateJoystick(hubGroup, "HubStick",
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(60f, 60f));
+
+            // Шаг 11b: HubGroup по умолчанию НЕактивна (как FlightGroup) — включает рантайм
+            // по InputContext.Hub. Миграционно: гасит и у уже собранного канваса.
+            if (hubGroup.gameObject.activeSelf)
+            {
+                Undo.RecordObject(hubGroup.gameObject, "Deactivate HubGroup");
+                hubGroup.gameObject.SetActive(false);
+                Debug.Log("[Editor] HubGroup выключена по умолчанию (рантайм включает по контексту).");
+            }
 
             // ── PauseButton (общий, на корне канваса — виден в обоих контекстах) ─
             var pauseBtn = CreateHoldButton(root, "PauseButton", PauseSprite,
@@ -215,6 +227,39 @@ namespace FlatOutLike.Editor.UI
             Undo.CollapseUndoOperations(undoGroup);
             Debug.Log("[Editor] Mobile Input Canvas собран на сцене " +
                 SceneManager.GetActiveScene().name + ".");
+        }
+
+        /// <summary>
+        /// Миграция префаба без открытия сцены: гарантирует, что HubGroup в
+        /// MobileInputCanvas.prefab по умолчанию выключена. Идемпотентно (нет изменений — нет записи).
+        /// </summary>
+        public static void EnsureHubGroupInactiveInPrefab()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) == null)
+                return;
+
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                var hubGroup = FindChildByName(root.transform, HubGroupName);
+                if (hubGroup == null)
+                {
+                    Debug.LogWarning("[Editor] В " + PrefabPath + " нет HubGroup — запусти " +
+                                     "'FlatOutLike/UI/Build Mobile Input Canvas'.");
+                    return;
+                }
+
+                if (!hubGroup.gameObject.activeSelf)
+                    return;
+
+                hubGroup.gameObject.SetActive(false);
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+                Debug.Log("[Editor] MobileInputCanvas.prefab: HubGroup выключена по умолчанию.");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
         }
 
         public static void BindMobileInputCanvas(MobileInputCanvas mic)

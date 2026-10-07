@@ -17,6 +17,7 @@ using FlatOutLike.Data.Configs.Hub;
 using FlatOutLike.Data.Configs.Input;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Data.Configs.Pickups;
+using FlatOutLike.Data.Configs.Progression;
 using FlatOutLike.Data.Configs.Rewards;
 using FlatOutLike.Data.Configs.Stunts;
 using FlatOutLike.Data.Configs.Upgrades;
@@ -33,6 +34,7 @@ using FlatOutLike.Services.Car;
 using FlatOutLike.Services.Combat;
 using FlatOutLike.Services.Driver;
 using FlatOutLike.Services.Flow;
+using FlatOutLike.Services.Hub;
 using FlatOutLike.Services.Match;
 using FlatOutLike.Services.Meta;
 using FlatOutLike.Services.Pickups;
@@ -40,6 +42,7 @@ using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
 using FlatOutLike.Views.UI.Common;
 using FlatOutLike.Views.UI.Garage;
+using FlatOutLike.Views.UI.Hub;
 using FlatOutLike.Views.UI.Hud;
 using FlatOutLike.Views.UI.Overlay;
 using UnityEngine;
@@ -249,6 +252,26 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private HubCharacterController _hubCharacter;
 
+        // ── Шаг 11b: зоны запуска, HUD хаба, PLAY ────────────────────────────────
+        /// <summary>
+        /// Каталог построек BaseHub (зоны запуска режимов, таймер подтверждения). Регистрация
+        /// УСЛОВНАЯ: без каталога HubLaunchService и LaunchZoneController-инъекция не нужны —
+        /// на сценах без хаба поле не прошито.
+        /// </summary>
+        [SerializeField] private BuildingCatalogConfig _buildingCatalogConfig;
+
+        /// <summary>
+        /// HUD хаба (монеты + временная кнопка PLAY). Живёт только в BaseHub; на остальных
+        /// сценах null — Presenter не регистрируется (паттерн _garageView).
+        /// </summary>
+        [SerializeField] private HubHudView _hubHudView;
+
+        /// <summary>
+        /// World-space круг подтверждения запуска над активной зоной. Регистрируется только
+        /// вместе с _buildingCatalogConfig — presenter читает каталог и IHubLaunchService.
+        /// </summary>
+        [SerializeField] private LaunchConfirmView _launchConfirmView;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -300,6 +323,17 @@ namespace FlatOutLike.Installers
             // GameState — не Unity/VContainer-тип, поэтому передаётся явным .WithParameter —
             // VContainer не умеет опциональные параметры инъекции конструктора.
             var initialState = GameStateSceneMap.InitialStateFor(SceneManager.GetActiveScene().name);
+            // Мета-сцены (хаб/гараж) ожидаемо не имеют машинного рига/тряски/нитро-камеры —
+            // там отсутствие этих полей не ошибка: Log вместо LogWarning (см. LogMissingOptional).
+            bool isMetaScene = initialState == GameState.BaseHub || initialState == GameState.GarageMeta;
+            void LogMissingOptional(string message)
+            {
+                if (isMetaScene)
+                    Debug.Log(message);
+                else
+                    Debug.LogWarning(message);
+            }
+
             builder.Register<SceneLoaderService>(Lifetime.Singleton).As<ISceneLoaderService>();
             builder.Register<GameFlowService>(Lifetime.Singleton)
                 .As<IGameFlowService>()
@@ -374,6 +408,32 @@ namespace FlatOutLike.Installers
             // (иначе Construct не вызовется). Условно — существует только в сцене BaseHub.
             if (_hubCharacter != null)
                 builder.RegisterComponent(_hubCharacter);
+
+            // ── BaseHub: зоны запуска, HUD, PLAY (Шаг 11b) ─────────────────────────
+            // Каталог и сервис запуска — условно: без каталога зонам нечего проверять, а
+            // LaunchZoneController-инъекция (build callback ниже) тоже идёт только при нём.
+            if (_buildingCatalogConfig != null)
+            {
+                builder.RegisterInstance(_buildingCatalogConfig);
+                // EntryPoint → VContainer вызывает ITickable.Tick через PlayerLoop-диспетчер автоматически.
+                builder.RegisterEntryPoint<HubLaunchService>().As<IHubLaunchService>();
+            }
+
+            // HUD хаба зависит только от безусловных IEconomyService/IEventBus/IGameFlowService.
+            if (_hubHudView != null)
+            {
+                builder.RegisterComponent(_hubHudView);
+                builder.Register<HubPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<HubPresenter>());
+            }
+
+            // Круг подтверждения читает каталог и IHubLaunchService — оба условны по каталогу.
+            if (_launchConfirmView != null && _buildingCatalogConfig != null)
+            {
+                builder.RegisterComponent(_launchConfirmView);
+                builder.Register<LaunchConfirmPresenter>(Lifetime.Singleton);
+                builder.RegisterBuildCallback(c => c.Resolve<LaunchConfirmPresenter>());
+            }
 
             // MatchEndView живёт в Derby-сцене — зависит только от IEventBus/ICarRegistry/
             // IGameFlowService (все регистрируются безусловно ниже по файлу), никаких
@@ -468,7 +528,7 @@ namespace FlatOutLike.Installers
             {
                 // Ожидаемо для мета-сцен/хаба (BaseHub/Garage) — там нет машинного рига: камера хаба
                 // (CinemachineHubCameraBehaviour) живёт отдельно и в ICameraRig не входит.
-                Debug.LogWarning("[GameLifetimeScope] _cameraRig не задан — ICameraService не регистрируется (мета-сцена/хаб или тест-сцена без камеры).");
+                LogMissingOptional("[GameLifetimeScope] _cameraRig не задан — ICameraService не регистрируется (мета-сцена/хаб или тест-сцена без камеры).");
             }
 
             // Тряска камеры от столкновений (Impulse). Условно — оба поля заполняются
@@ -481,7 +541,7 @@ namespace FlatOutLike.Installers
             }
             else
             {
-                Debug.LogWarning("[GameLifetimeScope] _cameraShakeConfig/_cameraShaker не заданы — ICameraShakeService не регистрируется (мета-сцена/хаб или тест-сцена без рига).");
+                LogMissingOptional("[GameLifetimeScope] _cameraShakeConfig/_cameraShaker не заданы — ICameraShakeService не регистрируется (мета-сцена/хаб или тест-сцена без рига).");
             }
 
             // NitroCameraEffectController — MonoBehaviour, ему нужна инъекция (IEventBus, ICarRegistry),
@@ -492,7 +552,7 @@ namespace FlatOutLike.Installers
             }
             else
             {
-                Debug.LogWarning("[GameLifetimeScope] _nitroCameraEffectController не задан — эффект нитро-камеры не регистрируется (мета-сцена/хаб или тест-сцена без камеры).");
+                LogMissingOptional("[GameLifetimeScope] _nitroCameraEffectController не задан — эффект нитро-камеры не регистрируется (мета-сцена/хаб или тест-сцена без камеры).");
             }
 
             // Полёт водителя (Шаг 7). DriverFlightConfig — БЕЗУСЛОВНО, тот же резон, что и
@@ -586,6 +646,14 @@ namespace FlatOutLike.Installers
                 // Безусловно (паттерн DestructibleObjectController выше) — если объектов нет, цикл пуст.
                 foreach (var eject in Object.FindObjectsByType<EjectTriggerZone>(FindObjectsSortMode.None))
                     container.InjectGameObject(eject.gameObject);
+
+                // Шаг 11b: инъекция зон запуска хаба. Только при каталоге — без него IHubLaunchService
+                // не зарегистрирован, и Construct зоны уронил бы построение контейнера.
+                if (_buildingCatalogConfig != null)
+                {
+                    foreach (var zone in Object.FindObjectsByType<LaunchZoneController>(FindObjectsSortMode.None))
+                        container.InjectGameObject(zone.gameObject);
+                }
 
                 // _TestDriving-путь: chase-камера на первую сцено-машину (арена привязывает камеру
                 // отдельно, в build-callback ниже, после спавна через DerbyMatchService).
