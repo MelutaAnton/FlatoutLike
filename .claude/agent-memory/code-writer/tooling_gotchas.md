@@ -9,6 +9,7 @@ metadata:
   `echo '{"tool_input":{"file_path":"<abs path>"}}' | powershell -NoProfile -File .claude/hooks/arch-guard.ps1` (пустой вывод = чисто).
 - `python` в Git Bash — заглушка Microsoft Store (печатает "Python" и ничего не делает). Для многострочных правок — `perl -0pi -e` или Edit.
 - .cs в Assets/Development — LF (git конвертирует в CRLF при checkout-е), вставки с `\n` безопасны.
+- Unity YAML (.asset) пишет не-ASCII строки как `"...—..."`. Edit-инструмент может превратить `—` в new_string в литеральный символ, sed/perl в Git Bash съедают `\u`. Надёжно: awk с `sprintf("%c",92)` для бэкслеша; проверять `file <asset>` (должно быть ASCII) и `cat -A`.
 - Корневой неймспейс — `FlatOutLike` (Project Variables агента с `Flatuot2_Like` устарели), меню — `FlatOutLike/...`.
 
 **Why:** обнаружено в шаге 11a (2026-10-03) — без ручного прогона хука нарушения ушли бы на ревью.

@@ -230,6 +230,61 @@ namespace FlatOutLike.Tests
             Assert.AreEqual(GameState.Paused, received[0].To);
         }
 
+        // ── Шаг 11d: переходы во время загрузки сцены отбрасываются ─────────────────
+
+        [Test]
+        public void ChangeState_WhileLoading_IsIgnored()
+        {
+            _loader.ActiveSceneName = SceneKeys.BaseHub;
+            var flow = new GameFlowService(_bus, _loader, GameState.BaseHub);
+            var received = new List<GameStateChangedEvent>();
+            _bus.Subscribe<GameStateChangedEvent>(received.Add);
+            _loader.IsLoading = true;
+
+            flow.ChangeState(GameState.DerbyMatch);
+
+            Assert.AreEqual(GameState.BaseHub, flow.Current);
+            Assert.AreEqual(0, received.Count);
+            Assert.AreEqual(0, _loader.LoadCalls.Count);
+        }
+
+        [Test]
+        public void Push_WhileLoading_IsIgnored()
+        {
+            _loader.ActiveSceneName = SceneKeys.DerbyArena01;
+            var flow = new GameFlowService(_bus, _loader, GameState.DerbyMatch);
+            var received = new List<GameStateChangedEvent>();
+            _bus.Subscribe<GameStateChangedEvent>(received.Add);
+            _loader.IsLoading = true;
+
+            flow.Push(GameState.Paused);
+
+            Assert.AreEqual(GameState.DerbyMatch, flow.Current);
+            Assert.AreEqual(0, received.Count);
+        }
+
+        [Test]
+        public void Pop_WhileLoading_IsIgnored()
+        {
+            // Pop из Paused под экраном загрузки опубликовал бы GameResumedEvent и разморозил
+            // старую сцену — переход отбрасывается целиком, как ChangeState/Push.
+            _loader.ActiveSceneName = SceneKeys.DerbyArena01;
+            var flow = new GameFlowService(_bus, _loader, GameState.DerbyMatch);
+            flow.Push(GameState.Paused);
+
+            var stateEvents = new List<GameStateChangedEvent>();
+            var resumedEvents = new List<GameResumedEvent>();
+            _bus.Subscribe<GameStateChangedEvent>(stateEvents.Add);
+            _bus.Subscribe<GameResumedEvent>(resumedEvents.Add);
+            _loader.IsLoading = true;
+
+            flow.Pop();
+
+            Assert.AreEqual(GameState.Paused, flow.Current);
+            Assert.AreEqual(0, stateEvents.Count);
+            Assert.AreEqual(0, resumedEvents.Count);
+        }
+
         // ── Фейк ──────────────────────────────────────────────────────────────────
 
         /// <summary>
@@ -239,6 +294,7 @@ namespace FlatOutLike.Tests
         private sealed class FakeSceneLoaderService : ISceneLoaderService
         {
             public string ActiveSceneName { get; set; }
+            public bool IsLoading { get; set; }
             public readonly List<string> LoadCalls = new List<string>();
 
             public void Load(string sceneKey)

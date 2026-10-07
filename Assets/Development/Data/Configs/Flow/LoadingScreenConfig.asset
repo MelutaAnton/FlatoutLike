@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08618d9668efcf84b8fa78cd6d29c97e, type: 3}
+  m_Name: LoadingScreenConfig
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Flow.LoadingScreenConfig
+  _showSeconds: 0.2
+  _hideSeconds: 0.35
+  _hintFadeSeconds: 0.15
+  _fakeTarget: 0.75
+  _fakeSeconds: 2
+  _creepTarget: 0.9
+  _creepSeconds: 6
+  _finishSeconds: 0.2
+  _defaultMinSeconds: 0.8
+  _destinations:
+  - State: 0
+    Title: HOME BASE
+    MinSeconds: 0.8
+  - State: 1
+    Title: GARAGE
+    MinSeconds: 0.8
+  - State: 3
+    Title: DERBY ARENA
+    MinSeconds: 2
+  - State: 4
+    Title: HIGH JUMP
+    MinSeconds: 2
+  _hints:
+  - "Ram at full speed \u2014 faster hits deal more damage."
+  - Save nitro for ramming, not just for speed.
+  - Car wrecked? Eject and watch the chaos from above.
+  - Upgrade armor in the Garage to survive longer in the Derby.
+  - In High Jump, your speed at the ramp edge decides the height.
+  - Grab repair pickups when your car starts smoking.
+  - Stand in a launch zone to start a mode.
+  - The last car standing takes the biggest reward.
+  - "In High Jump only height counts \u2014 aim for the sky."
+  - Handbrake turns help you swing around for a ram.
+  - "Each upgrade is tied to its car \u2014 choose your favorite."
+  - Grab nitro pickups to refill your boost.

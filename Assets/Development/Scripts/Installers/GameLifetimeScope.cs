@@ -13,6 +13,7 @@ using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Combat;
 using FlatOutLike.Data.Configs.Driver;
+using FlatOutLike.Data.Configs.Flow;
 using FlatOutLike.Data.Configs.Hub;
 using FlatOutLike.Data.Configs.Input;
 using FlatOutLike.Data.Configs.Match;
@@ -272,14 +273,21 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private LaunchConfirmView _launchConfirmView;
 
-        // ── Шаг 11c: асинхронная загрузка сцен с фейдом ──────────────────────────
+        // ── Шаг 11d: экран загрузки межсценового перехода ────────────────────────
         /// <summary>
-        /// Чёрная шторка межсценового перехода (инстанс префаба Prefabs/UI/ScreenFadeCanvas).
-        /// Прошивается меню "FlatOutLike/UI/Build Screen Fade Canvas (All Scenes)". Условная
-        /// регистрация (паттерн _audioPlayerController): в Boot и тест-сценах отсутствует —
-        /// регистрируется NullScreenFader, переход мгновенный.
+        /// Экран загрузки (инстанс префаба Prefabs/UI/LoadingScreenCanvas). Прошивается меню
+        /// "FlatOutLike/UI/Build Loading Screen (All Scenes)". Условная регистрация (паттерн
+        /// _audioPlayerController): на сценах без экрана регистрируется NullLoadingScreen —
+        /// переход мгновенный.
         /// </summary>
-        [SerializeField] private ScreenFadeView _screenFadeView;
+        [SerializeField] private LoadingScreenView _loadingScreenView;
+
+        /// <summary>
+        /// Настройки экрана загрузки (длительности, фейк-прогресс, заголовки, подсказки).
+        /// Прошивается тем же меню "FlatOutLike/UI/Build Loading Screen (All Scenes)".
+        /// Регистрируется БЕЗУСЛОВНО с фоллбэк-инстансом — SceneLoaderService нужен на любой сцене.
+        /// </summary>
+        [SerializeField] private LoadingScreenConfig _loadingScreenConfig;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -343,17 +351,27 @@ namespace FlatOutLike.Installers
                     Debug.LogWarning(message);
             }
 
-            // Фейд межсценового перехода (Шаг 11c) — условно по наличию шторки на сцене:
-            // без неё SceneLoaderService получает мгновенный NullScreenFader (Boot, тест-сцены).
-            if (_screenFadeView != null)
-                builder.RegisterComponent<IScreenFader>(_screenFadeView);
-            else
-                builder.Register<NullScreenFader>(Lifetime.Singleton).As<IScreenFader>();
+            // Экран загрузки межсценового перехода (Шаг 11d). Конфиг — БЕЗУСЛОВНО (фоллбэк-инстанс
+            // с дефолтами: RegisterInstance(null) = NRE при резолве SceneLoaderService).
+            builder.RegisterInstance(_loadingScreenConfig != null
+                ? _loadingScreenConfig
+                : ScriptableObject.CreateInstance<LoadingScreenConfig>());
 
-            // SceneLoaderService — EntryPoint (Singleton): IStartable проявляет сцену из чёрного,
-            // если загрузка не началась ещё при сборке контейнера (Boot). GameFlowService получает
-            // этот же синглтон через ISceneLoaderService.
+            // View — условно по наличию экрана на сцене: без него SceneLoaderService получает
+            // мгновенный NullLoadingScreen (тест-сцены).
+            if (_loadingScreenView != null)
+                builder.RegisterComponent<ILoadingScreen>(_loadingScreenView);
+            else
+                builder.Register<NullLoadingScreen>(Lifetime.Singleton).As<ILoadingScreen>();
+
+            // SceneLoaderService — EntryPoint (Singleton, AsImplementedInterfaces: IStartable открывает
+            // сцену, если загрузка не началась ещё при сборке контейнера (Boot); ITickable ведёт прогресс
+            // загрузки). GameFlowService/PauseService/AudioService получают этот же синглтон через
+            // ISceneLoaderService.
             builder.RegisterEntryPoint<SceneLoaderService>().As<ISceneLoaderService>();
+            // Eager: конструктор вызывает ILoadingScreen.Cover — экран обязан закрыть новую сцену
+            // при сборке контейнера (Awake scope), ДО первого отрисованного кадра.
+            builder.RegisterBuildCallback(c => c.Resolve<ISceneLoaderService>());
             builder.Register<GameFlowService>(Lifetime.Singleton)
                 .As<IGameFlowService>()
                 .WithParameter(initialState);

@@ -20,6 +20,7 @@ namespace FlatOutLike.Tests
         private EventBus _bus;
         private FakeInputProvider _input;
         private FakeGameFlowService _flow;
+        private FakeSceneLoaderService _sceneLoader;
         private PauseService _service;
 
         [SetUp]
@@ -28,7 +29,8 @@ namespace FlatOutLike.Tests
             _bus = new EventBus();
             _input = new FakeInputProvider();
             _flow = new FakeGameFlowService(GameState.DerbyMatch);
-            _service = new PauseService(_input, _flow, _bus);
+            _sceneLoader = new FakeSceneLoaderService();
+            _service = new PauseService(_input, _flow, _bus, _sceneLoader);
         }
 
         [TearDown]
@@ -153,10 +155,46 @@ namespace FlatOutLike.Tests
         {
             Time.timeScale = 0f;
 
-            var service = new PauseService(_input, _flow, _bus);
+            var service = new PauseService(_input, _flow, _bus, _sceneLoader);
 
             Assert.AreEqual(1f, Time.timeScale);
             service.Dispose();
+        }
+
+        // ── Шаг 11d: загрузка сцены ──────────────────────────────────────────────
+
+        [Test]
+        public void Tick_PausePressedWhileLoading_Ignored()
+        {
+            // Под экраном загрузки пауза не ставится — оверлей не виден, переход всё равно отбросится.
+            _sceneLoader.IsLoading = true;
+            _input.PausePressed = true;
+
+            _service.Tick();
+
+            Assert.AreEqual(GameState.DerbyMatch, _flow.Current);
+        }
+
+        [Test]
+        public void SceneTransitionCoveredEvent_SetsTimeScaleToZero()
+        {
+            // Старая сцена под экраном загрузки замораживается; сброс — конструктор новой сцены.
+            _bus.Publish(new SceneTransitionCoveredEvent());
+
+            Assert.AreEqual(0f, Time.timeScale);
+        }
+
+        [Test]
+        public void GameStateChangedEvent_WhileLoadingAfterCovered_KeepsTimeScaleZero()
+        {
+            // С синхронным экраном загрузки (NullLoadingScreen) Covered приходит раньше
+            // GameStateChangedEvent — смена состояния не должна отменять заморозку.
+            _sceneLoader.IsLoading = true;
+            _bus.Publish(new SceneTransitionCoveredEvent());
+
+            _bus.Publish(new GameStateChangedEvent(GameState.DerbyMatch, GameState.BaseHub));
+
+            Assert.AreEqual(0f, Time.timeScale);
         }
 
         // ── Хелпер ──────────────────────────────────────────────────────────────
@@ -165,7 +203,7 @@ namespace FlatOutLike.Tests
         {
             _service.Dispose();
             _flow = new FakeGameFlowService(initial);
-            _service = new PauseService(_input, _flow, _bus);
+            _service = new PauseService(_input, _flow, _bus, _sceneLoader);
         }
 
         // ── Фейки ───────────────────────────────────────────────────────────────
@@ -182,6 +220,15 @@ namespace FlatOutLike.Tests
             public bool PausePressed { get; set; }
 
             public void Tick() { }
+        }
+
+        /// <summary>Фейк ISceneLoaderService — PauseService читает только IsLoading.</summary>
+        private sealed class FakeSceneLoaderService : ISceneLoaderService
+        {
+            public string ActiveSceneName => string.Empty;
+            public bool IsLoading { get; set; }
+
+            public void Load(string sceneKey) { }
         }
 
         /// <summary>Стековая реализация IGameFlowService — PauseService опирается на Push/Pop/Current.</summary>

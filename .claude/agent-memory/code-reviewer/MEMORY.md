@@ -13,5 +13,5 @@
 - [TMP dynamic font dirty](hotspot_tmp_dynamic_font_dirty.md) — Art/Fonts/TMP/*SDF.asset грязнеют после Play Mode (атлас 1024²); в diff шага — Warning «не коммитить», не скоуп-Critical
 - [Editor scene-path literals](project-editor-scene-path-literals.md) — с 11b путь сцены = ScenePaths.For(SceneKeys.X); литерал в editor — Warning, в runtime — Critical
 - [Hub camera outside rig](project-hub-camera-outside-rig.md) — камера BaseHub вне ICameraRig/CameraService (статичный Priority); с 11b сообщения в мета-сценах — Log
-- [Scene transition window](hotspot_scene_transition_window.md) — с 11c старая сцена живёт фейд+async-load с уже сменённым FSM; проверять побочки GameStateChangedEvent
+- [Scene transition window](hotspot_scene_transition_window.md) — старая сцена живёт под экраном загрузки при сменённом FSM; 11d закрыл IsLoading-гейтами; остаток — error-path LoadSceneAsync
 - [Hub launch zones](project-hub-launch-zones.md) — 11b: зона HighJump без гейта стройкой — НЕ отклонение (§19 шаг 11); на шаге 12 гейт должен быть декларативным; зоны не должны перекрываться (сервис без fallback)

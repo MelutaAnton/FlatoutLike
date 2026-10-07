@@ -24,6 +24,7 @@ namespace FlatOutLike.Services.Audio
         private readonly IAudioPlayer _player;
         private readonly ICarRegistry _carRegistry;
         private readonly IGameFlowService _gameFlow;
+        private readonly ISceneLoaderService _sceneLoader;
 
         // Per-Id троттлинг по Time.unscaledTime — без него 7 машин, бьющихся одновременно,
         // завалят one-shot источники CrashLight/CrashHeavy за один кадр.
@@ -32,13 +33,14 @@ namespace FlatOutLike.Services.Audio
         private MusicTrackId _currentMusic = MusicTrackId.None;
 
         public AudioService(IEventBus eventBus, AudioConfig config, IAudioPlayer player,
-            ICarRegistry carRegistry, IGameFlowService gameFlow)
+            ICarRegistry carRegistry, IGameFlowService gameFlow, ISceneLoaderService sceneLoader)
         {
             _eventBus = eventBus;
             _config = config;
             _player = player;
             _carRegistry = carRegistry;
             _gameFlow = gameFlow;
+            _sceneLoader = sceneLoader;
 
             _eventBus.Subscribe<CarCollisionEvent>(OnCarCollision);
             _eventBus.Subscribe<CarDestroyedEvent>(OnCarDestroyed);
@@ -54,6 +56,7 @@ namespace FlatOutLike.Services.Audio
             _eventBus.Subscribe<GamePausedEvent>(OnGamePaused);
             _eventBus.Subscribe<GameResumedEvent>(OnGameResumed);
             _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
+            _eventBus.Subscribe<SceneTransitionCoveredEvent>(OnSceneTransitionCovered);
         }
 
         public void Start()
@@ -64,6 +67,14 @@ namespace FlatOutLike.Services.Audio
             _player.SetPaused(false);
 
             _player.Initialize(_config.OneShotSourcesCount);
+
+            // Шаг 11d: сцена стартует уже в процессе загрузки следующей (Boot: initialState =
+            // InitialStateFor(Boot) = BaseHub, и сразу грузится сцена хаба) — трек состояния
+            // назначения здесь не запускаем, его включит Start() AudioService новой сцены.
+            // Иначе хаб-трек стартовал бы в Boot и повторно в BaseHub.
+            if (_sceneLoader.IsLoading)
+                return;
+
             // Музыка текущего состояния сразу при старте сцены (без ожидания первого GameStateChangedEvent).
             PlayMusicForState(_gameFlow.Current);
         }
@@ -157,12 +168,26 @@ namespace FlatOutLike.Services.Audio
 
         private void OnGameResumed(GameResumedEvent evt) => _player.SetPaused(false);
 
+        // Шаг 11d: экран загрузки закрыл старую сцену — глушим её звук целиком. Сброс делает
+        // Start() AudioService новой сцены (SetPaused(false) — страховка глобального AudioListener.pause).
+        private void OnSceneTransitionCovered(SceneTransitionCoveredEvent evt) => _player.SetPaused(true);
+
         // ── Музыка по GameState ───────────────────────────────────────────────
         private void OnGameStateChanged(GameStateChangedEvent evt)
         {
             // Push/Pop паузы (To == Paused или From == Paused) не должны трогать музыку —
             // пауза глушит звук целиком через SetPaused, а не сменой трека.
             if (evt.To == GameState.Paused || evt.From == GameState.Paused) return;
+
+            // Шаг 11d: состояние назначения уже выставлено, но сцена ещё грузится — трек нового
+            // состояния стартует только в новой сцене (Start()), иначе он играл бы дважды.
+            // Старую музыку гасим сразу.
+            if (_sceneLoader.IsLoading)
+            {
+                _player.StopMusic(_config.MusicCrossfadeSeconds);
+                _currentMusic = MusicTrackId.None;
+                return;
+            }
 
             PlayMusicForState(evt.To);
         }
@@ -210,6 +235,7 @@ namespace FlatOutLike.Services.Audio
             _eventBus.Unsubscribe<GamePausedEvent>(OnGamePaused);
             _eventBus.Unsubscribe<GameResumedEvent>(OnGameResumed);
             _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
+            _eventBus.Unsubscribe<SceneTransitionCoveredEvent>(OnSceneTransitionCovered);
         }
     }
 }
