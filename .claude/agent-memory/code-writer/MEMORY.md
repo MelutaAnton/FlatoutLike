@@ -7,3 +7,4 @@
 - [Step 5c — Nitro + Pickups](step5c_nitro_pickups.md) — NitroService, RepairPickup/NitroPickup, PickupFactory, PickupSpawnerService (ITickable EntryPoint), DamageService.Repair, условные регистрации
 - [Driving feel polish](driving_feel_polish.md) — CalculateSmoothedSteerAngle (MoveTowards), handbrake drift (stiffness switch), CarStatsConfig new fields, "SO new-field-gap" YAML-patch nuance
 - [Tooling gotchas](tooling_gotchas.md) — arch-guard не видит Bash-записи (прогон вручную), python=заглушка, LF, ns FlatOutLike
+- [Step 11c — Scene fade](step11c_scene_fade.md) — IScreenFader/ScreenFadeView/NullScreenFader, SceneLoaderService EntryPoint, Boot: FadeIn только при !_loading

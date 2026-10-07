@@ -272,6 +272,15 @@ namespace FlatOutLike.Installers
         /// </summary>
         [SerializeField] private LaunchConfirmView _launchConfirmView;
 
+        // ── Шаг 11c: асинхронная загрузка сцен с фейдом ──────────────────────────
+        /// <summary>
+        /// Чёрная шторка межсценового перехода (инстанс префаба Prefabs/UI/ScreenFadeCanvas).
+        /// Прошивается меню "FlatOutLike/UI/Build Screen Fade Canvas (All Scenes)". Условная
+        /// регистрация (паттерн _audioPlayerController): в Boot и тест-сценах отсутствует —
+        /// регистрируется NullScreenFader, переход мгновенный.
+        /// </summary>
+        [SerializeField] private ScreenFadeView _screenFadeView;
+
         protected override void Configure(IContainerBuilder builder)
         {
             // Core
@@ -334,7 +343,17 @@ namespace FlatOutLike.Installers
                     Debug.LogWarning(message);
             }
 
-            builder.Register<SceneLoaderService>(Lifetime.Singleton).As<ISceneLoaderService>();
+            // Фейд межсценового перехода (Шаг 11c) — условно по наличию шторки на сцене:
+            // без неё SceneLoaderService получает мгновенный NullScreenFader (Boot, тест-сцены).
+            if (_screenFadeView != null)
+                builder.RegisterComponent<IScreenFader>(_screenFadeView);
+            else
+                builder.Register<NullScreenFader>(Lifetime.Singleton).As<IScreenFader>();
+
+            // SceneLoaderService — EntryPoint (Singleton): IStartable проявляет сцену из чёрного,
+            // если загрузка не началась ещё при сборке контейнера (Boot). GameFlowService получает
+            // этот же синглтон через ISceneLoaderService.
+            builder.RegisterEntryPoint<SceneLoaderService>().As<ISceneLoaderService>();
             builder.Register<GameFlowService>(Lifetime.Singleton)
                 .As<IGameFlowService>()
                 .WithParameter(initialState);

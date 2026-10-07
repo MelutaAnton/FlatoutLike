@@ -12,7 +12,9 @@ namespace FlatOutLike.Services.Flow
         string ActiveSceneName { get; }
 
         /// <summary>
-        /// Загружает сцену в режиме Single. No-op, если sceneKey уже активна.
+        /// Асинхронно загружает сцену в режиме Single через фейд (затемнение → LoadSceneAsync).
+        /// No-op, если sceneKey уже активна; повторный вызов во время уже идущей загрузки
+        /// игнорируется.
         /// </summary>
         void Load(string sceneKey);
     }
