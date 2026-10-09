@@ -116,5 +116,128 @@ namespace FlatOutLike.Tests
             Assert.DoesNotThrow(() => _pool.Return(alien),
                 "Return объекта без маркера PooledInstance не должен выбрасывать исключение.");
         }
+
+        // ── Тест 5: Get(prefab, pos, rot) выдаёт активный инстанс в заданной позе ─
+
+        [Test]
+        public void GetWithPose_ReturnsActiveInstance_AtGivenPositionAndRotation()
+        {
+            var prefab   = CreatePrefab();
+            var position = new Vector3(10f, 2f, -5f);
+            var rotation = Quaternion.Euler(0f, 90f, 0f);
+
+            var result = _pool.Get(prefab, position, rotation);
+
+            Assert.IsNotNull(result, "Get с позой должен вернуть инстанс, не null.");
+            Assert.AreNotSame(prefab, result, "Get с позой должен вернуть копию prefab, не сам prefab.");
+            Assert.IsTrue(result.activeSelf, "Выданный инстанс должен быть активным.");
+            AssertPose(result, position, rotation);
+        }
+
+        // ── Тест 6: после Return повторный Get с позой переставляет тот же инстанс ─
+
+        [Test]
+        public void GetWithPose_AfterReturn_ReusesSameInstance_AtNewPose()
+        {
+            var prefab = CreatePrefab();
+
+            var first = _pool.Get(prefab, new Vector3(1f, 0f, 1f), Quaternion.identity);
+            _pool.Return(first);
+
+            var position2 = new Vector3(-20f, 3f, 7f);
+            var rotation2 = Quaternion.Euler(0f, -45f, 0f);
+            var second    = _pool.Get(prefab, position2, rotation2);
+
+            Assert.AreSame(first, second,
+                "После Return повторный Get с позой должен вернуть тот же инстанс.");
+            Assert.IsTrue(second.activeSelf, "Переиспользованный инстанс должен быть активным.");
+            AssertPose(second, position2, rotation2);
+        }
+
+        // ── Тест 7: Get с позой и null-prefab возвращает null без исключения ─────
+
+        [Test]
+        public void GetWithPose_NullPrefab_ReturnsNull_WithoutThrowing()
+        {
+            GameObject result = null;
+
+            Assert.DoesNotThrow(() => result = _pool.Get(null, Vector3.one, Quaternion.identity),
+                "Get с null-prefab не должен выбрасывать исключение.");
+            Assert.IsNull(result, "Get с null-prefab должен вернуть null.");
+        }
+
+        // ── Тест 8: у свежего инстанса ПЕРВЫЙ OnEnable (при Instantiate) уже в целевой позе ─
+
+        [Test]
+        public void GetWithPose_FreshInstance_FirstOnEnableSeesTargetPosition()
+        {
+            // Префаб стоит в нуле, цель — не в нуле: до фикса первый OnEnable видел бы ноль.
+            var prefab = CreatePrefab();
+            prefab.AddComponent<PoolPoseProbe>();
+            var position = new Vector3(10f, 2f, -5f);
+
+            var result = _pool.Get(prefab, position, Quaternion.identity);
+            var probe  = result.GetComponent<PoolPoseProbe>();
+
+            Assert.IsNotNull(probe, "Зонд должен скопироваться в инстанс вместе с префабом.");
+            Assert.Greater(probe.EnableCount, 0, "OnEnable зонда должен был сработать.");
+            Assert.That(Vector3.Distance(probe.FirstEnablePosition, position), Is.LessThan(1e-4f),
+                $"Первый OnEnable свежего инстанса увидел {probe.FirstEnablePosition}, ожидалось {position}.");
+            Assert.That(Vector3.Distance(probe.LastEnablePosition, position), Is.LessThan(1e-4f),
+                $"Последний OnEnable свежего инстанса увидел {probe.LastEnablePosition}, ожидалось {position}.");
+        }
+
+        // ── Тест 9: инстанс из очереди видит целевую позицию в последнем OnEnable ─
+
+        [Test]
+        public void GetWithPose_InstanceFromQueue_LastOnEnableSeesTargetPosition()
+        {
+            var prefab = CreatePrefab();
+            prefab.AddComponent<PoolPoseProbe>();
+
+            var first = _pool.Get(prefab, new Vector3(1f, 0f, 1f), Quaternion.identity);
+            _pool.Return(first);
+            int enableCountBefore = first.GetComponent<PoolPoseProbe>().EnableCount;
+
+            var position2 = new Vector3(-20f, 3f, 7f);
+            var second    = _pool.Get(prefab, position2, Quaternion.identity);
+            var probe     = second.GetComponent<PoolPoseProbe>();
+
+            Assert.AreSame(first, second, "Инстанс должен прийти из очереди.");
+            Assert.Greater(probe.EnableCount, enableCountBefore,
+                "Повторная активация из очереди должна вызвать OnEnable.");
+            Assert.That(Vector3.Distance(probe.LastEnablePosition, position2), Is.LessThan(1e-4f),
+                $"Последний OnEnable инстанса из очереди увидел {probe.LastEnablePosition}, ожидалось {position2}.");
+        }
+
+        /// <summary>Сверяет позицию и поворот инстанса с допуском на погрешность float.</summary>
+        private static void AssertPose(GameObject go, Vector3 position, Quaternion rotation)
+        {
+            Assert.That(Vector3.Distance(go.transform.position, position), Is.LessThan(1e-4f),
+                $"Позиция инстанса {go.transform.position} не совпадает с ожидаемой {position}.");
+            Assert.That(Quaternion.Angle(go.transform.rotation, rotation), Is.LessThan(1e-2f),
+                $"Поворот инстанса {go.transform.rotation.eulerAngles} не совпадает с ожидаемым {rotation.eulerAngles}.");
+        }
+    }
+
+    /// <summary>
+    /// Тест-зонд: запоминает позицию transform в первом и в последнем OnEnable.
+    /// [ExecuteAlways] — иначе в EditMode OnEnable у MonoBehaviour не вызывается.
+    /// </summary>
+    [ExecuteAlways]
+    public class PoolPoseProbe : MonoBehaviour
+    {
+        public Vector3 FirstEnablePosition { get; private set; }
+        public Vector3 LastEnablePosition { get; private set; }
+        public int EnableCount { get; private set; }
+
+        private void OnEnable()
+        {
+            if (EnableCount == 0)
+                FirstEnablePosition = transform.position;
+
+            LastEnablePosition = transform.position;
+            EnableCount++;
+        }
     }
 }

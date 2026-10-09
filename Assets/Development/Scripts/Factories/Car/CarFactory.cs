@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using FlatOutLike.Controllers.Car;
 using FlatOutLike.Controllers.Enemies;
+using FlatOutLike.Core.Pool;
 using FlatOutLike.Data.Configs.Car;
 using FlatOutLike.Data.Configs.Match;
 using FlatOutLike.Services.Car;
@@ -13,9 +14,21 @@ using VContainer.Unity;
 namespace FlatOutLike.Factories.Car
 {
     /// <summary>
-    /// Инстанцирует машины для Derby-матча. Машины не пулятся — живут весь матч.
+    /// Спавнит машины для Derby-матча.
     ///
-    /// Порядок гарантирован: Instantiate → Configure (до инъекции) → InjectGameObject.
+    /// Пул: машины ВЫДАЮТСЯ через <see cref="IPoolManager"/> (§12 — фабрика единственная точка
+    /// доступа к пулу), но в пул НЕ ВОЗВРАЩАЮТСЯ: SpawnMatch вызывается один раз на сцену,
+    /// машины живут до её выгрузки (в т.ч. обломками), а per-scene пул умирает вместе со сценой.
+    /// Prewarm не делаем: все Get идут в том же кадре, прогрев ничего не экономит.
+    ///
+    /// Что потребует появление Return (сценарий респавна) — контракт сброса инстанса:
+    /// урон и параметры шейдера повреждений, оторванные детали, водитель/ragdoll с
+    /// перепарентованными костями (см. DriverController.Eject), нитро, состояние AI, VFX на машине.
+    /// ГЛАВНАЯ ловушка: у машины игрока <see cref="EnemyCarController"/> сносится DestroyImmediate,
+    /// а один префаб бывает и игроком, и врагом — инстанс, возвращённый игроком и выданный
+    /// пулом врагу, оказался бы без AI. Return без решения этой проблемы делать нельзя.
+    ///
+    /// Порядок гарантирован: Get из пула → Configure (до инъекции) → InjectGameObject.
     /// Это позволяет Construct читать актуальные _config / _profile / _statsConfig,
     /// а не значения по умолчанию из prefab.
     ///
@@ -36,14 +49,17 @@ namespace FlatOutLike.Factories.Car
         private readonly IEconomyService _economy;
         private readonly CarCatalogConfig _carCatalogConfig;
         private readonly ICarStatsService _carStatsService;
+        private readonly IPoolManager     _pool;
 
         public CarFactory(
             IObjectResolver resolver,
             ICarRegistry registry,
             IEconomyService economy,
             CarCatalogConfig carCatalogConfig,
-            ICarStatsService carStatsService)
+            ICarStatsService carStatsService,
+            IPoolManager pool)
         {
+            _pool = pool;
             _resolver = resolver;
             _registry = registry;
             _economy = economy;
@@ -105,40 +121,47 @@ namespace FlatOutLike.Factories.Car
             if (playerPrefab != null && spawnPoints[0] != null)
             {
                 var sp       = spawnPoints[0];
-                var playerGo = Object.Instantiate(playerPrefab, sp.position, sp.rotation);
-
-                // Префаб описывает «какая машина», роль решает фабрика: каталожная машина
-                // может использоваться и врагом, поэтому на префабе допустим EnemyCarController —
-                // у игрока он сносится. Именно DestroyImmediate и именно ДО InjectGameObject:
-                // обычный Destroy откладывается до конца кадра, и VContainer успел бы вызвать
-                // Construct на AI-компоненте (подписки/регистрации мёртвого контроллера).
-                var playerEnemyAi = playerGo.GetComponent<EnemyCarController>();
-                if (playerEnemyAi != null)
-                    Object.DestroyImmediate(playerEnemyAi);
-
-                // Прогоняем базовые статы через апгрейды ВЫБРАННОЙ машины игрока (per-car
-                // прогресс, §8/§14.3 game-design.md) — работает и для каталожной, и для
-                // фоллбэк-машины: id один и тот же (_economy.SelectedCarId — каталожный путь
-                // резолвит catalogEntry.Id из того же id). Пустой id (пустой каталог и профиль
-                // без выбора) → GetEffectiveStats вернёт baseStats без клона. При активных
-                // апгрейдах это runtime-клон SO: он живёт до domain reload (один на матч,
-                // только у игрока) — осознанный trade-off, без апгрейдов возвращается исходный
-                // ассет без аллокации.
-                var effectiveStats = _carStatsService.GetEffectiveStats(_economy.SelectedCarId, playerBaseStats);
-
-                playerController = playerGo.GetComponent<CarController>();
-                if (playerController != null)
-                    playerController.Configure(0, effectiveStats); // carId игрока = 0
-
-                // InjectGameObject вызывает Construct на всех компонентах.
-                // К этому моменту Configure уже задал _carId и _config.
-                _resolver.InjectGameObject(playerGo);
-
-                if (playerController != null)
+                // Get ставит позицию/поворот ДО активации — Rigidbody стартует в точке спавна.
+                var playerGo = _pool.Get(playerPrefab, sp.position, sp.rotation);
+                if (playerGo == null)
                 {
-                    allCars.Add(playerController);
-                    _registry.Register(playerController, isPlayer: true);
-                    _registry.RegisterName(playerController.CarId, playerDisplayName);
+                    Debug.LogWarning("[CarFactory] Пул не выдал машину игрока. Игрок не заспавнен.");
+                }
+                else
+                {
+                    // Префаб описывает «какая машина», роль решает фабрика: каталожная машина
+                    // может использоваться и врагом, поэтому на префабе допустим EnemyCarController —
+                    // у игрока он сносится. Именно DestroyImmediate и именно ДО InjectGameObject:
+                    // обычный Destroy откладывается до конца кадра, и VContainer успел бы вызвать
+                    // Construct на AI-компоненте (подписки/регистрации мёртвого контроллера).
+                    var playerEnemyAi = playerGo.GetComponent<EnemyCarController>();
+                    if (playerEnemyAi != null)
+                        Object.DestroyImmediate(playerEnemyAi);
+
+                    // Прогоняем базовые статы через апгрейды ВЫБРАННОЙ машины игрока (per-car
+                    // прогресс, §8/§14.3 game-design.md) — работает и для каталожной, и для
+                    // фоллбэк-машины: id один и тот же (_economy.SelectedCarId — каталожный путь
+                    // резолвит catalogEntry.Id из того же id). Пустой id (пустой каталог и профиль
+                    // без выбора) → GetEffectiveStats вернёт baseStats без клона. При активных
+                    // апгрейдах это runtime-клон SO: он живёт до domain reload (один на матч,
+                    // только у игрока) — осознанный trade-off, без апгрейдов возвращается исходный
+                    // ассет без аллокации.
+                    var effectiveStats = _carStatsService.GetEffectiveStats(_economy.SelectedCarId, playerBaseStats);
+
+                    playerController = playerGo.GetComponent<CarController>();
+                    if (playerController != null)
+                        playerController.Configure(0, effectiveStats); // carId игрока = 0
+
+                    // InjectGameObject вызывает Construct на всех компонентах.
+                    // К этому моменту Configure уже задал _carId и _config.
+                    _resolver.InjectGameObject(playerGo);
+
+                    if (playerController != null)
+                    {
+                        allCars.Add(playerController);
+                        _registry.Register(playerController, isPlayer: true);
+                        _registry.RegisterName(playerController.CarId, playerDisplayName);
+                    }
                 }
             }
             else
@@ -188,7 +211,12 @@ namespace FlatOutLike.Factories.Car
                     continue;
                 }
 
-                var enemyGo = Object.Instantiate(entry.carPrefab, sp.position, sp.rotation);
+                var enemyGo = _pool.Get(entry.carPrefab, sp.position, sp.rotation);
+                if (enemyGo == null)
+                {
+                    Debug.LogWarning($"[CarFactory] Пул не выдал машину врага {i}. Враг пропущен.");
+                    continue;
+                }
 
                 var carController   = enemyGo.GetComponent<CarController>();
                 var enemyController = enemyGo.GetComponent<EnemyCarController>();

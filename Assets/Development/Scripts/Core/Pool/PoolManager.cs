@@ -38,6 +38,18 @@ namespace FlatOutLike.Core.Pool
         }
 
         /// <inheritdoc/>
+        public GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation)
+        {
+            if (prefab == null)
+            {
+                Debug.LogWarning("[PoolManager] Get(position, rotation): prefab равен null.");
+                return null;
+            }
+
+            return GetOrCreatePool(prefab).Get(position, rotation);
+        }
+
+        /// <inheritdoc/>
         public void Return(GameObject instance)
         {
             if (instance == null) return;

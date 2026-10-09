@@ -34,6 +34,30 @@ namespace FlatOutLike.Core.Pool
             return go;
         }
 
+        /// <summary>
+        /// Возвращает активный инстанс, поставленный в <paramref name="position"/> / <paramref name="rotation"/>.
+        /// Из очереди: поза ставится, пока объект выключен, активация — последней.
+        /// Свежий инстанс: создаётся сразу в заданной позе (Awake/OnEnable первичной активации
+        /// префаба проходят уже там), затем выключается и активируется повторно — Rigidbody
+        /// и коллайдеры никогда не видят позу корня префаба.
+        /// </summary>
+        public GameObject Get(Vector3 position, Quaternion rotation)
+        {
+            GameObject go;
+            if (_queue.Count > 0)
+            {
+                go = _queue.Dequeue();
+                go.transform.SetPositionAndRotation(position, rotation);
+            }
+            else
+            {
+                go = CreateInstance(position, rotation);
+            }
+
+            go.SetActive(true);
+            return go;
+        }
+
         /// <summary>Деактивирует инстанс и кладёт его обратно в очередь.</summary>
         public void Return(GameObject instance)
         {
@@ -45,10 +69,20 @@ namespace FlatOutLike.Core.Pool
             _queue.Enqueue(instance);
         }
 
-        /// <summary>Инстанцирует новый неактивный объект с маркером <see cref="PooledInstance"/>.</summary>
+        /// <summary>Инстанцирует новый неактивный объект в позе корня префаба.</summary>
         private GameObject CreateInstance()
         {
-            var go = Object.Instantiate(_prefab);
+            var prefabTransform = _prefab.transform;
+            return CreateInstance(prefabTransform.position, prefabTransform.rotation);
+        }
+
+        /// <summary>
+        /// Инстанцирует новый неактивный объект с маркером <see cref="PooledInstance"/> сразу
+        /// в заданной позе: Instantiate с позой — Awake/OnEnable и создание физики идут в ней.
+        /// </summary>
+        private GameObject CreateInstance(Vector3 position, Quaternion rotation)
+        {
+            var go = Object.Instantiate(_prefab, position, rotation);
             go.SetActive(false);
 
             // Не использовать ?? с Unity-объектами: fake-null обходит перегруженный ==.

@@ -38,8 +38,9 @@ namespace FlatOutLike.Bridge
         private void OnEnable()
         {
             // Страховка на случай переиспользования машины (пул/респавн): сейчас CarFactory
-            // машины не пулит, но перманентный SetActive(false) двигателя без обратного пути
-            // сделал бы переиспользованную машину немой навсегда.
+            // выдаёт машины из пула, но в пул их не возвращает, — однако перманентный
+            // SetActive(false) двигателя без обратного пути сделал бы возвращённую и
+            // переиспользованную машину немой навсегда.
             _engineStopped = false;
             if (_engineSound != null && !_engineSound.gameObject.activeSelf)
                 _engineSound.gameObject.SetActive(true);
