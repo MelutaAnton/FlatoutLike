@@ -409,6 +409,12 @@ namespace FlatOutLike.Installers
             // зависит только от сервисов, зарегистрированных выше безусловно.
             builder.RegisterEntryPoint<AudioService>().As<IAudioService>();
 
+#if UNITY_EDITOR
+            // Dev-чит «5555» → +1000 монет (только редактор, в билд не попадает). Регистрируется
+            // БЕЗУСЛОВНО во всех сценах — зависит только от безусловного IEconomyService.
+            builder.RegisterEntryPoint<FlatOutLike.Services.Dev.DevCoinsCheat>();
+#endif
+
             if (_uiClickSoundRelay != null)
                 builder.RegisterComponent(_uiClickSoundRelay);
 
