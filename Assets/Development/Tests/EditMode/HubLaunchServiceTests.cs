@@ -4,6 +4,7 @@ using FlatOutLike.Data.Configs.Progression;
 using FlatOutLike.Models;
 using FlatOutLike.Services.Flow;
 using FlatOutLike.Services.Hub;
+using FlatOutLike.Services.Progression;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ namespace FlatOutLike.Tests
 
         private BuildingCatalogConfig _catalog;
         private FakeGameFlowService _flow;
+        private FakeBuildProgressService _build;
         private HubLaunchService _service;
 
         [SetUp]
@@ -39,7 +41,8 @@ namespace FlatOutLike.Tests
             });
 
             _flow = new FakeGameFlowService(GameState.BaseHub);
-            _service = new HubLaunchService(_catalog, _flow);
+            _build = new FakeBuildProgressService();
+            _service = new HubLaunchService(_catalog, _flow, _build);
         }
 
         [TearDown]
@@ -166,6 +169,41 @@ namespace FlatOutLike.Tests
 
             Assert.IsFalse(_service.TryGetActiveZone(out _));
             Assert.AreEqual(0, _flow.ChangeStateCalls.Count);
+        }
+
+        // ── Гейт стройкой (Шаг 12a) ─────────────────────────────────────────────
+
+        [Test]
+        public void EnterZone_UnbuiltBuilding_DoesNotLaunch()
+        {
+            _build.Unbuilt.Add(BuildingId.HighJumpTower);
+
+            _service.EnterZone(BuildingId.HighJumpTower);
+            _service.Advance(2f);
+
+            Assert.IsFalse(_service.TryGetActiveZone(out _));
+            Assert.AreEqual(0, _flow.ChangeStateCalls.Count);
+        }
+
+        [Test]
+        public void EnterZone_BuiltWhileInside_NoAutoLaunch_ReenterLaunches()
+        {
+            _build.Unbuilt.Add(BuildingId.HighJumpTower);
+            _service.EnterZone(BuildingId.HighJumpTower);
+
+            // Стройка завершилась, персонаж стоит в зоне — повторного OnTriggerEnter нет, запуска нет.
+            _build.Unbuilt.Remove(BuildingId.HighJumpTower);
+            _service.Advance(2f);
+
+            Assert.AreEqual(0, _flow.ChangeStateCalls.Count, "Завершение стройки не должно авто-запускать режим.");
+
+            // Перезаход в зону — обычный запуск по таймеру.
+            _service.ExitZone(BuildingId.HighJumpTower);
+            _service.EnterZone(BuildingId.HighJumpTower);
+            _service.Advance(ConfirmSeconds);
+
+            Assert.AreEqual(1, _flow.ChangeStateCalls.Count);
+            Assert.AreEqual(GameState.StuntsHighJumpDriving, _flow.ChangeStateCalls[0]);
         }
 
         // ── Время только в BaseHub ────────────────────────────────────────────────
@@ -330,6 +368,26 @@ namespace FlatOutLike.Tests
             public void Push(GameState next) { }
             public void Pop() { }
             public void Tick() { }
+        }
+
+        /// <summary>
+        /// Фейк стройки: по умолчанию ВСЁ построено (старые тесты проверяют только таймер),
+        /// недостроенные здания тест кладёт в Unbuilt.
+        /// </summary>
+        private sealed class FakeBuildProgressService : IBuildProgressService
+        {
+            public readonly HashSet<BuildingId> Unbuilt = new HashSet<BuildingId>();
+
+            public bool IsBuilt(BuildingId id) => !Unbuilt.Contains(id);
+            public bool IsUnderConstruction(BuildingId id) => Unbuilt.Contains(id);
+
+            public int GetCompletedStages(BuildingId id) => 0;
+            public int GetTotalStages(BuildingId id) => 0;
+            public int GetInvestedInStage(BuildingId id) => 0;
+            public int GetCurrentStageCost(BuildingId id) => 0;
+            public int GetCurrentIncomePerMinute(BuildingId id) => 0;
+            public void EnterZone(BuildingId id) { }
+            public void ExitZone(BuildingId id) { }
         }
     }
 }

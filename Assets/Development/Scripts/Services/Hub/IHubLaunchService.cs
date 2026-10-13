@@ -6,10 +6,13 @@ namespace FlatOutLike.Services.Hub
     /// Запуск режимов из BaseHub (game-design §6 «Запуск режимов»): персонаж заходит в зону
     /// запуска постройки, стоит в ней LaunchConfirmSeconds — и GameFlow переключается в режим зоны.
     /// Триггеры (LaunchZoneController) только сообщают о входе/выходе; таймер и решение — здесь.
+    /// Запуск доступен только у построенного здания (IBuildProgressService.IsBuilt, шаг 12a): пока
+    /// здание строится, та же зона принимает вложения. Завершение стройки запуск не начинает —
+    /// персонаж перезаходит в зону.
     /// </summary>
     public interface IHubLaunchService
     {
-        /// <summary>Персонаж вошёл в зону постройки. Зона без HasLaunchZone или выключенная — игнор.</summary>
+        /// <summary>Персонаж вошёл в зону постройки. Зона без HasLaunchZone, выключенная или недостроенная — игнор.</summary>
         void EnterZone(BuildingId id);
 
         /// <summary>

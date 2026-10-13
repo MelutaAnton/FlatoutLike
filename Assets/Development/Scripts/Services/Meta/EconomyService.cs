@@ -156,5 +156,28 @@ namespace FlatOutLike.Services.Meta
 
             _eventBus.Publish(new CurrencyChangedEvent(oldValue, _meta.Profile.Coins, coinAmount));
         }
+
+        public bool TrySpend(int amount) => TrySpend(amount, true);
+
+        public bool TrySpend(int amount, bool persist)
+        {
+            if (amount <= 0)
+                return false;
+
+            int oldValue = Coins;
+            if (oldValue < amount)
+                return false;
+
+            // Тот же паттерн, что у покупок: профиль → Save → событие баланса.
+            // persist = false — Save делает вызывающий в своей точке flush (см. IEconomyService).
+            int newValue = oldValue - amount;
+            _meta.Profile.Coins = newValue;
+            if (persist)
+                _meta.Save();
+
+            _eventBus.Publish(new CurrencyChangedEvent(oldValue, newValue, -amount));
+
+            return true;
+        }
     }
 }

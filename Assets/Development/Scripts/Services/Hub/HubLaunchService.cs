@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FlatOutLike.Data.Configs.Progression;
 using FlatOutLike.Models;
 using FlatOutLike.Services.Flow;
+using FlatOutLike.Services.Progression;
 using UnityEngine;
 using VContainer.Unity;
 
@@ -14,11 +15,15 @@ namespace FlatOutLike.Services.Hub
     /// (отсчёт с нуля) — повторного OnTriggerEnter для неё не будет. Время идёт только
     /// в состоянии BaseHub (в паузе отсчёт стоит). По истечении LaunchConfirmSeconds —
     /// ровно один ChangeState(LaunchState), после чего зона деактивируется, а занятые зоны очищаются.
+    /// Гейт стройкой (12a): зона недостроенного здания запуск не начинает (IBuildProgressService.IsBuilt).
+    /// Авто-запуска при завершении стройки нет — персонаж стоит в зоне, но OnTriggerEnter уже был;
+    /// чтобы запустить режим, нужно выйти и перезайти в зону (без внезапного ухода со стройки в режим).
     /// </summary>
     public sealed class HubLaunchService : IHubLaunchService, ITickable
     {
         private readonly BuildingCatalogConfig _catalog;
         private readonly IGameFlowService _gameFlow;
+        private readonly IBuildProgressService _build;
 
         // Занятые зоны в порядке входа; последняя — активная. Недопустимые id сюда не попадают.
         private readonly List<BuildingId> _occupiedZones = new List<BuildingId>();
@@ -28,10 +33,11 @@ namespace FlatOutLike.Services.Hub
         private GameState _activeLaunchState;
         private float _elapsed;
 
-        public HubLaunchService(BuildingCatalogConfig catalog, IGameFlowService gameFlow)
+        public HubLaunchService(BuildingCatalogConfig catalog, IGameFlowService gameFlow, IBuildProgressService build)
         {
             _catalog = catalog;
             _gameFlow = gameFlow;
+            _build = build;
         }
 
         public float Progress01
@@ -51,6 +57,9 @@ namespace FlatOutLike.Services.Hub
         {
             if (!_catalog.TryGetEntry(id, out var entry)) return;
             if (!entry.Enabled || !entry.HasLaunchZone) return;
+
+            // Недостроенное здание: та же зона сейчас принимает вложения (BuildProgressService), не запуск.
+            if (!_build.IsBuilt(id)) return;
 
             // Повторный вход не дублирует запись: id уходит в конец списка (последняя вошедшая).
             _occupiedZones.Remove(id);

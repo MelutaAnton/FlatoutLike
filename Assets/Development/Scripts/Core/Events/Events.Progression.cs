@@ -20,4 +20,56 @@ namespace FlatOutLike.Core.Events
             XpAmount = xpAmount;
         }
     }
+
+    /// <summary>
+    /// Публикуется <c>BuildProgressService</c> после каждой списанной пачки потокового вложения
+    /// (game-design §6). Ценник здания (BuildingPanelView) обновляет «осталось X» без опроса.
+    /// </summary>
+    public readonly struct BuildingInvestProgressEvent
+    {
+        public readonly BuildingId Id;
+        public readonly int CompletedStages;
+        public readonly int InvestedInStage;
+        public readonly int StageCost;
+
+        public BuildingInvestProgressEvent(BuildingId id, int completedStages, int investedInStage, int stageCost)
+        {
+            Id = id;
+            CompletedStages = completedStages;
+            InvestedInStage = investedInStage;
+            StageCost = stageCost;
+        }
+    }
+
+    /// <summary>
+    /// Публикуется <c>BuildProgressService</c>, когда этап стройки оплачен полностью.
+    /// BuildSiteController меняет визуальную стадию, ценник — rate и следующий этап.
+    /// </summary>
+    public readonly struct BuildingStageInvestedEvent
+    {
+        public readonly BuildingId Id;
+        public readonly int CompletedStages;
+        public readonly int TotalStages;
+
+        public BuildingStageInvestedEvent(BuildingId id, int completedStages, int totalStages)
+        {
+            Id = id;
+            CompletedStages = completedStages;
+            TotalStages = totalStages;
+        }
+    }
+
+    /// <summary>
+    /// Публикуется <c>BuildProgressService</c> ровно один раз, когда завершён последний этап здания.
+    /// Разблокировки (запуск режима, доход) подписываются сюда — сервис стройки GameFlow не вызывает.
+    /// </summary>
+    public readonly struct BuildingCompletedEvent
+    {
+        public readonly BuildingId Id;
+
+        public BuildingCompletedEvent(BuildingId id)
+        {
+            Id = id;
+        }
+    }
 }

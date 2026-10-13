@@ -15,4 +15,5 @@
 - [Hub camera outside rig](project-hub-camera-outside-rig.md) — камера BaseHub вне ICameraRig/CameraService (статичный Priority); с 11b сообщения в мета-сценах — Log
 - [Scene transition window](hotspot_scene_transition_window.md) — старая сцена живёт под экраном загрузки при сменённом FSM; 11d закрыл IsLoading-гейтами; остаток — error-path LoadSceneAsync
 - [Hub launch zones](project-hub-launch-zones.md) — 11b: зона HighJump без гейта стройкой — НЕ отклонение (§19 шаг 11); на шаге 12 гейт должен быть декларативным; зоны не должны перекрываться (сервис без fallback)
+- [Step 12a build loop](project-step12a-build-loop.md) — R1 FAIL→R2 PASS; flush-модель сейва стройки, Dispose-flush vs per-scene Meta (порядок сцен), чек для 12b/13
 - [Pool create lifecycle](hotspot_pool_create_lifecycle.md) — пул инстанцирует активный prefab: Awake/OnEnable в позе префаба + OnDisable до Construct; OnDisable обязан быть null-guarded

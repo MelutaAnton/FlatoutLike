@@ -306,6 +306,85 @@ namespace FlatOutLike.Tests
             Assert.AreEqual(0, _currencyEvents.Count);
         }
 
+        // ── Тесты: списание (Шаг 12a, вложение в стройку) ───────────────────────
+
+        [Test]
+        public void TrySpend_EnoughCoins_DeductsSavesAndPublishesNegativeDelta()
+        {
+            _meta.Profile.Coins = 50;
+
+            Assert.IsTrue(_service.TrySpend(20));
+
+            Assert.AreEqual(30, _service.Coins);
+            Assert.AreEqual(1, _meta.SaveCallCount, "Списание сохраняет профиль (согласованность с save-блоком хаба).");
+            Assert.AreEqual(1, _currencyEvents.Count);
+            Assert.AreEqual(50, _currencyEvents[0].OldValue);
+            Assert.AreEqual(30, _currencyEvents[0].NewValue);
+            Assert.AreEqual(-20, _currencyEvents[0].Delta);
+        }
+
+        [Test]
+        public void TrySpend_PersistFalse_DeductsAndPublishesWithoutSave()
+        {
+            _meta.Profile.Coins = 50;
+
+            Assert.IsTrue(_service.TrySpend(20, persist: false));
+
+            Assert.AreEqual(30, _service.Coins, "Баланс в памяти списан.");
+            Assert.AreEqual(0, _meta.SaveCallCount, "persist: false — профиль сохраняет вызывающий.");
+            Assert.AreEqual(1, _currencyEvents.Count);
+            Assert.AreEqual(50, _currencyEvents[0].OldValue);
+            Assert.AreEqual(30, _currencyEvents[0].NewValue);
+            Assert.AreEqual(-20, _currencyEvents[0].Delta);
+        }
+
+        [Test]
+        public void TrySpend_PersistFalse_NotEnoughCoins_ReturnsFalseWithoutChanges()
+        {
+            _meta.Profile.Coins = 10;
+
+            Assert.IsFalse(_service.TrySpend(11, persist: false));
+
+            Assert.AreEqual(10, _service.Coins);
+            Assert.AreEqual(0, _meta.SaveCallCount);
+            Assert.AreEqual(0, _currencyEvents.Count);
+        }
+
+        [Test]
+        public void TrySpend_ExactBalance_DeductsToZero()
+        {
+            _meta.Profile.Coins = 20;
+
+            Assert.IsTrue(_service.TrySpend(20));
+
+            Assert.AreEqual(0, _service.Coins);
+        }
+
+        [Test]
+        public void TrySpend_NotEnoughCoins_ReturnsFalseWithoutChanges()
+        {
+            _meta.Profile.Coins = 10;
+
+            Assert.IsFalse(_service.TrySpend(11));
+
+            Assert.AreEqual(10, _service.Coins);
+            Assert.AreEqual(0, _meta.SaveCallCount);
+            Assert.AreEqual(0, _currencyEvents.Count);
+        }
+
+        [Test]
+        public void TrySpend_NonPositiveAmount_ReturnsFalseWithoutChanges()
+        {
+            _meta.Profile.Coins = 10;
+
+            Assert.IsFalse(_service.TrySpend(0));
+            Assert.IsFalse(_service.TrySpend(-5));
+
+            Assert.AreEqual(10, _service.Coins);
+            Assert.AreEqual(0, _meta.SaveCallCount);
+            Assert.AreEqual(0, _currencyEvents.Count);
+        }
+
         // ── Хелперы ─────────────────────────────────────────────────────────────
 
         private CarCatalogConfig MakeCarCatalog(params (string id, int price)[] cars)

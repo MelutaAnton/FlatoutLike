@@ -22,8 +22,9 @@ MonoBehaviour:
     VisualFootprint: 10
     HasLaunchZone: 1
     LaunchState: 3
-    LaunchZoneOffset: {x: 0, y: 0, z: 8.5}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 8.5}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   - Id: 1
     Position: {x: -15, y: 0, z: 4}
     YRotation: 90
@@ -33,8 +34,9 @@ MonoBehaviour:
     VisualFootprint: 8
     HasLaunchZone: 1
     LaunchState: 1
-    LaunchZoneOffset: {x: 0, y: 0, z: 7.5}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 7.5}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   - Id: 2
     Position: {x: 15, y: 0, z: 4}
     YRotation: -90
@@ -44,8 +46,18 @@ MonoBehaviour:
     VisualFootprint: 8
     HasLaunchZone: 1
     LaunchState: 4
-    LaunchZoneOffset: {x: 0, y: 0, z: 7.5}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 7.5}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages:
+    - Cost: 25
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 0
+    - Cost: 40
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 0
+    - Cost: 60
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 0
   - Id: 3
     Position: {x: -15, y: 0, z: -8}
     YRotation: 90
@@ -55,8 +67,18 @@ MonoBehaviour:
     VisualFootprint: 7
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 7}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages:
+    - Cost: 60
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 5
+    - Cost: 100
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 8
+    - Cost: 140
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 12
   - Id: 4
     Position: {x: 15, y: 0, z: -8}
     YRotation: -90
@@ -66,8 +88,18 @@ MonoBehaviour:
     VisualFootprint: 7
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 7}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages:
+    - Cost: 100
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 8
+    - Cost: 150
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 12
+    - Cost: 200
+      StagePrefab: {fileID: 0}
+      IncomePerMinute: 18
   - Id: 5
     Position: {x: -16, y: 0, z: -18}
     YRotation: 0
@@ -77,8 +109,9 @@ MonoBehaviour:
     VisualFootprint: 6
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 0}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   - Id: 6
     Position: {x: -8, y: 0, z: -18}
     YRotation: 0
@@ -88,8 +121,9 @@ MonoBehaviour:
     VisualFootprint: 6
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 0}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   - Id: 7
     Position: {x: 0, y: 0, z: -18}
     YRotation: 0
@@ -99,8 +133,9 @@ MonoBehaviour:
     VisualFootprint: 6
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 0}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   - Id: 8
     Position: {x: 8, y: 0, z: -18}
     YRotation: 0
@@ -110,8 +145,9 @@ MonoBehaviour:
     VisualFootprint: 6
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 0}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   - Id: 9
     Position: {x: 16, y: 0, z: -18}
     YRotation: 0
@@ -121,11 +157,14 @@ MonoBehaviour:
     VisualFootprint: 6
     HasLaunchZone: 0
     LaunchState: 0
-    LaunchZoneOffset: {x: 0, y: 0, z: 0}
-    LaunchZoneSize: {x: 6, y: 3, z: 6}
+    ZoneOffset: {x: 0, y: 0, z: 0}
+    ZoneSize: {x: 6, y: 3, z: 6}
+    Stages: []
   _characterSpawnPosition: {x: 0, y: 0, z: 0}
   _characterSpawnYRotation: 0
   _comingSoonLabel: COMING SOON
   _launchConfirmSeconds: 1
   _launchIndicatorHeight: 3
   _presentationDefaultsApplied: 1
+  _vacantStagePrefab: {fileID: 0}
+  _stagesDefaultsApplied: 1

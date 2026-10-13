@@ -40,8 +40,11 @@ namespace FlatOutLike.Editor.Hub
     ///   • Main Camera (CinemachineBrain + единственный AudioListener) и CM_HubCamera
     ///     (CinemachineCamera + Follow + RotationComposer + CinemachineHubCameraBehaviour, Priority=Active);
     ///   • GameLifetimeScope + GameBootstrap, UICanvas + EventSystem;
-    ///   • (11b) Buildings/&lt;Id&gt;/LaunchZone (триггер + kinematic Rigidbody + LaunchZoneController + Marker)
-    ///     для entry с HasLaunchZone; UICanvas/HubHud (CoinsPanel + PlayButton);
+    ///   • (11b/12a) Buildings/&lt;Id&gt;/Zone (триггер + kinematic Rigidbody + Marker; LaunchZoneController при
+    ///     HasLaunchZone, InvestZoneController при StageCount &gt; 0) у каждого Enabled-здания с зоной;
+    ///     (12a) Buildings/&lt;Id&gt;/Stages/Stage_0..Stage_N (пустырь -> заглушки -> финальный визуал),
+    ///     BuildSiteController на корне, Panel (world-space BuildingPanelView) у достраиваемых зданий;
+    ///     UICanvas/HubHud (CoinsPanel + PlayButton);
     ///     LaunchConfirmCanvas (world-space круг подтверждения запуска);
     ///   • connected-инстансы префабов MobileInputCanvas / PauseOverlayCanvas / AudioPlayer;
     ///   • прошивка полей GameLifetimeScope; Build Settings (Boot первой, BaseHub второй).
@@ -70,7 +73,8 @@ namespace FlatOutLike.Editor.Hub
         private const string MarkerMaterialPath = "Assets/Development/Art/Materials/HubLaunchZoneMarker.mat";
         private const string UrpUnlitShader     = "Universal Render Pipeline/Unlit";
 
-        private const string LaunchZoneName    = "LaunchZone";
+        private const string ZoneName          = "Zone";
+        private const string LegacyZoneName    = "LaunchZone"; // имя зоны до 12a — переименовывается в Zone
         private const string MarkerName        = "Marker";
         private const float  MarkerHeight      = 0.02f; // над землёй, чтобы не было z-fighting
 
@@ -110,6 +114,35 @@ namespace FlatOutLike.Editor.Hub
         private const float LabelDefaultHeight = 3f;   // высота, если у площадки нет визуала, м
         private const float LabelFallbackPitchDeg = 50f; // поворот, если HubCameraConfig не найден
         private const float LabelFontSize      = 9f;
+
+        // ── Шаг 12a: стадии стройки и панель площадки ───────────────────────
+        private const string StagesName        = "Stages";
+        private const string StageNamePrefix   = "Stage_";
+        private const string PlaceholderName   = "Placeholder";
+        private const string PanelName         = "Panel";
+
+        private const string StageMaterialsRoot   = "Assets/Development/Art/Materials/";
+        private const string VacantMaterialPath   = StageMaterialsRoot + "HubStageVacant.mat";
+        private const string PlaceholderMaterialPrefix = StageMaterialsRoot + "HubStagePlaceholder_";
+        private const string UrpLitShader         = "Universal Render Pipeline/Lit";
+
+        private const float  DefaultPlaceholderFootprint = 6f;  // габарит заглушки, если VisualFootprint = 0, м
+        private const float  VacantHeight         = 0.1f;       // плоский пустырь, м
+        private const float  PlaceholderHeightK   = 0.25f;      // высота заглушки стадии k из N = footprint * K * k / N
+        private static readonly Color VacantColor = new Color(0.16f, 0.14f, 0.12f, 1f);
+        // Оттенки серого заглушек по индексу стадии (k-1): чем выше стадия, тем светлее.
+        private static readonly float[] PlaceholderShades = { 0.42f, 0.52f, 0.62f, 0.72f };
+
+        private const float  PanelPixelsW      = 300f;  // размер world-space канваса панели («пиксели»)
+        private const float  PanelPixelsH      = 120f;
+        private const float  PanelScale        = 0.01f; // 300 px * 0.01 = 3 м шириной
+        private const float  PanelAboveLabel   = 1.8f;  // подъём центра панели над центром подписи, м (фоллбэк без зоны)
+        private const float  PanelHeightAboveZone = 2.5f; // высота центра панели над землёй в центре зоны здания, м
+        private static readonly Color PanelTrackColor = new Color(0f, 0f, 0f, 0.6f);
+        private static readonly Color PanelFillColor  = new Color(1f, 0.78f, 0.2f, 1f);
+        private static readonly Color PanelRateColor  = new Color(0.55f, 1f, 0.55f, 1f);
+        private const float  PanelFillInset    = 5f;
+        private const string BuiltinSpritePath = "UI/Skin/UISprite.psd";
 
         [MenuItem("FlatOutLike/Hub/Build Base Hub Layout")]
         public static void BuildBaseHubLayout()
@@ -194,6 +227,8 @@ namespace FlatOutLike.Editor.Hub
             // Оба вызова идемпотентны и не затирают тюнинг; выполняются ДО OpenScene, каталог дальше читается заново.
             CreateBuildingSoSetEditor.MigrateLaunchZones();
             CreateBuildingSoSetEditor.MigrateBuildingPresentation();
+            // 12a: стадии стройки (цены/доход) и зоны вложения — одноразово по флагу в каталоге.
+            CreateBuildingSoSetEditor.MigrateBuildStages();
             AssetDatabase.SaveAssets();
             BuildMobileInputCanvasEditor.EnsureHubGroupInactiveInPrefab();
         }
@@ -299,6 +334,9 @@ namespace FlatOutLike.Editor.Hub
 
             RemoveOrphanBuildings(root.transform, catalog);
 
+            // Пустырь стадии 0 — общий для всех площадок (может быть пуст -> примитив).
+            GameObject vacantPrefab = ReadVacantStagePrefab(catalog);
+
             foreach (var entry in catalog.Entries)
             {
                 processed++;
@@ -310,15 +348,16 @@ namespace FlatOutLike.Editor.Hub
                 go.transform.localRotation = Quaternion.Euler(0f, entry.YRotation, 0f);
                 go.transform.localScale = Vector3.one;
 
-                var visual = SyncVisual(go, entry);
-                if (visual != null && entry.VisualFootprint > 0f)
-                    FitVisual(go, visual, entry);
+                // Стадии: Stages/Stage_0..Stage_N (визуал здания переезжает в последнюю стадию) +
+                // BuildSiteController с прошитым списком стадий. Возвращает позицию подписи над контентом.
+                var labelLocalPos = SyncStages(go, entry, vacantPrefab);
+                SyncNameLabel(go, entry, catalog.ComingSoonLabel, labelLocalPos, labelRotation);
 
-                SyncNameLabel(go, entry, catalog.ComingSoonLabel, visual, labelRotation);
-
-                if (entry.HasLaunchZone && entry.Enabled && markerMaterial == null)
+                if (HasZone(entry) && markerMaterial == null)
                     markerMaterial = EnsureMarkerMaterial();
-                SyncLaunchZone(go, entry, markerMaterial);
+                SyncZone(go, entry, markerMaterial);
+
+                SyncPanel(go, entry, labelLocalPos, labelRotation);
             }
 
             Debug.Log("[Editor] Buildings: обработано зданий — " + processed + ".");
@@ -326,10 +365,14 @@ namespace FlatOutLike.Editor.Hub
             CheckLaunchZoneOverlaps(catalog);
         }
 
+        /// <summary>У Enabled-здания есть зона (запуска и/или вложения): ненулевой ZoneSize.</summary>
+        private static bool HasZone(BuildingCatalogConfig.BuildingEntry entry) =>
+            entry.Enabled && entry.ZoneSize.sqrMagnitude > 0.0001f;
+
         /// <summary>
-        /// Проверка XZ-перекрытия зон запуска всех entry с HasLaunchZone &amp;&amp; Enabled. Перекрытия нежелательны:
+        /// Проверка XZ-перекрытия зон всех Enabled-зданий (запуска и вложения). Перекрытия нежелательны:
         /// персонаж, стоя на стыке, может активировать соседнюю зону. Зона — прямоугольник
-        /// LaunchZoneSize (x/z) вокруг GetLaunchZoneWorldCenter(), повёрнутый на YRotation здания
+        /// ZoneSize (x/z) вокруг GetZoneWorldCenter(), повёрнутый на YRotation здания
         /// (триггер наследует поворот корня). Для ±90/270° габарит x/z меняется местами, для произвольного
         /// угла берётся AABB повёрнутого прямоугольника — консервативная оценка (возможны ложные Warning,
         /// пропусков нет). Только диагностика: каталог не правится.
@@ -344,15 +387,15 @@ namespace FlatOutLike.Editor.Hub
 
             foreach (var entry in catalog.Entries)
             {
-                if (!(entry.HasLaunchZone && entry.Enabled))
+                if (!HasZone(entry))
                     continue;
 
-                Vector3 c = entry.GetLaunchZoneWorldCenter();
+                Vector3 c = entry.GetZoneWorldCenter();
                 float rad = entry.YRotation * Mathf.Deg2Rad;
                 float cos = Mathf.Abs(Mathf.Cos(rad));
                 float sin = Mathf.Abs(Mathf.Sin(rad));
-                float hx = entry.LaunchZoneSize.x * 0.5f;
-                float hz = entry.LaunchZoneSize.z * 0.5f;
+                float hx = entry.ZoneSize.x * 0.5f;
+                float hz = entry.ZoneSize.z * 0.5f;
 
                 // AABB повёрнутого прямоугольника; при 90/270° даёт ровно перестановку (hx <-> hz).
                 // Плюс радиус капсулы персонажа: триггер срабатывает при касании краем капсулы,
@@ -374,13 +417,13 @@ namespace FlatOutLike.Editor.Hub
                         continue;
 
                     overlaps++;
-                    Debug.LogWarning("[Editor] Зоны запуска " + ids[i] + " и " + ids[j] +
-                                     " перекрываются — раздвинь Position/LaunchZoneOffset/LaunchZoneSize в каталоге.");
+                    Debug.LogWarning("[Editor] Зоны " + ids[i] + " и " + ids[j] +
+                                     " перекрываются — раздвинь Position/ZoneOffset/ZoneSize в каталоге.");
                 }
             }
 
             if (overlaps == 0)
-                Debug.Log("[Editor] Зоны запуска: перекрытий нет (проверено зон — " + ids.Count + ").");
+                Debug.Log("[Editor] Зоны: перекрытий нет (проверено зон — " + ids.Count + ").");
         }
 
         /// <summary>
@@ -406,45 +449,347 @@ namespace FlatOutLike.Editor.Hub
             }
         }
 
+        // ── Стадии стройки (12a) ────────────────────────────────────────────────
+
         /// <summary>
-        /// Гарантирует ровно один инстанс entry.VisualPrefab внутри здания; инстансы другого
-        /// префаба (после смены визуала в каталоге) заменяются.
+        /// Buildings/&lt;Id&gt;/Stages/Stage_0..Stage_N (контейнеры с единичным трансформом, контент — ребёнок):
+        ///   • !Enabled (заглушка): один Stage_0 = пустырь;
+        ///   • Enabled, StageCount == 0 (построено со старта): один Stage_0 = визуал здания;
+        ///   • Enabled, StageCount = N &gt; 0: Stage_0 = пустырь, Stage_k (1..N-1) = Stages[k-1].StagePrefab или
+        ///     заглушка, Stage_N = Stages[N-1].StagePrefab, иначе визуал здания (существующий инстанс
+        ///     VisualPrefab переезжает из корня здания — не дублируется).
+        /// Включён только Stage_0 — остальные выключает/включает рантайм. Также прошивает BuildSiteController.
+        /// Возвращает локальную позицию подписи (над контентом ПОСЛЕДНЕЙ стадии) — считается, пока все
+        /// стадии ещё активны, чтобы bounds не зависели от activeSelf.
         /// </summary>
-        private static GameObject SyncVisual(GameObject building, BuildingCatalogConfig.BuildingEntry entry)
+        private static Vector3 SyncStages(GameObject building, BuildingCatalogConfig.BuildingEntry entry,
+            GameObject vacantPrefab)
         {
-            if (entry.VisualPrefab == null)
+            var stagesGo = FindOrCreateChild(building.transform, StagesName);
+            ResetLocal(stagesGo.transform);
+
+            bool isStub = !entry.Enabled;
+            int stageCount = isStub ? 0 : entry.StageCount;
+            int total = stageCount > 0 ? stageCount + 1 : 1;
+
+            float footprint = entry.VisualFootprint > 0f ? entry.VisualFootprint : DefaultPlaceholderFootprint;
+            // Заглушки наследуют «твёрдость» текущего визуала: есть коллайдеры у VisualPrefab — оставляем BoxCollider.
+            bool keepPlaceholderCollider = entry.VisualPrefab != null &&
+                                           entry.VisualPrefab.GetComponentInChildren<Collider>(true) != null;
+
+            var roots = new GameObject[total];
+            GameObject lastContent = null;
+
+            for (int i = 0; i < total; i++)
             {
-                Debug.Log("[Editor] " + entry.Id + ": VisualPrefab в каталоге не задан — визуал не создаётся.");
-                return null;
+                var container = FindOrCreateChild(stagesGo.transform, StageNamePrefix + i);
+                ResetLocal(container.transform);
+                if (!container.activeSelf)
+                {
+                    Undo.RecordObject(container, "Activate Stage While Building");
+                    container.SetActive(true); // на время сборки — потом выставим итоговое состояние
+                }
+                roots[i] = container;
+
+                GameObject content;
+                if (stageCount == 0)
+                {
+                    content = isStub
+                        ? SyncVacantContent(container.transform, building.transform, entry, vacantPrefab, footprint)
+                        : SyncPrefabContent(container.transform, building.transform, entry, entry.VisualPrefab);
+                }
+                else if (i == 0)
+                {
+                    content = SyncVacantContent(container.transform, building.transform, entry, vacantPrefab, footprint);
+                }
+                else
+                {
+                    GameObject stagePrefab = GetStagePrefab(entry, i - 1);
+                    if (stagePrefab == null && i == total - 1)
+                        stagePrefab = entry.VisualPrefab; // финальная стадия без своего префаба = визуал здания
+
+                    if (stagePrefab != null)
+                    {
+                        content = SyncPrefabContent(container.transform, building.transform, entry, stagePrefab);
+                    }
+                    else
+                    {
+                        float t = (float)i / stageCount;
+                        float width = footprint * Mathf.Lerp(0.55f, 0.9f, t);
+                        float height = footprint * PlaceholderHeightK * t;
+                        int shade = Mathf.Clamp(i - 1, 0, PlaceholderShades.Length - 1);
+                        var mat = EnsureStageMaterial(PlaceholderMaterialPrefix + shade + ".mat",
+                            new Color(PlaceholderShades[shade], PlaceholderShades[shade], PlaceholderShades[shade], 1f));
+                        content = SyncPlaceholderContent(container.transform, building.transform, entry,
+                            new Vector3(width, height, width), mat, keepPlaceholderCollider);
+                    }
+                }
+
+                if (content != null && entry.VisualFootprint > 0f && PrefabUtility.IsAnyPrefabInstanceRoot(content))
+                    FitVisual(building, content, entry);
+
+                if (i == total - 1)
+                    lastContent = content;
             }
 
-            GameObject found = null;
-            for (int i = building.transform.childCount - 1; i >= 0; i--)
+            // Удаляем лишние Stage_* (стадий стало меньше / здание отключили).
+            for (int i = stagesGo.transform.childCount - 1; i >= 0; i--)
             {
-                var child = building.transform.GetChild(i).gameObject;
-                if (!PrefabUtility.IsAnyPrefabInstanceRoot(child))
-                    continue;
+                var child = stagesGo.transform.GetChild(i).gameObject;
+                bool expected = false;
+                for (int k = 0; k < total; k++)
+                {
+                    if (child.name == StageNamePrefix + k)
+                    {
+                        expected = true;
+                        break;
+                    }
+                }
 
-                var source = PrefabUtility.GetCorrespondingObjectFromSource(child);
-                if (found == null && source == entry.VisualPrefab)
+                if (expected)
+                    continue;
+                Debug.Log("[Editor] " + entry.Id + ": лишняя стадия '" + child.name + "' удалена.");
+                Undo.DestroyObjectImmediate(child);
+            }
+
+            // Устаревшие визуалы, оставшиеся прямыми детьми корня (смена префаба/раскладки стадий).
+            RemoveLegacyVisuals(building.transform, entry);
+
+            Vector3 labelPos = ComputeLabelLocalPosition(building, lastContent);
+
+            // Итоговая активность: включён только Stage_0.
+            for (int i = 0; i < total; i++)
+            {
+                bool want = i == 0;
+                if (roots[i].activeSelf == want)
+                    continue;
+                Undo.RecordObject(roots[i], "Set Stage Active");
+                roots[i].SetActive(want);
+            }
+
+            SyncBuildSite(building, entry, roots);
+            Debug.Log("[Editor] " + entry.Id + ": стадий в сцене — " + total + (isStub ? " (заглушка)." : "."));
+            return labelPos;
+        }
+
+        private static GameObject GetStagePrefab(BuildingCatalogConfig.BuildingEntry entry, int index)
+        {
+            if (entry.Stages == null || index < 0 || index >= entry.Stages.Length || entry.Stages[index] == null)
+                return null;
+            return entry.Stages[index].StagePrefab;
+        }
+
+        /// <summary>_vacantStagePrefab каталога (может быть пуст). Читается через SerializedObject, как прочие служебные поля.</summary>
+        private static GameObject ReadVacantStagePrefab(BuildingCatalogConfig catalog)
+        {
+            var so = new SerializedObject(catalog);
+            var prop = so.FindProperty("_vacantStagePrefab");
+            if (prop == null)
+            {
+                Debug.LogWarning("[Editor] BuildingCatalogConfig._vacantStagePrefab не найдено (рантайм 12a не скомпилирован?) — " +
+                                 "пустырь будет примитивом.");
+                return null;
+            }
+            return prop.objectReferenceValue as GameObject;
+        }
+
+        private static GameObject SyncVacantContent(Transform container, Transform building,
+            BuildingCatalogConfig.BuildingEntry entry, GameObject vacantPrefab, float footprint)
+        {
+            if (vacantPrefab != null)
+                return SyncPrefabContent(container, building, entry, vacantPrefab);
+
+            var mat = EnsureStageMaterial(VacantMaterialPath, VacantColor);
+            // Плоский пустырь без коллайдера: персонаж не должен цепляться за низкую плиту.
+            return SyncPlaceholderContent(container, building, entry,
+                new Vector3(footprint, VacantHeight, footprint), mat, false);
+        }
+
+        /// <summary>
+        /// Ровно один инстанс <paramref name="prefab"/> внутри контейнера стадии. Старый визуал, лежавший
+        /// прямым ребёнком корня здания (до 12a), переезжает в контейнер, а не пересоздаётся.
+        /// Всё остальное содержимое контейнера (заглушка, инстансы других префабов) удаляется.
+        /// prefab == null — контейнер очищается, возвращает null.
+        /// </summary>
+        private static GameObject SyncPrefabContent(Transform container, Transform building,
+            BuildingCatalogConfig.BuildingEntry entry, GameObject prefab)
+        {
+            GameObject found = null;
+            for (int i = container.childCount - 1; i >= 0; i--)
+            {
+                var child = container.GetChild(i).gameObject;
+                if (prefab != null && found == null && PrefabUtility.IsAnyPrefabInstanceRoot(child) &&
+                    PrefabUtility.GetCorrespondingObjectFromSource(child) == prefab)
                 {
                     found = child;
                     continue;
                 }
 
-                Debug.Log("[Editor] " + entry.Id + ": убран устаревший визуал '" + child.name + "'.");
+                Debug.Log("[Editor] " + entry.Id + ": убран устаревший контент '" + child.name + "' из " + container.name + ".");
                 Undo.DestroyObjectImmediate(child);
+            }
+
+            if (prefab == null)
+            {
+                Debug.Log("[Editor] " + entry.Id + ": префаб для " + container.name + " не задан — контент не создаётся.");
+                return null;
             }
 
             if (found != null)
                 return found;
 
-            var instance = (GameObject)PrefabUtility.InstantiatePrefab(entry.VisualPrefab, building.transform);
-            Undo.RegisterCreatedObjectUndo(instance, "Create Building Visual");
+            // Миграция: визуал из корня здания (раскладка 11a/11b) переезжает под контейнер.
+            for (int i = building.childCount - 1; i >= 0; i--)
+            {
+                var child = building.GetChild(i).gameObject;
+                if (!PrefabUtility.IsAnyPrefabInstanceRoot(child) ||
+                    PrefabUtility.GetCorrespondingObjectFromSource(child) != prefab)
+                    continue;
+
+                Undo.SetTransformParent(child.transform, container, "Move Visual To Stage");
+                Debug.Log("[Editor] " + entry.Id + ": визуал '" + child.name + "' перенесён в " + container.name + ".");
+                return child;
+            }
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, container);
+            Undo.RegisterCreatedObjectUndo(instance, "Create Stage Content");
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
-            Debug.Log("[Editor] " + entry.Id + ": создан визуал '" + entry.VisualPrefab.name + "'.");
+            Debug.Log("[Editor] " + entry.Id + ": " + container.name + " <- '" + prefab.name + "'.");
             return instance;
+        }
+
+        /// <summary>
+        /// Примитив-заглушка (Cube «Placeholder») внутри контейнера: низ на земле, размер size, наш материал.
+        /// Коллайдер — BoxCollider при keepCollider, иначе убирается. Прочий контент контейнера удаляется.
+        /// </summary>
+        private static GameObject SyncPlaceholderContent(Transform container, Transform building,
+            BuildingCatalogConfig.BuildingEntry entry, Vector3 size, Material material, bool keepCollider)
+        {
+            GameObject placeholder = null;
+            for (int i = container.childCount - 1; i >= 0; i--)
+            {
+                var child = container.GetChild(i).gameObject;
+                if (placeholder == null && child.name == PlaceholderName && child.GetComponent<MeshFilter>() != null)
+                {
+                    placeholder = child;
+                    continue;
+                }
+
+                Debug.Log("[Editor] " + entry.Id + ": убран устаревший контент '" + child.name + "' из " + container.name + ".");
+                Undo.DestroyObjectImmediate(child);
+            }
+
+            if (placeholder == null)
+            {
+                placeholder = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                placeholder.name = PlaceholderName;
+                Undo.RegisterCreatedObjectUndo(placeholder, "Create Stage Placeholder");
+                placeholder.transform.SetParent(container, false);
+                Debug.Log("[Editor] " + entry.Id + ": " + container.name + " <- заглушка " + size.ToString("F2") + ".");
+            }
+
+            Undo.RecordObject(placeholder.transform, "Place Stage Placeholder");
+            placeholder.transform.localPosition = new Vector3(0f, size.y * 0.5f, 0f);
+            placeholder.transform.localRotation = Quaternion.identity;
+            placeholder.transform.localScale = size;
+
+            var col = placeholder.GetComponent<Collider>();
+            if (keepCollider && col == null)
+            {
+                Undo.AddComponent<BoxCollider>(placeholder);
+            }
+            else if (!keepCollider && col != null)
+            {
+                Undo.DestroyObjectImmediate(col);
+            }
+
+            var mr = placeholder.GetComponent<MeshRenderer>();
+            if (mr != null && material != null)
+            {
+                Undo.RecordObject(mr, "Setup Stage Placeholder");
+                mr.sharedMaterial = material;
+            }
+            else if (material == null)
+            {
+                Debug.LogWarning("[Editor] " + entry.Id + ": материал заглушки не создан — " + container.name + " без материала.");
+            }
+
+            return placeholder;
+        }
+
+        /// <summary>Удаляет прямые префаб-инстансы корня здания (визуалы до 12a, не нашедшие места в стадиях).</summary>
+        private static void RemoveLegacyVisuals(Transform building, BuildingCatalogConfig.BuildingEntry entry)
+        {
+            for (int i = building.childCount - 1; i >= 0; i--)
+            {
+                var child = building.GetChild(i).gameObject;
+                if (!PrefabUtility.IsAnyPrefabInstanceRoot(child))
+                    continue;
+
+                Debug.Log("[Editor] " + entry.Id + ": убран устаревший визуал '" + child.name + "'.");
+                Undo.DestroyObjectImmediate(child);
+            }
+        }
+
+        /// <summary>Наш материал заглушки (URP Lit, Development/Art/Materials). Цвет задаётся только при создании.</summary>
+        private static Material EnsureStageMaterial(string path, Color color)
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat != null)
+                return mat;
+
+            var shader = Shader.Find(UrpLitShader);
+            if (shader == null)
+            {
+                Debug.LogError("[Editor] Шейдер " + UrpLitShader + " не найден — материал " + path + " не создан.");
+                return null;
+            }
+
+            mat = new Material(shader) { name = Path.GetFileNameWithoutExtension(path) };
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.1f);
+            AssetDatabase.CreateAsset(mat, path);
+            Debug.Log("[Editor] Создан материал стадии: " + path);
+            return mat;
+        }
+
+        private static void ResetLocal(Transform t)
+        {
+            if (t.localPosition == Vector3.zero && t.localRotation == Quaternion.identity && t.localScale == Vector3.one)
+                return;
+            Undo.RecordObject(t, "Reset Local Transform");
+            t.localPosition = Vector3.zero;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
+        }
+
+        /// <summary>BuildSiteController на корне здания: _buildingId и _stageVisuals = Stage_0..Stage_N.</summary>
+        private static void SyncBuildSite(GameObject building, BuildingCatalogConfig.BuildingEntry entry, GameObject[] stageRoots)
+        {
+            var site = building.GetComponent<BuildSiteController>();
+            if (site == null)
+            {
+                site = Undo.AddComponent<BuildSiteController>(building);
+                Debug.Log("[Editor] " + entry.Id + ": добавлен BuildSiteController.");
+            }
+
+            var so = new SerializedObject(site);
+            var idProp = so.FindProperty("_buildingId");
+            var stagesProp = so.FindProperty("_stageVisuals");
+            if (idProp == null || stagesProp == null)
+            {
+                Debug.LogWarning("[Editor] BuildSiteController._buildingId/_stageVisuals не найдены " +
+                                 "(рантайм 12a не скомпилирован?) — " + entry.Id + " не прошит.");
+                return;
+            }
+
+            idProp.intValue = (int)entry.Id; // enum — числовое значение
+            stagesProp.arraySize = stageRoots.Length;
+            for (int i = 0; i < stageRoots.Length; i++)
+                stagesProp.GetArrayElementAtIndex(i).objectReferenceValue = stageRoots[i]; // каждый элемент явно
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(site);
         }
 
         /// <summary>
@@ -542,6 +887,17 @@ namespace FlatOutLike.Editor.Hub
             return has;
         }
 
+        /// <summary>
+        /// Локальная позиция подписи/панели: над bounds контента (в осях здания), чтобы надпись не пряталась
+        /// внутри модели; контента нет — на LabelDefaultHeight.
+        /// </summary>
+        private static Vector3 ComputeLabelLocalPosition(GameObject building, GameObject content)
+        {
+            if (content != null && TryGetLocalBounds(building.transform, content, out Bounds vb))
+                return new Vector3(vb.center.x, Mathf.Max(vb.max.y, 0f) + LabelMargin, vb.center.z);
+            return new Vector3(0f, LabelDefaultHeight, 0f);
+        }
+
         /// <summary>Мировой поворот «лицом к камере хаба»: LookRotation(-FollowOffset.normalized), как у LaunchConfirmCanvas.</summary>
         private static bool TryGetHubViewRotation(out Quaternion rotation)
         {
@@ -565,7 +921,7 @@ namespace FlatOutLike.Editor.Hub
         /// только при создании объекта; raycastTarget/maskable = false — на каждом прогоне.
         /// </summary>
         private static void SyncNameLabel(GameObject building, BuildingCatalogConfig.BuildingEntry entry,
-            string comingSoonText, GameObject visual, Quaternion worldRotation)
+            string comingSoonText, Vector3 localPos, Quaternion worldRotation)
         {
             var legacy = building.transform.Find(LegacyLabelName);
             if (legacy != null)
@@ -616,11 +972,7 @@ namespace FlatOutLike.Editor.Hub
                 Undo.RecordObject(tmp, "Update " + NameLabelName);
             }
 
-            // Позиция: над bounds визуала (в осях здания), чтобы надпись не пряталась внутри модели.
-            Vector3 localPos = new Vector3(0f, LabelDefaultHeight, 0f);
-            if (visual != null && TryGetLocalBounds(building.transform, visual, out Bounds vb))
-                localPos = new Vector3(vb.center.x, Mathf.Max(vb.max.y, 0f) + LabelMargin, vb.center.z);
-
+            // Позиция (над bounds контента, в осях здания) посчитана заранее — ComputeLabelLocalPosition.
             Undo.RecordObject(labelGo.transform, "Place " + NameLabelName);
             labelGo.transform.localPosition = localPos;
             // Мировой поворот — не зависит от yaw здания: подпись всегда обращена к камере хаба.
@@ -789,38 +1141,59 @@ namespace FlatOutLike.Editor.Hub
         }
 
         /// <summary>
-        /// Buildings/&lt;Id&gt;/LaunchZone для entry с HasLaunchZone &amp;&amp; Enabled; у остальных
-        /// существующий LaunchZone удаляется (миграция). Идемпотентно по компонентам.
+        /// Buildings/&lt;Id&gt;/Zone у каждого Enabled-здания с ненулевым ZoneSize (зона запуска и/или вложения).
+        /// Компоненты по каталогу: LaunchZoneController — при HasLaunchZone, InvestZoneController — при
+        /// StageCount &gt; 0; лишний компонент удаляется. Объект старой раскладки LaunchZone переименовывается
+        /// в Zone (второй не плодим). Зданиям без зоны Zone/LaunchZone удаляются. Идемпотентно по компонентам.
         /// </summary>
-        private static void SyncLaunchZone(GameObject building, BuildingCatalogConfig.BuildingEntry entry, Material markerMaterial)
+        private static void SyncZone(GameObject building, BuildingCatalogConfig.BuildingEntry entry, Material markerMaterial)
         {
-            var zoneT = building.transform.Find(LaunchZoneName);
+            var zoneT = building.transform.Find(ZoneName);
+            var legacyT = building.transform.Find(LegacyZoneName);
 
-            if (!(entry.HasLaunchZone && entry.Enabled))
+            if (!HasZone(entry))
             {
                 if (zoneT != null)
                 {
                     Undo.DestroyObjectImmediate(zoneT.gameObject);
-                    Debug.Log("[Editor] " + entry.Id + ": зона запуска не нужна — LaunchZone удалён.");
+                    Debug.Log("[Editor] " + entry.Id + ": зона не нужна — " + ZoneName + " удалён.");
+                }
+                if (legacyT != null)
+                {
+                    Undo.DestroyObjectImmediate(legacyT.gameObject);
+                    Debug.Log("[Editor] " + entry.Id + ": зона не нужна — " + LegacyZoneName + " удалён.");
                 }
                 return;
             }
 
             GameObject zone;
-            if (zoneT == null)
+            if (zoneT != null)
             {
-                zone = new GameObject(LaunchZoneName);
-                Undo.RegisterCreatedObjectUndo(zone, "Create LaunchZone");
-                zone.transform.SetParent(building.transform, false);
-                Debug.Log("[Editor] " + entry.Id + ": создан LaunchZone.");
+                zone = zoneT.gameObject;
+                // Остался и старый объект — он лишний.
+                if (legacyT != null)
+                {
+                    Undo.DestroyObjectImmediate(legacyT.gameObject);
+                    Debug.Log("[Editor] " + entry.Id + ": дубль " + LegacyZoneName + " удалён (есть " + ZoneName + ").");
+                }
+            }
+            else if (legacyT != null)
+            {
+                zone = legacyT.gameObject;
+                Undo.RecordObject(zone, "Rename LaunchZone To Zone");
+                zone.name = ZoneName;
+                Debug.Log("[Editor] " + entry.Id + ": " + LegacyZoneName + " переименован в " + ZoneName + ".");
             }
             else
             {
-                zone = zoneT.gameObject;
+                zone = new GameObject(ZoneName);
+                Undo.RegisterCreatedObjectUndo(zone, "Create Zone");
+                zone.transform.SetParent(building.transform, false);
+                Debug.Log("[Editor] " + entry.Id + ": создан " + ZoneName + ".");
             }
 
-            Undo.RecordObject(zone.transform, "Place LaunchZone");
-            zone.transform.localPosition = entry.LaunchZoneOffset;
+            Undo.RecordObject(zone.transform, "Place Zone");
+            zone.transform.localPosition = entry.ZoneOffset;
             zone.transform.localRotation = Quaternion.identity;
             zone.transform.localScale = Vector3.one;
 
@@ -829,41 +1202,217 @@ namespace FlatOutLike.Editor.Hub
             if (box == null)
                 box = Undo.AddComponent<BoxCollider>(zone);
             else
-                Undo.RecordObject(box, "Update LaunchZone Collider");
+                Undo.RecordObject(box, "Update Zone Collider");
             box.isTrigger = true;
-            box.size = entry.LaunchZoneSize;
-            box.center = new Vector3(0f, entry.LaunchZoneSize.y * 0.5f, 0f);
+            box.size = entry.ZoneSize;
+            box.center = new Vector3(0f, entry.ZoneSize.y * 0.5f, 0f);
 
             // Триггер без Rigidbody не срабатывает (CLAUDE.md) — kinematic на зоне.
             var rb = zone.GetComponent<Rigidbody>();
             if (rb == null)
                 rb = Undo.AddComponent<Rigidbody>(zone);
             else
-                Undo.RecordObject(rb, "Update LaunchZone Rigidbody");
+                Undo.RecordObject(rb, "Update Zone Rigidbody");
             rb.isKinematic = true;
             rb.useGravity = false;
 
-            var controller = zone.GetComponent<LaunchZoneController>();
-            if (controller == null)
+            // Контроллер зоны запуска — только у зданий с запуском режима.
+            var launch = zone.GetComponent<LaunchZoneController>();
+            if (entry.HasLaunchZone)
             {
-                controller = Undo.AddComponent<LaunchZoneController>(zone);
-                Debug.Log("[Editor] " + entry.Id + ": добавлен LaunchZoneController.");
+                if (launch == null)
+                {
+                    launch = Undo.AddComponent<LaunchZoneController>(zone);
+                    Debug.Log("[Editor] " + entry.Id + ": добавлен LaunchZoneController.");
+                }
+                SetBuildingId(launch, entry.Id);
+            }
+            else if (launch != null)
+            {
+                Undo.DestroyObjectImmediate(launch);
+                Debug.Log("[Editor] " + entry.Id + ": лишний LaunchZoneController удалён.");
             }
 
-            var so = new SerializedObject(controller);
-            var idProp = so.FindProperty("_buildingId");
-            if (idProp == null)
+            // Контроллер зоны вложения — только у достраиваемых зданий.
+            var invest = zone.GetComponent<InvestZoneController>();
+            if (entry.StageCount > 0)
             {
-                Debug.LogWarning("[Editor] LaunchZoneController._buildingId не найдено — id зоны " + entry.Id + " не прошит.");
+                if (invest == null)
+                {
+                    invest = Undo.AddComponent<InvestZoneController>(zone);
+                    Debug.Log("[Editor] " + entry.Id + ": добавлен InvestZoneController.");
+                }
+                SetBuildingId(invest, entry.Id);
             }
-            else if (idProp.intValue != (int)entry.Id)
+            else if (invest != null)
             {
-                idProp.intValue = (int)entry.Id; // enum — числовое значение
-                so.ApplyModifiedProperties();
+                Undo.DestroyObjectImmediate(invest);
+                Debug.Log("[Editor] " + entry.Id + ": лишний InvestZoneController удалён.");
             }
 
             SyncMarker(zone, entry, markerMaterial);
             EditorUtility.SetDirty(zone);
+        }
+
+        /// <summary>Прошивает _buildingId (enum — числовое значение) на компоненте; нет поля — LogWarning.</summary>
+        private static void SetBuildingId(Component component, BuildingId id)
+        {
+            var so = new SerializedObject(component);
+            var idProp = so.FindProperty("_buildingId");
+            if (idProp == null)
+            {
+                Debug.LogWarning("[Editor] " + component.GetType().Name + "._buildingId не найдено — id " + id + " не прошит.");
+                return;
+            }
+
+            if (idProp.intValue == (int)id)
+                return;
+            idProp.intValue = (int)id;
+            so.ApplyModifiedProperties();
+        }
+
+        // ── Панель площадки (12a) ───────────────────────────────────────────────
+
+        /// <summary>
+        /// Buildings/&lt;Id&gt;/Panel — world-space Canvas над подписью для достраиваемых зданий
+        /// (Enabled и StageCount &gt; 0); остальным панель удаляется. Содержимое: ProgressGroup (Track + Fill
+        /// Filled/Horizontal/Left + RemainingText) и RateGroup (RateText). Панель повёрнута к камере хаба
+        /// (камера не вращается по yaw), без GraphicRaycaster — EventSystem не нужен. Цвета, шрифты и
+        /// тексты существующих элементов не затираются; раскладка и флаги Graphic выставляются на каждом прогоне.
+        /// </summary>
+        private static void SyncPanel(GameObject building, BuildingCatalogConfig.BuildingEntry entry,
+            Vector3 labelLocalPos, Quaternion worldRotation)
+        {
+            var panelT = building.transform.Find(PanelName);
+
+            if (!(entry.Enabled && entry.StageCount > 0))
+            {
+                if (panelT != null)
+                {
+                    Undo.DestroyObjectImmediate(panelT.gameObject);
+                    Debug.Log("[Editor] " + entry.Id + ": панель не нужна — " + PanelName + " удалён.");
+                }
+                return;
+            }
+
+            // Панель без RectTransform (посторонний объект с таким именем) — пересоздаём.
+            if (panelT != null && !(panelT is RectTransform))
+            {
+                Undo.DestroyObjectImmediate(panelT.gameObject);
+                panelT = null;
+            }
+
+            RectTransform rt;
+            if (panelT == null)
+            {
+                var go = new GameObject(PanelName, typeof(RectTransform));
+                Undo.RegisterCreatedObjectUndo(go, "Create " + PanelName);
+                go.transform.SetParent(building.transform, false);
+                rt = (RectTransform)go.transform;
+                Debug.Log("[Editor] " + entry.Id + ": создана панель " + PanelName + ".");
+            }
+            else
+            {
+                rt = (RectTransform)panelT;
+            }
+
+            var canvas = rt.GetComponent<Canvas>();
+            if (canvas == null)
+                canvas = Undo.AddComponent<Canvas>(rt.gameObject);
+            canvas.renderMode = RenderMode.WorldSpace;
+
+            Undo.RecordObject(rt, "Place " + PanelName);
+            rt.sizeDelta = new Vector2(PanelPixelsW, PanelPixelsH);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.localScale = Vector3.one * PanelScale;
+            // Ценник — про зону, где стоит игрок: над центром зоны на фиксированной высоте (не зависит
+            // от высоты контента последней стадии). Зона лежит в локальных осях корня здания на
+            // entry.ZoneOffset (та же формула, что у объекта Zone); локальный y=0 корня — уровень земли.
+            // Нет зоны — прежняя логика: над подписью.
+            rt.localPosition = HasZone(entry)
+                ? entry.ZoneOffset + new Vector3(0f, PanelHeightAboveZone, 0f)
+                : labelLocalPos + new Vector3(0f, PanelAboveLabel, 0f);
+            // Мировой поворот — не зависит от yaw здания: панель всегда обращена к камере хаба.
+            rt.rotation = worldRotation;
+
+            // ── ProgressGroup: верхняя половина ─────────────────────────────
+            var progressRt = UIBuildHelpers.FindOrCreateChild(rt, "ProgressGroup");
+            progressRt.anchorMin = new Vector2(0f, 0.5f);
+            progressRt.anchorMax = Vector2.one;
+            progressRt.pivot = new Vector2(0.5f, 0.5f);
+            progressRt.offsetMin = Vector2.zero;
+            progressRt.offsetMax = Vector2.zero;
+
+            bool trackNew = progressRt.Find("Track") == null;
+            var track = UIBuildHelpers.CreateImage(progressRt, "Track", null);
+            UIBuildHelpers.Stretch((RectTransform)track.transform);
+            if (trackNew)
+            {
+                track.sprite = null;
+                track.color = PanelTrackColor;
+            }
+            track.raycastTarget = false;
+            track.maskable = false;
+
+            bool fillNew = progressRt.Find("Fill") == null;
+            var fill = UIBuildHelpers.CreateImage(progressRt, "Fill", null);
+            var fillRt = (RectTransform)fill.transform;
+            UIBuildHelpers.Stretch(fillRt);
+            fillRt.offsetMin = new Vector2(PanelFillInset, PanelFillInset);
+            fillRt.offsetMax = new Vector2(-PanelFillInset, -PanelFillInset);
+            if (fill.sprite == null)
+            {
+                // Filled без спрайта не заполняется — берём встроенный UISprite Unity.
+                fill.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>(BuiltinSpritePath);
+                if (fill.sprite == null)
+                    Debug.LogWarning("[Editor] Встроенный спрайт " + BuiltinSpritePath + " не найден — Fill без спрайта.");
+            }
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fill.fillAmount = 0f;
+            if (fillNew)
+                fill.color = PanelFillColor;
+            fill.raycastTarget = false;
+            fill.maskable = false;
+
+            var remaining = EnsureLabel(progressRt, "RemainingText", "0 LEFT", UIBuildHelpers.BodyFontPath,
+                40f, Color.white, TextAlignmentOptions.Center);
+            UIBuildHelpers.Stretch((RectTransform)remaining.transform);
+
+            // ── RateGroup: нижняя половина ──────────────────────────────────
+            var rateRt = UIBuildHelpers.FindOrCreateChild(rt, "RateGroup");
+            rateRt.anchorMin = Vector2.zero;
+            rateRt.anchorMax = new Vector2(1f, 0.5f);
+            rateRt.pivot = new Vector2(0.5f, 0.5f);
+            rateRt.offsetMin = Vector2.zero;
+            rateRt.offsetMax = Vector2.zero;
+
+            var rateText = EnsureLabel(rateRt, "RateText", "+0/min", UIBuildHelpers.BodyFontPath,
+                44f, PanelRateColor, TextAlignmentOptions.Center);
+            UIBuildHelpers.Stretch((RectTransform)rateText.transform);
+
+            // ── BuildingPanelView на корне панели ───────────────────────────
+            var view = rt.GetComponent<BuildingPanelView>();
+            if (view == null)
+            {
+                view = Undo.AddComponent<BuildingPanelView>(rt.gameObject);
+                Debug.Log("[Editor] " + entry.Id + ": добавлен BuildingPanelView.");
+            }
+
+            var so = new SerializedObject(view);
+            var idProp = so.FindProperty("_buildingId");
+            if (idProp == null)
+                Debug.LogWarning("[Editor] BuildingPanelView._buildingId не найдено — id панели " + entry.Id + " не прошит.");
+            else
+                idProp.intValue = (int)entry.Id; // enum — числовое значение
+            SetRef(so, "_progressGroup", progressRt.gameObject, "ProgressGroup");
+            SetRef(so, "_progressFill", fill, "Fill");
+            SetRef(so, "_remainingText", remaining, "RemainingText");
+            SetRef(so, "_rateGroup", rateRt.gameObject, "RateGroup");
+            SetRef(so, "_rateText", rateText, "RateText");
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(rt.gameObject);
         }
 
         /// <summary>Плоский Quad-маркер на земле (без коллайдера и теней), размер = размер зоны по XZ.</summary>
@@ -894,9 +1443,9 @@ namespace FlatOutLike.Editor.Hub
 
             // Мировая высота маркера = MarkerHeight независимо от Position.y/offset.y здания.
             Undo.RecordObject(marker.transform, "Place LaunchZone Marker");
-            marker.transform.localPosition = new Vector3(0f, MarkerHeight - entry.Position.y - entry.LaunchZoneOffset.y, 0f);
+            marker.transform.localPosition = new Vector3(0f, MarkerHeight - entry.Position.y - entry.ZoneOffset.y, 0f);
             marker.transform.localRotation = Quaternion.Euler(90f, 0f, 0f); // Quad смотрит лицом вверх
-            marker.transform.localScale = new Vector3(entry.LaunchZoneSize.x, entry.LaunchZoneSize.z, 1f);
+            marker.transform.localScale = new Vector3(entry.ZoneSize.x, entry.ZoneSize.z, 1f);
 
             var mr = marker.GetComponent<MeshRenderer>();
             if (mr == null)

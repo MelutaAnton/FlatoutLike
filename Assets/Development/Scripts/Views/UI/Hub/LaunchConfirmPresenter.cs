@@ -33,7 +33,7 @@ namespace FlatOutLike.Views.UI.Hub
         {
             if (_launch.TryGetActiveZone(out var id) && _catalog.TryGetEntry(id, out var entry))
             {
-                var position = entry.GetLaunchZoneWorldCenter() + Vector3.up * _catalog.LaunchIndicatorHeight;
+                var position = entry.GetZoneWorldCenter() + Vector3.up * _catalog.LaunchIndicatorHeight;
                 _view.ShowAt(position, _launch.Progress01);
                 _shown = true;
                 return;

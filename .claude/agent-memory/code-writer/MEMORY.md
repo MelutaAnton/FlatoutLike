@@ -8,3 +8,4 @@
 - [Driving feel polish](driving_feel_polish.md) — CalculateSmoothedSteerAngle (MoveTowards), handbrake drift (stiffness switch), CarStatsConfig new fields, "SO new-field-gap" YAML-patch nuance
 - [Tooling gotchas](tooling_gotchas.md) — arch-guard не видит Bash-записи (прогон вручную), python=заглушка, LF, ns FlatOutLike
 - [Step 11c/11d — Scene loading](step11c_scene_fade.md) — ILoadingScreen/LoadingScreenView, SceneLoaderService IStartable+ITickable, IsLoading-гарды, Boot и isActiveAndEnabled ловушки
+- [Step 12a — Build progress](step12a_build_progress.md) — BuildProgressService пачки+flush-точки (этап/ExitZone/Dispose), TrySpend(n,persist), IHubSaveStorage, площадки/ценники

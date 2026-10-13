@@ -39,6 +39,7 @@ using FlatOutLike.Services.Hub;
 using FlatOutLike.Services.Match;
 using FlatOutLike.Services.Meta;
 using FlatOutLike.Services.Pickups;
+using FlatOutLike.Services.Progression;
 using FlatOutLike.Services.Stunts;
 using FlatOutLike.Services.Vfx;
 using FlatOutLike.Views.UI.Common;
@@ -460,6 +461,31 @@ namespace FlatOutLike.Installers
                 builder.RegisterInstance(_buildingCatalogConfig);
                 // EntryPoint → VContainer вызывает ITickable.Tick через PlayerLoop-диспетчер автоматически.
                 builder.RegisterEntryPoint<HubLaunchService>().As<IHubLaunchService>();
+
+                // ── BaseHub: стадийная стройка (Шаг 12a) ───────────────────────────
+                // Save-блок хаба — отдельный от профиля (ключи FlatOutLike.Hub.*).
+                builder.Register<PlayerPrefsHubSaveStorage>(Lifetime.Singleton).As<IHubSaveStorage>();
+                // EntryPoint (ITickable — поток вложения). Зависит от HubCharacterConfig (безусловный,
+                // с фоллбэком выше), IEconomyService/IEventBus/IGameFlowService/IMetaProgressService
+                // (безусловны) и каталога. IDisposable: контейнер вызывает Dispose при выгрузке scope —
+                // последняя точка flush несохранённых пачек стройки.
+                // HubLaunchService тоже его резолвит (гейт IsBuilt) — порядок регистраций не важен.
+                builder.RegisterEntryPoint<BuildProgressService>().As<IBuildProgressService>();
+
+                // Ценники зданий — world-space view'ы на площадках; presenter получает их списком.
+                // Его никто не резолвит напрямую → build callback, иначе подписки не произойдут.
+                var panels = Object.FindObjectsByType<BuildingPanelView>(FindObjectsSortMode.None);
+                if (panels.Length > 0)
+                {
+                    // Панели — одним держателем, НЕ циклом RegisterComponent(panel): VContainer запрещает
+                    // несколько Singleton-регистраций одного implementation type в коллекцию
+                    // («VContainerException: Conflict implementation type», CollectionInstanceProvider.Add).
+                    // У BuildingPanelView нет [Inject] → RegisterComponent не нужен; BuildingPanelViews —
+                    // plain C#, RegisterInstance для него корректен (CLAUDE.md «Нюансы VContainer»).
+                    builder.RegisterInstance(new BuildingPanelViews(panels));
+                    builder.Register<BuildingPanelPresenter>(Lifetime.Singleton);
+                    builder.RegisterBuildCallback(c => c.Resolve<BuildingPanelPresenter>());
+                }
             }
 
             // HUD хаба зависит только от безусловных IEconomyService/IEventBus/IGameFlowService.
@@ -690,12 +716,20 @@ namespace FlatOutLike.Installers
                 foreach (var eject in Object.FindObjectsByType<EjectTriggerZone>(FindObjectsSortMode.None))
                     container.InjectGameObject(eject.gameObject);
 
-                // Шаг 11b: инъекция зон запуска хаба. Только при каталоге — без него IHubLaunchService
-                // не зарегистрирован, и Construct зоны уронил бы построение контейнера.
+                // Шаг 12a: инъекция площадок хаба. Только при каталоге — без него IHubLaunchService/
+                // IBuildProgressService не зарегистрированы, и Construct уронил бы построение контейнера.
+                // Зона здания (LaunchZoneController + InvestZoneController) и ценник — дочерние объекты
+                // площадки: один InjectGameObject корня инжектит и BuildSiteController, и зоны — без
+                // двойного Construct (отдельный цикл по зонам повторил бы инъекцию).
                 if (_buildingCatalogConfig != null)
                 {
-                    foreach (var zone in Object.FindObjectsByType<LaunchZoneController>(FindObjectsSortMode.None))
-                        container.InjectGameObject(zone.gameObject);
+                    foreach (var site in Object.FindObjectsByType<BuildSiteController>(FindObjectsSortMode.None))
+                        container.InjectGameObject(site.gameObject);
+
+                    // Страховка для сцены, собранной до 12a: зона вне площадки не получила бы инъекцию
+                    // и молча не работала бы. Такие зоны инжектим отдельно и просим пересобрать хаб.
+                    InjectOrphanZone<LaunchZoneController>(container);
+                    InjectOrphanZone<InvestZoneController>(container);
                 }
 
                 // _TestDriving-путь: chase-камера на первую сцено-машину (арена привязывает камеру
@@ -741,6 +775,22 @@ namespace FlatOutLike.Installers
                 if (_pickupConfig != null && _pickupZones != null && _pickupZones.Length > 0)
                     container.Resolve<IPickupSpawnerService>().StartSpawning(_pickupZones);
             });
+        }
+
+        /// <summary>
+        /// Инъекция зоны хаба, лежащей вне площадки (BuildSiteController): штатно зоны — дочерние
+        /// объекты площадки и инжектятся вместе с ней. Зона вне площадки — сцена собрана до 12a.
+        /// </summary>
+        private static void InjectOrphanZone<T>(IObjectResolver container) where T : Component
+        {
+            foreach (var zone in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
+            {
+                if (zone.GetComponentInParent<BuildSiteController>() != null) continue;
+
+                container.InjectGameObject(zone.gameObject);
+                Debug.LogWarning($"[GameLifetimeScope] {typeof(T).Name} на '{zone.name}' вне площадки " +
+                                 "BuildSiteController — пересобери хаб: FlatOutLike/Hub/Build Base Hub Layout.");
+            }
         }
     }
 }

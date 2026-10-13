@@ -118,6 +118,8 @@ namespace FlatOutLike.Editor.Configs
             MigrateLaunchZones();
             // Подписи площадок и целевые габариты визуала — тем же способом.
             MigrateBuildingPresentation();
+            // Шаг 12a: стадии стройки (цены/доход) и зоны вложения — одноразово по флагу.
+            MigrateBuildStages();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -344,8 +346,9 @@ namespace FlatOutLike.Editor.Configs
 
                 var hasZone = entry.FindPropertyRelative("HasLaunchZone");
                 var state   = entry.FindPropertyRelative("LaunchState");
-                var offset  = entry.FindPropertyRelative("LaunchZoneOffset");
-                var size    = entry.FindPropertyRelative("LaunchZoneSize");
+                // 12a: LaunchZoneOffset/LaunchZoneSize переименованы в ZoneOffset/ZoneSize (FormerlySerializedAs).
+                var offset  = entry.FindPropertyRelative("ZoneOffset");
+                var size    = entry.FindPropertyRelative("ZoneSize");
                 if (hasZone == null || state == null || offset == null || size == null)
                 {
                     Debug.LogWarning("[Editor] MigrateLaunchZones: у BuildingEntry нет полей зоны запуска " +
@@ -417,6 +420,159 @@ namespace FlatOutLike.Editor.Configs
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
             Debug.Log("[Editor] MigrateBuildingPresentation: подписи/габариты залиты, флаг _presentationDefaultsApplied = true.");
+        }
+
+        // ── Шаг 12a: стадии стройки ─────────────────────────────────────────────
+
+        private const string StagesFlagField = "_stagesDefaultsApplied";
+
+        private readonly struct StageDef
+        {
+            public readonly BuildingId Id;
+            public readonly int[] Costs;
+            public readonly int[] Incomes;
+
+            public StageDef(BuildingId id, int[] costs, int[] incomes)
+            {
+                Id = id;
+                Costs = costs;
+                Incomes = incomes;
+            }
+        }
+
+        // Дерби и Гараж построены со старта (Stages пустые), заглушки трюков отключены (Stages пустые) —
+        // здесь только достраиваемые здания.
+        private static readonly StageDef[] StageDefaults =
+        {
+            new StageDef(BuildingId.HighJumpTower, new[] { 25, 40, 60 },    new[] { 0, 0, 0 }),
+            new StageDef(BuildingId.TicketBooth,   new[] { 60, 100, 140 },  new[] { 5, 8, 12 }),
+            new StageDef(BuildingId.Tribunes,      new[] { 100, 150, 200 }, new[] { 8, 12, 18 }),
+        };
+
+        // Enabled-здания без зоны запуска, но с зоной вложения: ей тоже нужны ZoneOffset/ZoneSize.
+        private static readonly BuildingId[] InvestZoneDefaults =
+        {
+            BuildingId.TicketBooth,
+            BuildingId.Tribunes,
+        };
+
+        /// <summary>
+        /// Одноразовая миграция каталога (шаг 12a) по флагу _stagesDefaultsApplied: заливает Stages
+        /// (Cost/IncomePerMinute, StagePrefab = null) для HighJumpTower/TicketBooth/Tribunes и заполняет
+        /// зону (ZoneOffset/ZoneSize) у Enabled-зданий без зоны запуска, если она не задана. После прохода
+        /// флаг = true — значения дизайнера дальше не трогаются. Поля не найдены (рантайм не скомпилирован) —
+        /// ничего не пишем и флаг не ставим. Идемпотентно; публично — для Build Base Hub Layout.
+        /// </summary>
+        public static void MigrateBuildStages()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<BuildingCatalogConfig>(CatalogPath);
+            if (catalog == null)
+            {
+                Debug.LogWarning("[Editor] MigrateBuildStages: каталог не найден: " + CatalogPath);
+                return;
+            }
+
+            var so = new SerializedObject(catalog);
+            var entries = so.FindProperty("_entries");
+            var flag = so.FindProperty(StagesFlagField);
+            if (entries == null || flag == null)
+            {
+                Debug.LogWarning("[Editor] BuildingCatalogConfig._entries/" + StagesFlagField +
+                                 " не найдены (рантайм 12a не скомпилирован?) — миграция стадий пропущена.");
+                return;
+            }
+
+            if (flag.boolValue)
+            {
+                Debug.Log("[Editor] MigrateBuildStages: стадии уже залиты (флаг) — не трогаем.");
+                return;
+            }
+
+            // Стадии. Запись идёт только в SerializedObject; при любой нехватке полей выходим до Apply —
+            // тогда ничего не сохраняется и флаг остаётся false.
+            foreach (var def in StageDefaults)
+            {
+                SerializedProperty entry = FindEntry(entries, def.Id);
+                if (entry == null)
+                {
+                    Debug.LogWarning("[Editor] MigrateBuildStages: entry " + def.Id + " не найден в каталоге.");
+                    continue;
+                }
+
+                var stages = entry.FindPropertyRelative("Stages");
+                if (stages == null)
+                {
+                    Debug.LogWarning("[Editor] MigrateBuildStages: у BuildingEntry нет поля Stages " +
+                                     "(рантайм 12a не скомпилирован?) — миграция пропущена.");
+                    return;
+                }
+
+                stages.arraySize = def.Costs.Length;
+                for (int i = 0; i < def.Costs.Length; i++)
+                {
+                    // arraySize++ зануляет инициализаторы — заполняем КАЖДОЕ поле элемента явно.
+                    var stage = stages.GetArrayElementAtIndex(i);
+                    var cost = stage.FindPropertyRelative("Cost");
+                    var prefab = stage.FindPropertyRelative("StagePrefab");
+                    var income = stage.FindPropertyRelative("IncomePerMinute");
+                    if (cost == null || prefab == null || income == null)
+                    {
+                        Debug.LogWarning("[Editor] MigrateBuildStages: у BuildStageEntry нет полей " +
+                                         "Cost/StagePrefab/IncomePerMinute — миграция пропущена.");
+                        return;
+                    }
+
+                    cost.intValue = def.Costs[i];
+                    prefab.objectReferenceValue = null;
+                    income.intValue = def.Incomes[i];
+                }
+
+                Debug.Log("[Editor] " + def.Id + ": " + def.Costs.Length + " стадий стройки (цены " +
+                          string.Join("/", def.Costs) + ", доход " + string.Join("/", def.Incomes) + " в мин).");
+            }
+
+            // Зоны вложения у зданий без зоны запуска.
+            foreach (var id in InvestZoneDefaults)
+            {
+                SerializedProperty entry = FindEntry(entries, id);
+                if (entry == null)
+                {
+                    Debug.LogWarning("[Editor] MigrateBuildStages: entry " + id + " не найден в каталоге.");
+                    continue;
+                }
+
+                var offset = entry.FindPropertyRelative("ZoneOffset");
+                var size = entry.FindPropertyRelative("ZoneSize");
+                if (offset == null || size == null)
+                {
+                    Debug.LogWarning("[Editor] MigrateBuildStages: у BuildingEntry нет полей ZoneOffset/ZoneSize " +
+                                     "(рантайм 12a не скомпилирован?) — миграция пропущена.");
+                    return;
+                }
+
+                bool sizeEmpty = size.vector3Value.sqrMagnitude < 0.0001f;
+                bool offsetEmpty = offset.vector3Value.sqrMagnitude < 0.0001f;
+                if (!sizeEmpty && !offsetEmpty)
+                {
+                    Debug.Log("[Editor] " + id + ": зона уже задана — не трогаем.");
+                    continue;
+                }
+
+                // Нулевой размер -> дефолт; нулевое смещение -> «вперёд» от визуала (как у зон запуска):
+                // зона с центром в pivot здания лежала бы внутри модели.
+                if (sizeEmpty)
+                    size.vector3Value = LaunchZoneSizeDefault;
+                if (offsetEmpty)
+                    offset.vector3Value = new Vector3(0f, 0f, ComputeLaunchZoneForward(id));
+                Debug.Log("[Editor] " + id + ": зона -> offset " + offset.vector3Value.ToString("F2") +
+                          ", size " + size.vector3Value.ToString("F2") + ".");
+            }
+
+            flag.boolValue = true;
+            so.ApplyModifiedProperties();
+            EditorUtility.SetDirty(catalog);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Editor] MigrateBuildStages: стадии/зоны залиты, флаг " + StagesFlagField + " = true.");
         }
 
         private static SerializedProperty FindEntry(SerializedProperty entries, BuildingId id)
