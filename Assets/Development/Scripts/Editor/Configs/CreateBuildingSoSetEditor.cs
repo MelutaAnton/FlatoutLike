@@ -4,6 +4,7 @@ using UnityEngine;
 using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Hub;
 using FlatOutLike.Data.Configs.Progression;
+using FlatOutLike.Editor.Prefabs;
 using FlatOutLike.Models;
 
 namespace FlatOutLike.Editor.Configs
@@ -34,6 +35,11 @@ namespace FlatOutLike.Editor.Configs
             "Assets/ThirdParty/Synty/PolygonCity/Prefabs/Buildings/SM_Bld_OfficeOld_Small_01.prefab";
         private const string HighRampPrefab =
             "Assets/Development/Prefabs/Environment/HighRamp.prefab";
+
+        // Полиш хаба: постоянные визуалы Derby (префаб пользователя) и Garage (Build Hub Garage Prefab).
+        private const string ArenaEnvironmentPrefab =
+            "Assets/Development/Prefabs/Hub/Arena/Arena_Environment.prefab";
+        private const string GarageFinalPrefab = BuildHubGaragePrefabEditor.PrefabPath;
         // Публично: плита стадий (Build Hub Stage Prefabs) и проверка «заглушка ли это» берут путь отсюда.
         public const string ConcreteFloorPrefab =
             "Assets/ThirdParty/Synty/PolygonConstruction/Prefabs/Buildings/SM_Bld_Concrete_Floor_01.prefab";
@@ -104,8 +110,8 @@ namespace FlatOutLike.Editor.Configs
 
         private static readonly BuildingDef[] Defaults =
         {
-            new BuildingDef(BuildingId.DerbyArena,    new Vector3(0f, 0f, 14f),   180f, true,  OfficeRoundPrefab),
-            new BuildingDef(BuildingId.Garage,        new Vector3(-15f, 0f, 4f),   90f, true,  OfficeOldSmallPrefab),
+            new BuildingDef(BuildingId.DerbyArena,    new Vector3(0f, 0f, 14f),   180f, true,  ArenaEnvironmentPrefab),
+            new BuildingDef(BuildingId.Garage,        new Vector3(-15f, 0f, 4f),   90f, true,  GarageFinalPrefab),
             new BuildingDef(BuildingId.HighJumpTower, new Vector3(15f, 0f, 4f),   -90f, true,  HighRampPrefab),
             new BuildingDef(BuildingId.TicketBooth,   new Vector3(-15f, 0f, -8f),  90f, true,  TicketBoothFinalPrefab),
             new BuildingDef(BuildingId.Tribunes,      new Vector3(15f, 0f, -8f),  -90f, true,  TribunesFinalPrefab),
@@ -133,8 +139,8 @@ namespace FlatOutLike.Editor.Configs
 
         private static readonly PresentationDef[] PresentationDefaults =
         {
-            new PresentationDef(BuildingId.DerbyArena,    "DERBY",        10f),
-            new PresentationDef(BuildingId.Garage,        "GARAGE",        8f),
+            new PresentationDef(BuildingId.DerbyArena,    "DERBY",        12f),
+            new PresentationDef(BuildingId.Garage,        "GARAGE",       10f), // составной ангар+декор (2026-10-22)
             new PresentationDef(BuildingId.HighJumpTower, "HIGH JUMP",     8f),
             new PresentationDef(BuildingId.TicketBooth,   "TICKET BOOTH",  7f),
             new PresentationDef(BuildingId.Tribunes,      "TRIBUNES",     12f), // stand_001 — сектор стадиона: при 7 м финал ниже каркаса (решение 2026-10-22)
@@ -166,6 +172,8 @@ namespace FlatOutLike.Editor.Configs
             MigrateBuildStages();
             // Шаг 12b: префабы промежуточных стадий и финальные визуалы TicketBooth/Tribunes.
             MigrateStagePrefabs();
+            // Полиш хаба: постоянные визуалы Derby/Garage вместо временных Synty-офисов.
+            MigrateHubVisuals();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -752,6 +760,96 @@ namespace FlatOutLike.Editor.Configs
 
             visualProp.objectReferenceValue = final;
             Debug.Log("[Editor] " + def.Id + ": VisualPrefab = " + final.name + " (вместо " + (isEmpty ? "пусто" : "заглушки") + ").");
+            return true;
+        }
+
+        // ── Полиш хаба: постоянные визуалы Derby и Garage ───────────────────────
+
+        /// <summary>
+        /// Миграция каталога без затирания ручного выбора: VisualPrefab DerbyArena -> Arena_Environment,
+        /// Garage -> Garage_Final — только если поле пустое или равно прежней временной заглушке
+        /// (OfficeRound / OfficeOldSmall, сравнение по пути ассета). Нет нового префаба — LogWarning, поле не трогаем.
+        /// Идемпотентно; публично — чтобы Build Base Hub Layout мог гарантировать миграцию.
+        /// </summary>
+        public static void MigrateHubVisuals()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<BuildingCatalogConfig>(CatalogPath);
+            if (catalog == null)
+            {
+                Debug.LogWarning("[Editor] MigrateHubVisuals: каталог не найден: " + CatalogPath);
+                return;
+            }
+
+            var so = new SerializedObject(catalog);
+            var entries = so.FindProperty("_entries");
+            if (entries == null)
+            {
+                Debug.LogWarning("[Editor] BuildingCatalogConfig._entries не найдено (рантайм не скомпилирован?).");
+                return;
+            }
+
+            bool changed = false;
+            changed |= ReplaceLegacyVisual(entries, BuildingId.DerbyArena, OfficeRoundPrefab, ArenaEnvironmentPrefab,
+                "проверь, что префаб Arena_Environment существует");
+            changed |= ReplaceLegacyVisual(entries, BuildingId.Garage, OfficeOldSmallPrefab, GarageFinalPrefab,
+                "сначала FlatOutLike/Prefabs/Build Hub Garage Prefab");
+
+            if (changed)
+            {
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(catalog);
+                AssetDatabase.SaveAssets();
+                Debug.Log("[Editor] MigrateHubVisuals: каталог обновлён.");
+            }
+            else
+            {
+                Debug.Log("[Editor] MigrateHubVisuals: изменений нет.");
+            }
+        }
+
+        private static bool ReplaceLegacyVisual(SerializedProperty entries, BuildingId id, string legacyPath,
+            string newPath, string missingHint)
+        {
+            SerializedProperty entry = FindEntry(entries, id);
+            if (entry == null)
+            {
+                Debug.LogWarning("[Editor] MigrateHubVisuals: entry " + id + " не найден в каталоге.");
+                return false;
+            }
+
+            var visualProp = entry.FindPropertyRelative("VisualPrefab");
+            if (visualProp == null)
+            {
+                Debug.LogWarning("[Editor] BuildingEntry.VisualPrefab не найдено.");
+                return false;
+            }
+
+            var current = visualProp.objectReferenceValue;
+            bool isEmpty = current == null;
+            string currentPath = isEmpty ? string.Empty : AssetDatabase.GetAssetPath(current);
+            if (!isEmpty && currentPath == newPath)
+            {
+                Debug.Log("[Editor] " + id + ": VisualPrefab уже " + current.name + " — не трогаем.");
+                return false;
+            }
+
+            if (!isEmpty && currentPath != legacyPath)
+            {
+                Debug.Log("[Editor] " + id + ": VisualPrefab выбран вручную (" + current.name + ") — не трогаем.");
+                return false;
+            }
+
+            var replacement = AssetDatabase.LoadAssetAtPath<GameObject>(newPath);
+            if (replacement == null)
+            {
+                Debug.LogWarning("[Editor] " + id + ": новый визуал не найден: " + newPath + " — " + missingHint +
+                                 ". VisualPrefab не тронут.");
+                return false;
+            }
+
+            visualProp.objectReferenceValue = replacement;
+            Debug.Log("[Editor] " + id + ": VisualPrefab = " + replacement.name + " (вместо " +
+                      (isEmpty ? "пусто" : "временного " + current.name) + ").");
             return true;
         }
 

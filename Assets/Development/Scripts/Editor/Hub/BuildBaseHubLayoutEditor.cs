@@ -235,6 +235,8 @@ namespace FlatOutLike.Editor.Hub
             CreateBuildingSoSetEditor.MigrateBuildStages();
             // 12b: префабы промежуточных стадий и финальные визуалы (не затирает ручной выбор).
             CreateBuildingSoSetEditor.MigrateStagePrefabs();
+            // Полиш хаба: постоянные визуалы Derby/Garage вместо временных (не затирает ручной выбор).
+            CreateBuildingSoSetEditor.MigrateHubVisuals();
             AssetDatabase.SaveAssets();
             BuildMobileInputCanvasEditor.EnsureHubGroupInactiveInPrefab();
         }
@@ -549,6 +551,10 @@ namespace FlatOutLike.Editor.Hub
                         FitVisual(building, content, entry);
                 }
 
+                // Глобальный URP Volume префаба (демо-пак Arena_Environment) перекрасил бы пост-обработку хаба.
+                if (content != null)
+                    DisableVolumes(content, entry.Id);
+
                 if (i == total - 1)
                     lastContent = content;
             }
@@ -591,6 +597,25 @@ namespace FlatOutLike.Editor.Hub
             SyncBuildSite(building, entry, roots);
             Debug.Log("[Editor] " + entry.Id + ": стадий в сцене — " + total + (isStub ? " (заглушка)." : "."));
             return labelPos;
+        }
+
+        /// <summary>
+        /// Выключает все компоненты UnityEngine.Rendering.Volume в иерархии инстанса стадии (override сценного
+        /// инстанса — ассет префаба не трогаем). Идемпотентно: уже выключенный Volume не логируется как изменение.
+        /// </summary>
+        private static void DisableVolumes(GameObject content, BuildingId id)
+        {
+            foreach (var volume in content.GetComponentsInChildren<UnityEngine.Rendering.Volume>(true))
+            {
+                if (!volume.enabled)
+                    continue;
+
+                Undo.RecordObject(volume, "Disable Hub Volume");
+                volume.enabled = false;
+                EditorUtility.SetDirty(volume);
+                Debug.Log("[Editor] " + id + ": Volume на '" + volume.gameObject.name + "' выключен (глобальный профиль префаба " +
+                          "не должен менять пост-обработку хаба).");
+            }
         }
 
         private static GameObject GetStagePrefab(BuildingCatalogConfig.BuildingEntry entry, int index)

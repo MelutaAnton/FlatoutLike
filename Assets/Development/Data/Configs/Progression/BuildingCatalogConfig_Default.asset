@@ -17,21 +17,21 @@ MonoBehaviour:
     Position: {x: 0, y: 0, z: 14}
     YRotation: 180
     Enabled: 1
-    VisualPrefab: {fileID: 159070, guid: 54c86e934c1824f46a2a8955ea57091b, type: 3}
+    VisualPrefab: {fileID: 5055977425272516051, guid: 9195af8959e3ef141b2a8898425936f3, type: 3}
     DisplayName: DERBY
-    VisualFootprint: 10
+    VisualFootprint: 12
     HasLaunchZone: 1
     LaunchState: 3
-    ZoneOffset: {x: 0, y: 0, z: 8.5}
+    ZoneOffset: {x: 0, y: 0, z: 9.5}
     ZoneSize: {x: 6, y: 3, z: 6}
     Stages: []
   - Id: 1
     Position: {x: -15, y: 0, z: 4}
     YRotation: 90
     Enabled: 1
-    VisualPrefab: {fileID: 120682, guid: 84c719d9545655049b535e2613281b11, type: 3}
+    VisualPrefab: {fileID: 6817139855396370058, guid: b13dccd82fd6a814bb02b3badd01b0ab, type: 3}
     DisplayName: GARAGE
-    VisualFootprint: 8
+    VisualFootprint: 10
     HasLaunchZone: 1
     LaunchState: 1
     ZoneOffset: {x: 0, y: 0, z: 7.5}
@@ -168,3 +168,7 @@ MonoBehaviour:
   _presentationDefaultsApplied: 1
   _vacantStagePrefab: {fileID: 0}
   _stagesDefaultsApplied: 1
+  _stagePopDuration: 0.35
+  _stagePopStartScale: 0.6
+  _stagePopOvershoot: 1.08
+  _completedVfxHeight: 4

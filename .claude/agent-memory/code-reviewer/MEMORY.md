@@ -17,4 +17,5 @@
 - [Hub launch zones](project-hub-launch-zones.md) — 11b: зона HighJump без гейта стройкой — НЕ отклонение (§19 шаг 11); на шаге 12 гейт должен быть декларативным; зоны не должны перекрываться (сервис без fallback)
 - [Step 12a build loop](project-step12a-build-loop.md) — R1 FAIL→R2 PASS; flush-модель сейва стройки, Dispose-flush vs per-scene Meta (порядок сцен), чек для 12b/13
 - [Step 12b stage scale](project-step12b-stage-scale.md) — R1 FAIL→R2 PASS; стадии под след финала, сигнатура W/D в .meta (без H); VfxConfig_Hub отдельно; дефолт Tribunes 7≠12
+- [Hub ThirdParty visuals](hotspot_hub_thirdparty_visuals.md) — Junkyard_1 без коллайдеров (Garage_Final сквозной); Arena_Environment: глобальный Volume + рантайм-скрипты пака; ZoneOffset vs формула
 - [Pool create lifecycle](hotspot_pool_create_lifecycle.md) — пул инстанцирует активный prefab: Awake/OnEnable в позе префаба + OnDisable до Construct; OnDisable обязан быть null-guarded
