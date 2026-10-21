@@ -16,7 +16,9 @@ using FlatOutLike.Data.Configs.Camera;
 using FlatOutLike.Data.Configs.Hub;
 using FlatOutLike.Data.Configs.Input;
 using FlatOutLike.Data.Configs.Progression;
+using FlatOutLike.Data.Configs.Vfx;
 using FlatOutLike.Editor.Configs;
+using FlatOutLike.Editor.Prefabs;
 using FlatOutLike.Editor.Scenes;
 using FlatOutLike.Editor.Setup;
 using FlatOutLike.Editor.UI;
@@ -112,6 +114,8 @@ namespace FlatOutLike.Editor.Hub
         // что LaunchConfirmCanvas. При камере (0,20,-15)/FOV45 кегль 9 даёт читаемую подпись ~6 м шириной.
         private const float LabelMargin        = 1.5f; // отступ над верхом визуала, м
         private const float LabelDefaultHeight = 3f;   // высота, если у площадки нет визуала, м
+        // Потолок высоты подписи над землёй (12b): над высоким HighRamp подпись уезжала за кадр top-down камеры.
+        private const float MaxLabelHeight     = 6f;
         private const float LabelFallbackPitchDeg = 50f; // поворот, если HubCameraConfig не найден
         private const float LabelFontSize      = 9f;
 
@@ -229,6 +233,8 @@ namespace FlatOutLike.Editor.Hub
             CreateBuildingSoSetEditor.MigrateBuildingPresentation();
             // 12a: стадии стройки (цены/доход) и зоны вложения — одноразово по флагу в каталоге.
             CreateBuildingSoSetEditor.MigrateBuildStages();
+            // 12b: префабы промежуточных стадий и финальные визуалы (не затирает ручной выбор).
+            CreateBuildingSoSetEditor.MigrateStagePrefabs();
             AssetDatabase.SaveAssets();
             BuildMobileInputCanvasEditor.EnsureHubGroupInactiveInPrefab();
         }
@@ -525,8 +531,23 @@ namespace FlatOutLike.Editor.Hub
                     }
                 }
 
-                if (content != null && entry.VisualFootprint > 0f && PrefabUtility.IsAnyPrefabInstanceRoot(content))
-                    FitVisual(building, content, entry);
+                if (content != null && PrefabUtility.IsAnyPrefabInstanceRoot(content))
+                {
+                    // 12b: промежуточные стадии со своим префабом (Stage_1..Stage_N-1) уже собраны в метрах под
+                    // габарит — масштаб/сдвиг не применяем, а прежний FitVisual (если был) сбрасываем.
+                    // Пустырь (Stage_0), финальная стадия и здания «построено со старта» — по-старому.
+                    bool intermediatePrefab = stageCount > 0 && i >= 1 && i < total - 1;
+                    if (intermediatePrefab)
+                    {
+                        ResetLocal(content.transform);
+                        // Префаб стадии собран под вписанный след финала: если габарит финала с тех пор
+                        // менялся (VisualFootprint / финальный префаб) — подсказать пересборку.
+                        BuildHubStagePrefabsEditor.WarnIfStageStale(entry,
+                            PrefabUtility.GetCorrespondingObjectFromSource(content));
+                    }
+                    else if (entry.VisualFootprint > 0f)
+                        FitVisual(building, content, entry);
+                }
 
                 if (i == total - 1)
                     lastContent = content;
@@ -894,7 +915,7 @@ namespace FlatOutLike.Editor.Hub
         private static Vector3 ComputeLabelLocalPosition(GameObject building, GameObject content)
         {
             if (content != null && TryGetLocalBounds(building.transform, content, out Bounds vb))
-                return new Vector3(vb.center.x, Mathf.Max(vb.max.y, 0f) + LabelMargin, vb.center.z);
+                return new Vector3(vb.center.x, Mathf.Min(Mathf.Max(vb.max.y, 0f) + LabelMargin, MaxLabelHeight), vb.center.z);
             return new Vector3(0f, LabelDefaultHeight, 0f);
         }
 
@@ -1752,6 +1773,10 @@ namespace FlatOutLike.Editor.Hub
             SetRef(so, "_buildingCatalogConfig", catalog, "BuildingCatalogConfig_Default");
             SetRef(so, "_hubHudView", hubHudView, "HubHudView");
             SetRef(so, "_launchConfirmView", confirmView, "LaunchConfirmView");
+
+            // 12b: VFX стройки — отдельный конфиг хаба (создаёт меню Build Hub Build VFX).
+            var hubVfxConfig = AssetDatabase.LoadAssetAtPath<VfxConfig>(BuildHubBuildVfxEditor.HubVfxConfigPath);
+            SetRef(so, "_vfxConfig", hubVfxConfig, "VfxConfig_Hub");
 
             so.ApplyModifiedProperties();
 

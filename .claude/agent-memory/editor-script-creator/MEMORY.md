@@ -14,3 +14,5 @@
 - [Step 11a BaseHub Scripts](project_step11a_basehub_scripts.md) — Hub Character prefab / Building SO Set / Base Hub Layout; миграция меты; enum intValue; порядок запуска
 - [Step 11b Launch Zones](project_step11b_launch_zones.md) — зоны запуска/HubHud/LaunchConfirm, ScenePaths, ConfigureTapButton, python3 = заглушка
 - [Step 12a Stages Scripts](project_step12a_stages_scripts.md) — стадийная стройка хаба: Stages/Stage_N, Zone, Panel, BuildSiteController; флаг _stagesDefaultsApplied
+- [Step 12b Hub Stages Editor](step12b-hub-stages-editor.md) — префабы стадий через preview-сцену, VFX-варианты (Variant + LoadPrefabContents), HubStagePathsTable, FitVisual только финал
+- [Step 12b R1 signature rebuild](step12b-r1-signature-rebuild.md) — userData-сигнатура входов для пересборки префабов; плита = вписанный след финала; VfxConfig_Hub; VFX-кандидат без материала отбраковывается

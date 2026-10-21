@@ -4,6 +4,8 @@ namespace FlatOutLike.Models
     {
         CollisionSparks,
         DamageSmoke,
-        DamageFire
+        DamageFire,
+        BuildStageComplete,
+        BuildingCompleted
     }
 }

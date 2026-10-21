@@ -45,6 +45,20 @@ namespace FlatOutLike.Data.Configs.Progression
         // ОДИН раз — дальше ручной тюнинг миграцией не перезаписывается. Пишет только editor.
         [SerializeField, HideInInspector] private bool _stagesDefaultsApplied;
 
+        [Header("Эффекты стройки (12b)")]
+        [Tooltip("Длительность «попа» появления нового визуала стадии, секунды (игровое время). " +
+                 "0 и меньше — поп отключён, визуал сразу в базовом масштабе.")]
+        [SerializeField] private float _stagePopDuration = 0.35f;
+
+        [Tooltip("Стартовый множитель масштаба нового визуала стадии в начале попа.")]
+        [SerializeField] private float _stagePopStartScale = 0.6f;
+
+        [Tooltip("Пиковый множитель масштаба попа перед возвратом к 1.")]
+        [SerializeField] private float _stagePopOvershoot = 1.08f;
+
+        [Tooltip("Высота над площадкой, на которой играет VFX завершения здания, м.")]
+        [SerializeField] private float _completedVfxHeight = 4f;
+
         public IReadOnlyList<BuildingEntry> Entries =>
             _entries != null ? _entries : Array.Empty<BuildingEntry>();
 
@@ -55,6 +69,11 @@ namespace FlatOutLike.Data.Configs.Progression
         public string ComingSoonLabel => _comingSoonLabel;
         public float LaunchConfirmSeconds => _launchConfirmSeconds;
         public float LaunchIndicatorHeight => _launchIndicatorHeight;
+
+        public float StagePopDuration => _stagePopDuration;
+        public float StagePopStartScale => _stagePopStartScale;
+        public float StagePopOvershoot => _stagePopOvershoot;
+        public float CompletedVfxHeight => _completedVfxHeight;
 
         /// <summary>Ищет постройку по id. Каждый BuildingId встречается в каталоге не более раза.</summary>
         public bool TryGetEntry(BuildingId id, out BuildingEntry entry)

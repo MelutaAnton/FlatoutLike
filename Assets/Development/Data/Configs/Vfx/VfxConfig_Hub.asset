@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a36a82c45a000d841a79d8bfadc72ec6, type: 3}
+  m_Name: VfxConfig_Hub
+  m_EditorClassIdentifier: FlatOutLike::FlatOutLike.Data.Configs.Vfx.VfxConfig
+  _entries:
+  - type: 3
+    prefab: {fileID: 2175008947790354079, guid: fed3a68e7ac75144eb8b0327d1dbceaa, type: 3}
+    poolSize: 3
+  - type: 4
+    prefab: {fileID: 5985244979546824054, guid: 2531a6ddfb3624e448416f0ba14f95cc, type: 3}
+    poolSize: 2

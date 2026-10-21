@@ -50,10 +50,10 @@ MonoBehaviour:
     ZoneSize: {x: 6, y: 3, z: 6}
     Stages:
     - Cost: 25
-      StagePrefab: {fileID: 0}
+      StagePrefab: {fileID: 3468293951581122274, guid: 2cf30101680c37a4e8f77b774c29e93b, type: 3}
       IncomePerMinute: 0
     - Cost: 40
-      StagePrefab: {fileID: 0}
+      StagePrefab: {fileID: 4500513559043571306, guid: e94873cca816d0948a860ae963d2ff3d, type: 3}
       IncomePerMinute: 0
     - Cost: 60
       StagePrefab: {fileID: 0}
@@ -62,7 +62,7 @@ MonoBehaviour:
     Position: {x: -15, y: 0, z: -8}
     YRotation: 90
     Enabled: 1
-    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    VisualPrefab: {fileID: 1880884265163912, guid: e7678ff8216ad9b4299e317bcc4eb772, type: 3}
     DisplayName: TICKET BOOTH
     VisualFootprint: 7
     HasLaunchZone: 0
@@ -71,10 +71,10 @@ MonoBehaviour:
     ZoneSize: {x: 6, y: 3, z: 6}
     Stages:
     - Cost: 60
-      StagePrefab: {fileID: 0}
+      StagePrefab: {fileID: 5460936721391334517, guid: ff89ef28195134245b4e632664d1f4b4, type: 3}
       IncomePerMinute: 5
     - Cost: 100
-      StagePrefab: {fileID: 0}
+      StagePrefab: {fileID: 3044309081461423705, guid: 65cfe0ba9edfa504aa749022a5d71da3, type: 3}
       IncomePerMinute: 8
     - Cost: 140
       StagePrefab: {fileID: 0}
@@ -83,19 +83,19 @@ MonoBehaviour:
     Position: {x: 15, y: 0, z: -8}
     YRotation: -90
     Enabled: 1
-    VisualPrefab: {fileID: 1762945973701536, guid: 27e2f0253f3de9a4baa6aba994ff3eb7, type: 3}
+    VisualPrefab: {fileID: 2568517310789016070, guid: e3dbea4b681df77428fe9112a8becbc9, type: 3}
     DisplayName: TRIBUNES
-    VisualFootprint: 7
+    VisualFootprint: 12
     HasLaunchZone: 0
     LaunchState: 0
     ZoneOffset: {x: 0, y: 0, z: 7}
     ZoneSize: {x: 6, y: 3, z: 6}
     Stages:
     - Cost: 100
-      StagePrefab: {fileID: 0}
+      StagePrefab: {fileID: 3497953215142884365, guid: 2fb089f6cdc27b741abb4e62049d3d7c, type: 3}
       IncomePerMinute: 8
     - Cost: 150
-      StagePrefab: {fileID: 0}
+      StagePrefab: {fileID: 4018496546230306832, guid: 59750653be640b142a1c224926cfdfa6, type: 3}
       IncomePerMinute: 12
     - Cost: 200
       StagePrefab: {fileID: 0}

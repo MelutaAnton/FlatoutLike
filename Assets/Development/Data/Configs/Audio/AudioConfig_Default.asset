@@ -112,6 +112,26 @@ MonoBehaviour:
     Volume: 1
     PitchJitter: 0.05
     CooldownSeconds: 0.08
+  - Id: 15
+    Clips:
+    - {fileID: 8300000, guid: 82c75e390a98395459c8032a19526c1e, type: 3}
+    - {fileID: 8300000, guid: 4b602c678b914a447b8416b07661b2e9, type: 3}
+    Volume: 0.5
+    PitchJitter: 0.05
+    CooldownSeconds: 0.1
+  - Id: 16
+    Clips:
+    - {fileID: 8300000, guid: 97c86957807b10448aab19c7220ebb1c, type: 3}
+    - {fileID: 8300000, guid: f3e50e58721e02c4d8c3241ef24f4a0e, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
+  - Id: 17
+    Clips:
+    - {fileID: 8300000, guid: acf4ff693dea02a48b9d808f16ef5987, type: 3}
+    Volume: 1
+    PitchJitter: 0.05
+    CooldownSeconds: 0.08
   _musicEntries:
   - Id: 1
     Clip: {fileID: 8300000, guid: 5f3e15e7781ee9149b2bf932169ca39a, type: 3}

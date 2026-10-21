@@ -34,8 +34,52 @@ namespace FlatOutLike.Editor.Configs
             "Assets/ThirdParty/Synty/PolygonCity/Prefabs/Buildings/SM_Bld_OfficeOld_Small_01.prefab";
         private const string HighRampPrefab =
             "Assets/Development/Prefabs/Environment/HighRamp.prefab";
-        private const string ConcreteFloorPrefab =
+        // Публично: плита стадий (Build Hub Stage Prefabs) и проверка «заглушка ли это» берут путь отсюда.
+        public const string ConcreteFloorPrefab =
             "Assets/ThirdParty/Synty/PolygonConstruction/Prefabs/Buildings/SM_Bld_Concrete_Floor_01.prefab";
+
+        // Шаг 12b: финальные визуалы (Synty / Battle Stadium) и префабы промежуточных стадий.
+        private const string TicketBoothFinalPrefab =
+            "Assets/ThirdParty/Synty/PolygonConstruction/Prefabs/Buildings/SM_Bld_Portable_Office_01.prefab";
+        private const string TribunesFinalPrefab =
+            "Assets/ThirdParty/Battle_Stadium/Prefabs/Stadium/stand_001.prefab";
+        private const string HubStagePrefabsRoot = "Assets/Development/Prefabs/Hub/";
+
+        /// <summary>Пути стадий и финала достраиваемого здания. Единственное место путей (читает и Build Hub Stage Prefabs).</summary>
+        public readonly struct HubStagePaths
+        {
+            public readonly BuildingId Id;
+            public readonly string Stage1;
+            public readonly string Stage2;
+            public readonly string Final;
+            // true — VisualPrefab заменяется на Final, если он пуст или равен заглушке ConcreteFloorPrefab.
+            public readonly bool ReplaceStubVisual;
+
+            public HubStagePaths(BuildingId id, string stage1, string stage2, string final, bool replaceStubVisual)
+            {
+                Id = id;
+                Stage1 = stage1;
+                Stage2 = stage2;
+                Final = final;
+                ReplaceStubVisual = replaceStubVisual;
+            }
+        }
+
+        public static readonly HubStagePaths[] HubStagePathsTable =
+        {
+            new HubStagePaths(BuildingId.HighJumpTower,
+                HubStagePrefabsRoot + "HighJumpTower/HighJumpTower_Stage1.prefab",
+                HubStagePrefabsRoot + "HighJumpTower/HighJumpTower_Stage2.prefab",
+                HighRampPrefab, false),
+            new HubStagePaths(BuildingId.TicketBooth,
+                HubStagePrefabsRoot + "TicketBooth/TicketBooth_Stage1.prefab",
+                HubStagePrefabsRoot + "TicketBooth/TicketBooth_Stage2.prefab",
+                TicketBoothFinalPrefab, true),
+            new HubStagePaths(BuildingId.Tribunes,
+                HubStagePrefabsRoot + "Tribunes/Tribunes_Stage1.prefab",
+                HubStagePrefabsRoot + "Tribunes/Tribunes_Stage2.prefab",
+                TribunesFinalPrefab, true),
+        };
 
         private readonly struct BuildingDef
         {
@@ -63,8 +107,8 @@ namespace FlatOutLike.Editor.Configs
             new BuildingDef(BuildingId.DerbyArena,    new Vector3(0f, 0f, 14f),   180f, true,  OfficeRoundPrefab),
             new BuildingDef(BuildingId.Garage,        new Vector3(-15f, 0f, 4f),   90f, true,  OfficeOldSmallPrefab),
             new BuildingDef(BuildingId.HighJumpTower, new Vector3(15f, 0f, 4f),   -90f, true,  HighRampPrefab),
-            new BuildingDef(BuildingId.TicketBooth,   new Vector3(-15f, 0f, -8f),  90f, true,  ConcreteFloorPrefab),
-            new BuildingDef(BuildingId.Tribunes,      new Vector3(15f, 0f, -8f),  -90f, true,  ConcreteFloorPrefab),
+            new BuildingDef(BuildingId.TicketBooth,   new Vector3(-15f, 0f, -8f),  90f, true,  TicketBoothFinalPrefab),
+            new BuildingDef(BuildingId.Tribunes,      new Vector3(15f, 0f, -8f),  -90f, true,  TribunesFinalPrefab),
             new BuildingDef(BuildingId.LongJump,      new Vector3(-16f, 0f, StubRowZ), 0f, false, ConcreteFloorPrefab),
             new BuildingDef(BuildingId.FireRings,     new Vector3(-8f, 0f, StubRowZ),  0f, false, ConcreteFloorPrefab),
             new BuildingDef(BuildingId.Bowling,       new Vector3(0f, 0f, StubRowZ),   0f, false, ConcreteFloorPrefab),
@@ -93,7 +137,7 @@ namespace FlatOutLike.Editor.Configs
             new PresentationDef(BuildingId.Garage,        "GARAGE",        8f),
             new PresentationDef(BuildingId.HighJumpTower, "HIGH JUMP",     8f),
             new PresentationDef(BuildingId.TicketBooth,   "TICKET BOOTH",  7f),
-            new PresentationDef(BuildingId.Tribunes,      "TRIBUNES",      7f),
+            new PresentationDef(BuildingId.Tribunes,      "TRIBUNES",     12f), // stand_001 — сектор стадиона: при 7 м финал ниже каркаса (решение 2026-10-22)
             new PresentationDef(BuildingId.LongJump,      "LONG JUMP",     6f),
             new PresentationDef(BuildingId.FireRings,     "FIRE RINGS",    6f),
             new PresentationDef(BuildingId.Bowling,       "BOWLING",       6f),
@@ -120,6 +164,8 @@ namespace FlatOutLike.Editor.Configs
             MigrateBuildingPresentation();
             // Шаг 12a: стадии стройки (цены/доход) и зоны вложения — одноразово по флагу.
             MigrateBuildStages();
+            // Шаг 12b: префабы промежуточных стадий и финальные визуалы TicketBooth/Tribunes.
+            MigrateStagePrefabs();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -573,6 +619,140 @@ namespace FlatOutLike.Editor.Configs
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
             Debug.Log("[Editor] MigrateBuildStages: стадии/зоны залиты, флаг " + StagesFlagField + " = true.");
+        }
+
+        // ── Шаг 12b: префабы промежуточных стадий и финалы ──────────────────────
+
+        /// <summary>
+        /// Миграция каталога без затирания ручного выбора:
+        ///   • Stages[0].StagePrefab = Stage1, Stages[1].StagePrefab = Stage2 — только если поле пустое
+        ///     (Stages[2] не трогаем: финальная стадия = VisualPrefab);
+        ///   • VisualPrefab TicketBooth/Tribunes -> финальный визуал — только если он пуст или равен заглушке
+        ///     ConcreteFloorPrefab.
+        /// Префабы грузятся через LoadAssetAtPath; не найден — LogWarning (сначала Build Hub Stage Prefabs),
+        /// поле не трогаем. Идемпотентно; публично — чтобы Build Base Hub Layout мог гарантировать миграцию.
+        /// </summary>
+        public static void MigrateStagePrefabs()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<BuildingCatalogConfig>(CatalogPath);
+            if (catalog == null)
+            {
+                Debug.LogWarning("[Editor] MigrateStagePrefabs: каталог не найден: " + CatalogPath);
+                return;
+            }
+
+            var so = new SerializedObject(catalog);
+            var entries = so.FindProperty("_entries");
+            if (entries == null)
+            {
+                Debug.LogWarning("[Editor] BuildingCatalogConfig._entries не найдено (рантайм не скомпилирован?).");
+                return;
+            }
+
+            bool changed = false;
+            foreach (var def in HubStagePathsTable)
+            {
+                SerializedProperty entry = FindEntry(entries, def.Id);
+                if (entry == null)
+                {
+                    Debug.LogWarning("[Editor] MigrateStagePrefabs: entry " + def.Id + " не найден в каталоге.");
+                    continue;
+                }
+
+                // Префабы стадий 1 и 2 -> Stages[0] и Stages[1].
+                var stages = entry.FindPropertyRelative("Stages");
+                if (stages == null)
+                {
+                    // break, а не return: правки предыдущих зданий применятся общим ApplyModifiedProperties ниже.
+                    Debug.LogWarning("[Editor] MigrateStagePrefabs: у BuildingEntry нет поля Stages (рантайм 12a не скомпилирован?).");
+                    break;
+                }
+
+                if (stages.arraySize < 2)
+                {
+                    Debug.LogWarning("[Editor] " + def.Id + ": в каталоге меньше 2 стадий (" + stages.arraySize +
+                                     ") — префабы стадий не прошиты (проверь MigrateBuildStages).");
+                }
+                else
+                {
+                    changed |= AssignStagePrefab(stages, 0, def.Stage1, def.Id);
+                    changed |= AssignStagePrefab(stages, 1, def.Stage2, def.Id);
+                }
+
+                // Финальный визуал вместо заглушки-плиты.
+                if (def.ReplaceStubVisual)
+                    changed |= ReplaceStubVisual(entry, def);
+            }
+
+            if (changed)
+            {
+                so.ApplyModifiedProperties();
+                EditorUtility.SetDirty(catalog);
+                AssetDatabase.SaveAssets();
+                Debug.Log("[Editor] MigrateStagePrefabs: каталог обновлён.");
+            }
+            else
+            {
+                Debug.Log("[Editor] MigrateStagePrefabs: изменений нет.");
+            }
+        }
+
+        private static bool AssignStagePrefab(SerializedProperty stages, int index, string path, BuildingId id)
+        {
+            var prefabProp = stages.GetArrayElementAtIndex(index).FindPropertyRelative("StagePrefab");
+            if (prefabProp == null)
+            {
+                Debug.LogWarning("[Editor] У BuildStageEntry нет поля StagePrefab.");
+                return false;
+            }
+
+            if (prefabProp.objectReferenceValue != null)
+            {
+                Debug.Log("[Editor] " + id + ": Stages[" + index + "].StagePrefab уже задан — не трогаем.");
+                return false;
+            }
+
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab == null)
+            {
+                Debug.LogWarning("[Editor] " + id + ": префаб стадии не найден: " + path +
+                                 " — сначала FlatOutLike/Prefabs/Build Hub Stage Prefabs. Поле не тронуто.");
+                return false;
+            }
+
+            prefabProp.objectReferenceValue = prefab;
+            Debug.Log("[Editor] " + id + ": Stages[" + index + "].StagePrefab = " + prefab.name + ".");
+            return true;
+        }
+
+        private static bool ReplaceStubVisual(SerializedProperty entry, HubStagePaths def)
+        {
+            var visualProp = entry.FindPropertyRelative("VisualPrefab");
+            if (visualProp == null)
+            {
+                Debug.LogWarning("[Editor] BuildingEntry.VisualPrefab не найдено.");
+                return false;
+            }
+
+            var current = visualProp.objectReferenceValue;
+            bool isEmpty = current == null;
+            bool isStub = !isEmpty && AssetDatabase.GetAssetPath(current) == ConcreteFloorPrefab;
+            if (!isEmpty && !isStub)
+            {
+                Debug.Log("[Editor] " + def.Id + ": VisualPrefab выбран вручную (" + current.name + ") — не трогаем.");
+                return false;
+            }
+
+            var final = AssetDatabase.LoadAssetAtPath<GameObject>(def.Final);
+            if (final == null)
+            {
+                Debug.LogWarning("[Editor] " + def.Id + ": финальный визуал не найден: " + def.Final + " — VisualPrefab не тронут.");
+                return false;
+            }
+
+            visualProp.objectReferenceValue = final;
+            Debug.Log("[Editor] " + def.Id + ": VisualPrefab = " + final.name + " (вместо " + (isEmpty ? "пусто" : "заглушки") + ").");
+            return true;
         }
 
         private static SerializedProperty FindEntry(SerializedProperty entries, BuildingId id)

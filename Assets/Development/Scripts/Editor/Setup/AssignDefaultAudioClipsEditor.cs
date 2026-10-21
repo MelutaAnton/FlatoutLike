@@ -97,6 +97,30 @@ namespace FlatOutLike.Editor.Setup
                 UsfxRoot + "MONEY_CASH_CURRENCY/CASH_REGISTER_Cha-ching_01_mono.wav",
                 UsfxRoot + "MONEY_CASH_CURRENCY/CASH_REGISTER_Cha-ching_02_mono.wav",
             }),
+            // Шаг 12b: стройка BaseHub. Тик вложения — частый, поэтому тихий и с запасом по кулдауну.
+            (SfxId.BuildInvestTick, new[]
+            {
+                UsfxRoot + "8BIT/Coin_Collect/8BIT_RETRO_Coin_Collect_One_Note_Twinkle_Short_mono.wav",
+                UsfxRoot + "8BIT/Coin_Collect/8BIT_RETRO_Coin_Collect_Two_Note_Bright_Fast_mono.wav",
+            }),
+            (SfxId.BuildStageComplete, new[]
+            {
+                UsfxRoot + "THUDS_THUMPS/THUD_Bright_01_mono.wav",
+                UsfxRoot + "THUDS_THUMPS/THUD_Medium_01_mono.wav",
+            }),
+            (SfxId.BuildingCompleted, new[]
+            {
+                UsfxRoot + "MUSIC_EFFECTS/MUSIC_EFFECT_Platform_Positive_01_stereo.wav",
+            }),
+        };
+
+        // Идентификаторы, строки которых это меню добавляет в AudioConfig само (если их нет) —
+        // чтобы не гонять «Setup Audio (All Scenes)», пересохраняющий все сцены.
+        private static readonly (SfxId id, float volume, float pitchJitter, float cooldown)[] EnsuredSfxEntries =
+        {
+            (SfxId.BuildInvestTick,    0.5f, 0.05f, 0.1f),
+            (SfxId.BuildStageComplete, 1f,   0.05f, 0.08f),
+            (SfxId.BuildingCompleted,  1f,   0.05f, 0.08f),
         };
 
         // ── Маппинг MusicTrackId → трек (Pixabay, Development/Audio/Music) ──────────
@@ -143,6 +167,8 @@ namespace FlatOutLike.Editor.Setup
             var enumValues = (SfxId[])Enum.GetValues(typeof(SfxId));
             int filled = 0;
 
+            EnsureSfxEntries(entries, enumValues);
+
             foreach (var (id, paths) in SfxClipMap)
             {
                 int enumIndex = Array.IndexOf(enumValues, id);
@@ -169,6 +195,44 @@ namespace FlatOutLike.Editor.Setup
             }
 
             return filled;
+        }
+
+        /// <summary>Добавляет SfxEntry для EnsuredSfxEntries, если строки с таким Id ещё нет. Существующие не трогает.</summary>
+        private static void EnsureSfxEntries(SerializedProperty entries, SfxId[] enumValues)
+        {
+            foreach (var (id, volume, pitchJitter, cooldown) in EnsuredSfxEntries)
+            {
+                int enumIndex = Array.IndexOf(enumValues, id);
+                if (FindEntryByEnumIndex(entries, "Id", enumIndex) != null)
+                    continue;
+
+                int index = entries.arraySize;
+                entries.arraySize = index + 1;
+                var entry = entries.GetArrayElementAtIndex(index);
+
+                // Элемент после arraySize++ инициализирован нулями (field-инициализаторы не выполняются) —
+                // заполняем КАЖДОЕ поле явно.
+                var idProp = entry.FindPropertyRelative("Id");
+                var clipsProp = entry.FindPropertyRelative("Clips");
+                var volumeProp = entry.FindPropertyRelative("Volume");
+                var jitterProp = entry.FindPropertyRelative("PitchJitter");
+                var cooldownProp = entry.FindPropertyRelative("CooldownSeconds");
+                if (idProp == null || clipsProp == null || volumeProp == null || jitterProp == null || cooldownProp == null)
+                {
+                    Debug.LogWarning("[Editor] У SfxEntry нет ожидаемых полей (Id/Clips/Volume/PitchJitter/CooldownSeconds) — " +
+                                     "строка " + id + " не добавлена.");
+                    entries.arraySize = index;
+                    continue;
+                }
+
+                idProp.enumValueIndex = enumIndex;
+                clipsProp.arraySize = 0;
+                volumeProp.floatValue = volume;
+                jitterProp.floatValue = pitchJitter;
+                cooldownProp.floatValue = cooldown;
+                Debug.Log("[Editor] AudioConfig: добавлена строка SfxEntry " + id + " (Volume " + volume + ", Jitter " +
+                          pitchJitter + ", Cooldown " + cooldown + ").");
+            }
         }
 
         private static int FillMusicClips(SerializedObject so)

@@ -20,6 +20,9 @@ namespace FlatOutLike.Models
         NewRecord,
         MatchWin,
         MatchLose,
-        Purchase
+        Purchase,
+        BuildInvestTick,
+        BuildStageComplete,
+        BuildingCompleted
     }
 }

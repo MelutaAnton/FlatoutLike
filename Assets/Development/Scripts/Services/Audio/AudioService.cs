@@ -57,6 +57,9 @@ namespace FlatOutLike.Services.Audio
             _eventBus.Subscribe<GameResumedEvent>(OnGameResumed);
             _eventBus.Subscribe<GameStateChangedEvent>(OnGameStateChanged);
             _eventBus.Subscribe<SceneTransitionCoveredEvent>(OnSceneTransitionCovered);
+            _eventBus.Subscribe<BuildingInvestProgressEvent>(OnBuildingInvestProgress);
+            _eventBus.Subscribe<BuildingStageInvestedEvent>(OnBuildingStageInvested);
+            _eventBus.Subscribe<BuildingCompletedEvent>(OnBuildingCompleted);
         }
 
         public void Start()
@@ -163,6 +166,19 @@ namespace FlatOutLike.Services.Audio
 
         private void OnUpgradePurchased(UpgradePurchasedEvent evt) => PlaySfx(SfxId.Purchase);
 
+        // ── Стройка BaseHub (шаг 12b) ─────────────────────────────────────────
+        // Событие прогресса публикуется только на реальное списание пачки монет — тик по нему
+        // не звучит на холостых кадрах. Per-Id кулдаун в PlaySfx страхует от частых пачек.
+        private void OnBuildingInvestProgress(BuildingInvestProgressEvent evt) => PlaySfx(SfxId.BuildInvestTick);
+
+        private void OnBuildingStageInvested(BuildingStageInvestedEvent evt)
+        {
+            // Последний этап озвучивает фанфара BuildingCompleted, а не звук этапа.
+            if (evt.CompletedStages < evt.TotalStages) PlaySfx(SfxId.BuildStageComplete);
+        }
+
+        private void OnBuildingCompleted(BuildingCompletedEvent evt) => PlaySfx(SfxId.BuildingCompleted);
+
         // ── Пауза ─────────────────────────────────────────────────────────────
         private void OnGamePaused(GamePausedEvent evt) => _player.SetPaused(true);
 
@@ -236,6 +252,9 @@ namespace FlatOutLike.Services.Audio
             _eventBus.Unsubscribe<GameResumedEvent>(OnGameResumed);
             _eventBus.Unsubscribe<GameStateChangedEvent>(OnGameStateChanged);
             _eventBus.Unsubscribe<SceneTransitionCoveredEvent>(OnSceneTransitionCovered);
+            _eventBus.Unsubscribe<BuildingInvestProgressEvent>(OnBuildingInvestProgress);
+            _eventBus.Unsubscribe<BuildingStageInvestedEvent>(OnBuildingStageInvested);
+            _eventBus.Unsubscribe<BuildingCompletedEvent>(OnBuildingCompleted);
         }
     }
 }
